@@ -283,3 +283,21 @@ test('a source pass that read nothing says so', opts, async () => {
     'scanning nothing must never look like a clean codebase',
   );
 });
+
+test('a run whose urls are unreachable says so rather than scoring blind', opts, async () => {
+  // why-score printed a confident number twenty points off the scan's, with
+  // nothing to say its browser had never reached the pages. The warning has to
+  // exist on the result for every command to be able to print it.
+  const result = await runScan({
+    root: join(HERE, 'fixtures', 'clean'),
+    // Port 9 is discard: nothing listens, so every navigation is refused.
+    urls: ['http://127.0.0.1:9/'],
+    viewports: [1440],
+    ephemeral: true,
+  });
+  assert.ok(result.warnings.length > 0, 'an unreachable url must warn');
+  assert.ok(
+    !result.channelsRun.includes('render'),
+    'a render pass that reached nothing must not count as having run',
+  );
+});

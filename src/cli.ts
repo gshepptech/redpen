@@ -306,6 +306,10 @@ async function cmdBaseline(root: string, args: Args): Promise<void> {
     onProgress: args.quiet ? undefined : (m) => process.stderr.write(pc.dim(`  … ${m}\n`)),
   });
 
+  for (const warning of result.warnings) {
+    process.stderr.write(pc.yellow(`  ! ${warning}\n`));
+  }
+
   saveBaseline(root, {
     score: result.score,
     recordedAt: new Date().toISOString(),
@@ -313,9 +317,19 @@ async function cmdBaseline(root: string, args: Args): Promise<void> {
   });
 
   process.stdout.write(
-    `\n  baseline set at ${pc.bold(String(result.score))} (${grade(result.score)}) with ${result.findings.length} finding(s) on record\n` +
+    `\n  baseline set at ${pc.bold(String(result.score))} (${verdict(result.slopScore, result.qualityScore)}) with ${result.findings.length} finding(s) on record\n` +
+      pc.dim(`  channels: ${result.channelsRun.join(', ')}\n`) +
       pc.dim('  `redpen check` now fails when the score drops or a new tell appears\n\n'),
   );
+
+  // A baseline is the one artefact that outlives the run that made it, so a
+  // degraded run silently becomes the bar every later scan is judged against.
+  if (!result.channelsRun.includes('render')) {
+    process.stderr.write(
+      pc.yellow('  ! recorded without the render channel — every later `redpen check` that does\n') +
+      pc.yellow('    render will see the extra findings as a regression. Re-record with --url.\n'),
+    );
+  }
 }
 
 function cmdRules(args: Args): void {
@@ -400,6 +414,13 @@ async function cmdWhyScore(root: string, args: Args): Promise<void> {
     ephemeral: true,
     onProgress: args.quiet ? undefined : (m) => process.stderr.write(pc.dim(`  … ${m}\n`)),
   });
+
+  // Every other command prints these. Swallowing them here meant a run whose
+  // browser could not reach the urls printed a confident number twenty points
+  // off the scan's, with nothing to say one of them had not looked.
+  for (const warning of result.warnings) {
+    process.stderr.write(pc.yellow(`  ! ${warning}\n`));
+  }
 
   // Score exactly what `scan` scores. Anything below the confidence floor is
   // reported but never counted, and counting it here made `why-score` disagree
