@@ -1,0 +1,13 @@
+{
+  "name": "redpen",
+  "owner": {
+    "name": "redpen"
+  },
+  "plugins": [
+    {
+      "source": "./",
+      "name": "redpen",
+      "description": "One verdict on your UI — four AI-slop catalogues merged into 96 rules, cross-checked against a real browser before anything is reported."
+    }
+  ]
+}

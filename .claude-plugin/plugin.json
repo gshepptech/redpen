@@ -1,0 +1,17 @@
+{
+  "name": "redpen",
+  "version": "0.1.0",
+  "description": "One verdict on your UI. Merges impeccable, hallmark, unslop-ui and frontend-design-audit into 96 rules, then cross-checks each finding against a real browser before reporting it.",
+  "author": {
+    "name": "redpen"
+  },
+  "homepage": "https://github.com/gshepptech/redpen",
+  "license": "MIT",
+  "keywords": [
+    "design",
+    "ai-slop",
+    "ui",
+    "accessibility",
+    "code-review"
+  ]
+}

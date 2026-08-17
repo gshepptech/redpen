@@ -1,7 +1,7 @@
 {
   "name": "redpen",
   "version": "0.1.0",
-  "description": "One verdict on your UI. Source, rendered DOM, and vision — cross-confirmed, weighted by what humans actually notice.",
+  "description": "One verdict on your UI. Source, rendered DOM, and vision \u2014 cross-confirmed, weighted by what humans actually notice.",
   "type": "module",
   "license": "MIT",
   "engines": {
@@ -13,7 +13,9 @@
   "files": [
     "dist",
     "rules",
-    "skill",
+    "skills",
+    "commands",
+    ".claude-plugin",
     "NOTICE"
   ],
   "scripts": {

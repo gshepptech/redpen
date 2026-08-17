@@ -70,13 +70,31 @@ variety; the metric is weighted so that it barely moves.
 
 ## Install
 
+**As a Claude Code plugin** — gives you `/redpen:audit`, `/redpen:why`,
+`/redpen:gate`, and a skill that fires whenever you build or review UI:
+
+```
+/plugin marketplace add gshepptech/redpen
+/plugin install redpen
+```
+
+**As a CLI**, for CI or for use outside an agent:
+
 ```
 npm i -D redpen
-npm i -D playwright && npx playwright install chromium   # for the render channel
+npm i -D playwright && npx playwright install chromium   # for the browser pass
 ```
 
 Playwright is optional. Without it, redpen runs source-only and **says so** — a
 missing channel is reported as unconfirmed, never as clean.
+
+### Commands
+
+| | |
+| --- | --- |
+| `/redpen:audit [path] [--url ...]` | scan, report the confirmed findings, apply the fixes you approve |
+| `/redpen:why <rule-id>` | what a rule means, who named it, whether humans actually notice it |
+| `/redpen:gate` | wire the regression gate into this project's CI |
 
 ## Use
 
