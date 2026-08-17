@@ -503,3 +503,26 @@ test('an unfilled grid row is a hole on a marketing page and a record count in a
     'a feature grid is cards side by side, not a list of records going down',
   );
 });
+
+test('a toggled-theme pass that cannot enter its theme is skipped, not relabelled', opts, async () => {
+  // See test/POLICY.md. The stamp used to be read from the pass config, so a
+  // pass whose init script threw still labelled every hit "data-theme=dark"
+  // for a page that had stayed light the whole time.
+  const url = await serve(join(HERE, 'fixtures', 'toggled'));
+  const result = await runScan({
+    root: join(HERE, 'fixtures', 'toggled'),
+    urls: [url],
+    viewports: [1440],
+    ephemeral: true,
+  });
+
+  // Every stamped label must name a theme the page was actually in, which for
+  // this fixture means the contrast finding only exists under the stamp.
+  for (const f of result.findings) {
+    for (const e of f.evidence) {
+      if (!e.themeStamp) continue;
+      assert.equal(e.scheme, 'dark', 'a stamped hit is by definition a dark-theme hit');
+      assert.match(e.themeStamp, /^[\w-]+=[\w-]+$/, 'the label must be a real attribute reading');
+    }
+  }
+});

@@ -250,7 +250,32 @@ export async function scanRender(opts: RenderOptions): Promise<RenderResult> {
           }
         }
 
-        if (stampScript) await page.evaluate(stampScript);
+        // Read the stamp back off the page rather than trusting that setting
+        // it worked. The first version labelled every hit from the pass config,
+        // so when the init script threw before documentElement existed the
+        // evidence still said "data-theme=dark" for a context the page had
+        // never entered — confidently wrong, which is worse than absent.
+        // Report what was observed, never what was requested.
+        let observedStamp: string | null = null;
+        if (stampFor) {
+          if (stampScript) await page.evaluate(stampScript);
+          observedStamp = await page.evaluate<string | null>(
+            stampFor.kind === 'class'
+              ? `document.documentElement.classList.contains(${JSON.stringify(stampFor.value)}) ? 'class=' + ${JSON.stringify(stampFor.value)} : null`
+              : `document.documentElement.getAttribute(${JSON.stringify(stampFor.name)}) === ${JSON.stringify(stampFor.value)} ? ${JSON.stringify(stampFor.name)} + '=' + ${JSON.stringify(stampFor.value)} : null`,
+          );
+          if (!observedStamp) {
+            // The pass cannot mean what it was for, so it must not be reported
+            // as if it did. Skipping is right: its findings would be duplicates
+            // of the light pass wearing a dark label.
+            detectorErrors.push(
+              `${url}: could not apply ${stampFor.name}=${stampFor.value} to the page, so the toggled-theme pass was skipped rather than reported under a theme it never entered`,
+            );
+            await page.close();
+            await context.close();
+            continue;
+          }
+        }
         await page.waitForTimeout(opts.settleMs ?? 900);
 
         const found = await page.evaluate<DetectorHit[]>(
@@ -267,8 +292,8 @@ export async function scanRender(opts: RenderOptions): Promise<RenderResult> {
             location: url,
             selector: h.selector,
             viewport: width,
-            scheme: stampFor ? 'dark' : scheme,
-            themeStamp: stampFor ? `${stampFor.name}=${stampFor.value}` : undefined,
+            scheme: observedStamp ? 'dark' : scheme,
+            themeStamp: observedStamp ?? undefined,
             excerpt: h.excerpt,
           });
           hits.set(h.ruleId, list);
