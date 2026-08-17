@@ -30,6 +30,21 @@ export interface RenderOptions {
   autoScheme?: boolean;
 }
 
+/**
+ * How a page turns its own dark theme on, when it is not the media query.
+ *
+ * Emulating `prefers-color-scheme` never exercises a toggle, so a page can be
+ * correct under the OS preference and broken under its own switch — different
+ * code path, same claim of supporting dark mode.
+ */
+export interface ThemeStamp {
+  kind: 'attribute' | 'class';
+  /** Attribute name, or the literal "class". */
+  name: string;
+  /** Value to set, e.g. "dark". */
+  value: string;
+}
+
 export interface RenderResult {
   findings: RawFinding[];
   fingerprints: Fingerprint[];
@@ -174,19 +189,27 @@ export async function scanRender(opts: RenderOptions): Promise<RenderResult> {
    * the wall clock to re-measure layout that cannot differ.
    */
   let wantsDark = opts.schemes?.includes('dark') ?? false;
+  let stamp: ThemeStamp | null = null;
   if (opts.schemes === undefined || opts.autoScheme) {
     // Probe once rather than assuming. A site with no dark theme should not pay
     // for a pass whose findings would be identical to the light one.
-    wantsDark = await probeDarkTheme(browser, opts.urls[0]!);
+    const probe = await probeDarkTheme(browser, opts.urls[0]!);
+    wantsDark = probe.media;
+    stamp = probe.stamp;
   }
 
-  const passes: Array<{ width: number; scheme: 'light' | 'dark' }> = [];
+  const passes: Array<{ width: number; scheme: 'light' | 'dark'; stamp?: ThemeStamp }> = [];
   for (const width of opts.viewports) passes.push({ width, scheme: 'light' });
   if (wantsDark) passes.push({ width: widest, scheme: 'dark' });
+  // A theme driven by an attribute or a class is a different code path from
+  // one driven by the media query, and a page can be right under one and wrong
+  // under the other. Emulating the preference never exercises the toggle.
+  if (stamp) passes.push({ width: widest, scheme: 'light', stamp });
 
   try {
     for (const url of opts.urls) {
-      for (const { width, scheme } of passes) {
+      for (const { width, scheme, stamp: stampFor } of passes) {
+        let stampScript: string | null = null;
         const context = await browser.newContext({
           viewport: { width, height: 900 },
           deviceScaleFactor: 1,
@@ -196,6 +219,23 @@ export async function scanRender(opts: RenderOptions): Promise<RenderResult> {
         const page = await context.newPage();
         await page.addInitScript(ERROR_TRAP);
         await page.addInitScript(install);
+        if (stampFor) {
+          // An init script runs at document creation, when documentElement may
+          // not exist yet — setting it unguarded threw, and the only sign was a
+          // console-error finding that fired on the stamped pass alone. Apply as
+          // early as possible, then again once the element is certainly there.
+          const apply =
+            stampFor.kind === 'class'
+              ? `document.documentElement.classList.add(${JSON.stringify(stampFor.value)})`
+              : `document.documentElement.setAttribute(${JSON.stringify(stampFor.name)}, ${JSON.stringify(stampFor.value)})`;
+          await page.addInitScript(
+            `(function () {
+              function set() { if (document.documentElement) { ${apply}; return true; } return false; }
+              if (!set()) document.addEventListener('DOMContentLoaded', set);
+            })();`,
+          );
+          stampScript = `(function () { ${apply}; })()`;
+        }
 
         try {
           await page.goto(url, { waitUntil: 'networkidle', timeout: 30_000 });
@@ -210,6 +250,7 @@ export async function scanRender(opts: RenderOptions): Promise<RenderResult> {
           }
         }
 
+        if (stampScript) await page.evaluate(stampScript);
         await page.waitForTimeout(opts.settleMs ?? 900);
 
         const found = await page.evaluate<DetectorHit[]>(
@@ -226,7 +267,8 @@ export async function scanRender(opts: RenderOptions): Promise<RenderResult> {
             location: url,
             selector: h.selector,
             viewport: width,
-            scheme,
+            scheme: stampFor ? 'dark' : scheme,
+            themeStamp: stampFor ? `${stampFor.name}=${stampFor.value}` : undefined,
             excerpt: h.excerpt,
           });
           hits.set(h.ruleId, list);
@@ -234,7 +276,7 @@ export async function scanRender(opts: RenderOptions): Promise<RenderResult> {
 
         // Fingerprint once per url, at the widest viewport, because the
         // structural signature is a desktop-layout property.
-        if (width === widest && scheme === 'light') {
+        if (width === widest && scheme === 'light' && !stampFor) {
           const signals = await page.evaluate<SurfaceSignals>('window.__redpenSurface()');
           if (signals) detectedSurfaces.set(url, classify(signals));
 
@@ -283,26 +325,37 @@ export async function scanRender(opts: RenderOptions): Promise<RenderResult> {
  * cannot see. Same-origin stylesheets only — a cross-origin sheet throws on
  * .cssRules and is not worth a permission fight.
  */
-async function probeDarkTheme(browser: BrowserLike, url: string): Promise<boolean> {
+async function probeDarkTheme(
+  browser: BrowserLike,
+  url: string,
+): Promise<{ media: boolean; stamp: ThemeStamp | null }> {
   const read = async (scheme: 'light' | 'dark') => {
     const context = await browser.newContext({ colorScheme: scheme });
     const page = await context.newPage();
     try {
       await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 15_000 });
-      return await page.evaluate<{ declared: boolean; paint: string }>(`(function () {
+      return await page.evaluate<{ declared: boolean; stamp: ThemeStamp | null; paint: string }>(`(function () {
         var declared = false;
+        var stamp = null;
         for (var i = 0; i < document.styleSheets.length; i++) {
           try {
             var rules = document.styleSheets[i].cssRules;
             for (var j = 0; j < rules.length; j++) {
-              if (rules[j].conditionText && /prefers-color-scheme/.test(rules[j].conditionText)) {
-                declared = true;
+              var r = rules[j];
+              if (r.conditionText && /prefers-color-scheme/.test(r.conditionText)) declared = true;
+              // A theme the page drives itself, rather than one the OS asks for.
+              var sel = r.selectorText;
+              if (!sel) continue;
+              var attr = /\\[data-([\\w-]+)\\s*[~|^$*]?=\\s*["\']?(dark|night)["\']?\\]/i.exec(sel);
+              if (attr && !stamp) stamp = { kind: 'attribute', name: 'data-' + attr[1], value: attr[2] };
+              if (!stamp && /(^|[\\s,>+~])(html|:root|body)?\\.dark\\b/.test(sel)) {
+                stamp = { kind: 'class', name: 'class', value: 'dark' };
               }
             }
           } catch (e) { /* cross-origin sheet */ }
         }
         var cs = getComputedStyle(document.body);
-        return { declared: declared, paint: cs.backgroundColor + '|' + cs.color };
+        return { declared: declared, stamp: stamp, paint: cs.backgroundColor + '|' + cs.color };
       })()`);
     } catch {
       return null;
@@ -312,10 +365,11 @@ async function probeDarkTheme(browser: BrowserLike, url: string): Promise<boolea
   };
 
   const light = await read('light');
-  if (!light) return false;
-  if (light.declared) return true;
+  if (!light) return { media: false, stamp: null };
+  if (light.declared) return { media: true, stamp: light.stamp };
   const dark = await read('dark');
-  return !!dark && dark.paint !== light.paint;
+  const media = !!dark && dark.paint !== light.paint;
+  return { media, stamp: light.stamp };
 }
 
 function slug(url: string): string {

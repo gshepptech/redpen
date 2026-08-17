@@ -1,0 +1,20 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Toggle-driven theme</title>
+<style>
+  /* Two ways into the same dark theme, and only one of them was maintained.
+     The media-query block got the contrast fix; the [data-theme="dark"] block
+     the toggle sets did not. Emulating prefers-color-scheme exercises the
+     first and never the second, so the page passes while its own switch
+     produces 1.6:1 muted text. */
+  :root { --bg: #fdfcfb; --fg: #16161a; --muted: #55555f; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0d0d10; --fg: #e8e8ea; --muted: #a8a8b4; }
+  }
+  :root[data-theme="dark"] { --bg: #0d0d10; --fg: #e8e8ea; --muted: #1c1c22; }
+  body { background: var(--bg); color: var(--fg); font: 16px/1.6 system-ui; margin: 0; padding: 40px; }
+  .muted { color: var(--muted); font-size: 15px; max-width: 60ch; }
+</style>
+<h1>Board</h1>
+<p class="muted">Seven items are workable right now, and two are held by an agent editing a file in the payments package.</p>
+<p>Ordinary body copy that stays legible under every theme this page ships.</p>

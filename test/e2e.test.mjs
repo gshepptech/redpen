@@ -427,3 +427,32 @@ test('a color-mix control is measured against its composited ground', opts, asyn
     'light text on a near-opaque dark wash is readable; the wash must be composited, not skipped',
   );
 });
+
+test('a theme the page toggles itself is exercised, not just the OS preference', opts, async () => {
+  // Emulating prefers-color-scheme never runs the toggle's code path. This
+  // fixture keeps both: the media-query block got the contrast fix and the
+  // [data-theme="dark"] block did not, so the page is correct under the OS
+  // preference and broken under its own switch.
+  const url = await serve(join(HERE, 'fixtures', 'toggled'));
+  const result = await runScan({
+    root: join(HERE, 'fixtures', 'toggled'),
+    urls: [url],
+    viewports: [1440],
+    ephemeral: true,
+  });
+
+  const contrast = result.findings.find((f) => f.ruleId === 'low-contrast');
+  assert.ok(contrast, 'the toggle-only contrast failure must be found');
+
+  const stamped = contrast.evidence.filter((e) => e.themeStamp);
+  assert.ok(stamped.length, 'the finding must come from the stamped pass');
+  assert.match(stamped[0].themeStamp, /data-theme=dark/);
+
+  // The emulated dark pass is genuinely fine here, so blaming it would be wrong.
+  const emulated = contrast.evidence.filter((e) => e.scheme === 'dark' && !e.themeStamp);
+  assert.deepEqual(
+    emulated.map((e) => e.excerpt),
+    [],
+    'the media-query theme passes honestly and must not be blamed',
+  );
+});

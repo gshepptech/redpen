@@ -202,6 +202,11 @@ export interface Evidence {
   viewport?: number;
   /** Colour scheme the hit was seen under. Absent means the pass predates schemes. */
   scheme?: 'light' | 'dark';
+  /**
+   * Set when the theme came from the page's own switch rather than the OS
+   * preference, e.g. "data-theme=dark". Different code path, same claim.
+   */
+  themeStamp?: string;
   /** The matched text or the offending computed value. Trimmed to 160 chars. */
   excerpt?: string;
 }
