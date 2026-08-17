@@ -5,7 +5,7 @@ import { scanRender } from './channels/render.js';
 import { buildBrief, writeBrief, readAnswers } from './channels/vision.js';
 import { promote, meetsThreshold } from './promote.js';
 import { MIN_SURFACE_CONFIDENCE } from './channels/surface.js';
-import { loadCorpus, appliesTo } from './corpus/load.js';
+import { loadCorpus, appliesTo, isActionable } from './corpus/load.js';
 import { findClashes, fingerprintFindings } from './fingerprint/distance.js';
 import * as store from './fingerprint/store.js';
 import { score, scoreKind } from './score.js';
@@ -172,6 +172,22 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
   // firing it there would be a false positive by construction.
   const activeSurfaces = [...new Set(Object.values(surfaces).map((s) => s.surface))];
   const offSurface = new Set<string>();
+
+  // Rules whose fix needs a capability the project has declared it lacks.
+  const caps = config.capabilities as unknown as Record<string, boolean>;
+  let unactionable = 0;
+  for (const rule of loadCorpus()) {
+    if (!isActionable(rule, caps)) {
+      offSurface.add(rule.id);
+      unactionable++;
+    }
+  }
+  if (unactionable) {
+    opts.onProgress?.(
+      `capabilities: ${unactionable} rule(s) need something this project declares it cannot do`,
+    );
+  }
+
   if (activeSurfaces.length === 1) {
     const only = activeSurfaces[0] as Surface;
     for (const rule of loadCorpus()) {

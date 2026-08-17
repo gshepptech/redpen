@@ -18,7 +18,11 @@ export type Category =
   | 'copy'
   | 'usability'
   | 'a11y'
-  | 'sameness';
+  | 'sameness'
+  /** Browser surfaces nobody drew: selection, caret, scrollbar, focus ring. */
+  | 'chrome'
+  /** Drift from the project's own declared tokens. */
+  | 'system';
 
 export type Channel = 'source' | 'render' | 'vision' | 'fingerprint';
 
@@ -124,6 +128,12 @@ export interface Rule {
    * noise rather than a finding — em dashes being the canonical case.
    */
   advisory?: boolean;
+  /**
+   * Capabilities this rule's fix depends on. A project that declares it cannot
+   * do one of these is not failing the rule — the finding would be a standing
+   * complaint it can never act on.
+   */
+  requires?: Array<'javascript' | 'externalAssets'>;
   /** Upstream catalogues this rule was merged from. Never empty. */
   sources: Provenance[];
   /**

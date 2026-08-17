@@ -1,5 +1,5 @@
 {
-  "name": "redpen",
+  "name": "@gshepptech/redpen",
   "version": "0.1.0",
   "description": "One verdict on your UI. Source, rendered DOM, and vision \u2014 cross-confirmed, weighted by what humans actually notice.",
   "type": "module",

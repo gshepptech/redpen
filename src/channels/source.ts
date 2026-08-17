@@ -21,7 +21,13 @@ const SKIP_DIRS = new Set([
   'node_modules', '.git', 'dist', 'build', '.next', 'out', 'vendor',
   'coverage', '.svelte-kit', '.astro', '.turbo', '.cache', '__pycache__',
   '.vercel', '.netlify', 'storybook-static', '.redpen',
+  // Test material is not shipped UI. Reported from the field: a Go render
+  // test's golden file was fingerprinted as a page and cited ten times.
+  'testdata', '__snapshots__', '__fixtures__', 'fixtures', '__mocks__',
 ]);
+
+/** Snapshot and golden files, wherever they live. */
+const SKIP_FILE = /\.(golden|snap|snapshot)\.|\.golden$|\.snap$/i;
 
 /** Files above this size are almost always bundles, minified, or vendored. */
 const MAX_FILE_BYTES = 512 * 1024;
@@ -52,7 +58,11 @@ export function walk(root: string): string[] {
         // Hidden directories are config, not source — except the ones a
         // framework actually builds from, which are all in SKIP_DIRS anyway.
         if (!entry.startsWith('.')) visit(full);
-      } else if (SCANNED_EXTENSIONS.has(extname(entry)) && st.size <= MAX_FILE_BYTES) {
+      } else if (
+        SCANNED_EXTENSIONS.has(extname(entry)) &&
+        st.size <= MAX_FILE_BYTES &&
+        !SKIP_FILE.test(entry)
+      ) {
         found.push(full);
       }
     }

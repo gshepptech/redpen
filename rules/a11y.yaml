@@ -72,6 +72,7 @@
     weight change, or a shape.
 
 - id: no-live-region
+  requires: [javascript]
   kind: quality
   title: Dynamic content with no live region
   category: a11y

@@ -36,6 +36,8 @@ const VALID_CATEGORIES: ReadonlySet<string> = new Set<Category>([
   'usability',
   'a11y',
   'sameness',
+  'chrome',
+  'system',
 ]);
 
 const VALID_CHANNELS: ReadonlySet<string> = new Set<Channel>([
@@ -79,6 +81,16 @@ function validate(rule: unknown, file: string, index: number): Rule {
     }
     if (r.surfaces.length === 3) {
       throw new Error(`redpen: rule "${r.id}" lists every surface — omit the field instead`);
+    }
+  }
+  if (r.requires !== undefined) {
+    if (!Array.isArray(r.requires) || r.requires.length === 0) {
+      throw new Error(`redpen: rule "${r.id}" has an empty requires list`);
+    }
+    for (const cap of r.requires) {
+      if (!VALID_CAPABILITIES.has(cap)) {
+        throw new Error(`redpen: rule "${r.id}" requires unknown capability "${cap}"`);
+      }
     }
   }
   if (!Array.isArray(r.sources) || r.sources.length === 0) {
@@ -183,6 +195,18 @@ export function appliesTo(rule: Rule, surface: Surface | null): boolean {
   // With no surface established, keep the rule rather than silently dropping it.
   if (!surface) return true;
   return rule.surfaces.includes(surface);
+}
+
+const VALID_CAPABILITIES: ReadonlySet<string> = new Set(['javascript', 'externalAssets']);
+
+/**
+ * Is this rule actionable given what the project can do? A no-JavaScript
+ * project told to add inline validation on every scan forever learns to ignore
+ * the whole report.
+ */
+export function isActionable(rule: Rule, capabilities: Record<string, boolean>): boolean {
+  if (!rule.requires) return true;
+  return rule.requires.every((cap) => capabilities[cap] !== false);
 }
 
 export function rulesForSurface(surface: Surface | null): Rule[] {

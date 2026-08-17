@@ -4,9 +4,22 @@ argument-hint: "<rule-id>"
 allowed-tools: Bash
 ---
 
-Run `npx redpen why $ARGUMENTS` and relay what it says.
+## Running redpen
 
-If the user gave no rule id, run `npx redpen rules` and ask which one they mean.
+The plugin ships the CLI. Resolve it once and reuse the variable — **do not use
+`npx redpen`**, which resolves to an unrelated package of the same name on npm:
+
+```bash
+REDPEN="${CLAUDE_PLUGIN_ROOT:-$(npm root -g)/@gshepptech/redpen}/dist/cli.js"
+node "$REDPEN" --help    # confirm it resolved before doing anything else
+```
+
+If that path does not exist, the plugin is not installed; fall back to
+`npx @gshepptech/redpen` (note the `-cli`) and say which one you used.
+
+Run `node "$REDPEN" why $ARGUMENTS` and relay what it says.
+
+If the user gave no rule id, run `node "$REDPEN" rules` and ask which one they mean.
 If the id does not exist, `redpen rules <partial>` filters by substring.
 
 Two fields decide how much weight the rule deserves, and you should say which

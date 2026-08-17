@@ -149,3 +149,38 @@ test('advisory rules exist and are never the loudest thing in the corpus', () =>
     assert.ok(r.weight < 70, `${r.id} is advisory but weighted ${r.weight}`);
   }
 });
+
+test('the detector bundle is valid JavaScript', async () => {
+  // The bundle lives inside a TS template literal, so a stray backtick or a
+  // single-backslash regex silently corrupts it and every render check dies at
+  // runtime with "window.__redpenDetect is not a function". Both have happened.
+  const { detectorSource } = await import('../dist/channels/detectors.js');
+  const { fingerprintSource } = await import('../dist/fingerprint/extract.js');
+  const { surfaceSource } = await import('../dist/channels/surface.js');
+
+  for (const [name, fn] of [
+    ['detector', detectorSource],
+    ['fingerprint', fingerprintSource],
+    ['surface', surfaceSource],
+  ]) {
+    const src = fn();
+    assert.doesNotThrow(
+      () => new Function(`return ${src}`),
+      `the ${name} bundle does not parse`,
+    );
+    assert.ok(
+      !/[^\\]`/.test(src.slice(1, -1)),
+      `the ${name} bundle contains an unescaped backtick, which truncates it`,
+    );
+  }
+});
+
+test('every render check named by a rule exists in the bundle', async () => {
+  const { detectorSource } = await import('../dist/channels/detectors.js');
+  const src = detectorSource();
+  const missing = loadCorpus()
+    .filter((r) => r.render)
+    .map((r) => r.render.check)
+    .filter((check) => !src.includes(`CHECKS['${check}']`));
+  assert.deepEqual(missing, [], 'rules name render checks that do not exist');
+});

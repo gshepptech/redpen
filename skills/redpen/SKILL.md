@@ -15,7 +15,7 @@ merged, deduplicated, and cross-checked.
 ## Run it
 
 ```bash
-npx redpen scan . --url http://localhost:3000
+npx @gshepptech/redpen scan . --url http://localhost:3000
 ```
 
 Add every route worth judging. Without a `--url` the render channel never runs,
@@ -23,12 +23,12 @@ every finding it could have confirmed is capped at `possible`, and the report
 says so. **Never read a source-only run as a clean page.**
 
 ```bash
-npx redpen scan . --url http://localhost:3000 --url http://localhost:3000/pricing
-npx redpen scan . --url http://localhost:3000 --vision   # writes a brief for you to answer
-npx redpen why ai-purple          # what a rule means and who said so
-npx redpen rules color            # the corpus, by category
-npx redpen fingerprints           # every page signature on record
-npx redpen scan . --json report.json --url http://localhost:3000
+npx @gshepptech/redpen scan . --url http://localhost:3000 --url http://localhost:3000/pricing
+npx @gshepptech/redpen scan . --url http://localhost:3000 --vision   # writes a brief for you to answer
+npx @gshepptech/redpen why ai-purple          # what a rule means and who said so
+npx @gshepptech/redpen rules color            # the corpus, by category
+npx @gshepptech/redpen fingerprints           # every page signature on record
+npx @gshepptech/redpen scan . --json report.json --url http://localhost:3000
 ```
 
 ### The vision channel is you
@@ -39,10 +39,10 @@ row for each. **You** open the PNGs and fill them in, then re-run with
 `--answers`:
 
 ```bash
-npx redpen scan . --url http://localhost:3000 --vision
+npx @gshepptech/redpen scan . --url http://localhost:3000 --vision
 # Read every file under .redpen/screenshots/ with your image-reading tool.
 # Fill in each row of .redpen/vision-brief.json: present, confidence, evidence.
-npx redpen scan . --url http://localhost:3000 --answers .redpen/vision-brief.json
+npx @gshepptech/redpen scan . --url http://localhost:3000 --answers .redpen/vision-brief.json
 ```
 
 Rules for answering — the channel enforces all of them:

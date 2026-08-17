@@ -1,0 +1,139 @@
+# Browser surfaces.
+#
+# The parts nobody drew still carry the design. Text selection, the caret,
+# custom scrollbars, focus rings, underline offset and the numerals in tabular
+# data all ship with browser defaults that belong to no design system.
+#
+# impeccable's craft floor calls this "the cheapest signal that a page was built
+# rather than assembled, and the one models skip most reliably" — which is
+# exactly why it belongs in a corpus about machine-made UI. None of these
+# appear in any of the four catalogues as a *detector*; impeccable carries them
+# as prose in craft-floor.md and checks them nowhere.
+#
+# Every rule here is scoped to the render channel: a pseudo-element nobody
+# authored has no computed style, so these read the stylesheets directly.
+
+- id: unthemed-selection
+  kind: slop
+  title: Text selection left at the browser default
+  category: chrome
+  severity: low
+  weight: 44
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: "craft-floor:skill-craft-browser-surfaces" }
+  channels: [render]
+  render:
+    check: selection-unthemed
+  why: >-
+    Highlighting any sentence reveals the operating system's blue. It is the
+    first thing a reader does by accident and the last thing a generated page
+    ever themes.
+  fix: >-
+    One rule. `::selection { background: <accent at low alpha>; color: <ink>; }`
+    — and check the contrast of the pair, because the default blue is doing
+    that job for you today.
+
+- id: unthemed-caret
+  kind: slop
+  title: Text caret left at the browser default
+  category: chrome
+  severity: low
+  weight: 40
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: "craft-floor:skill-craft-browser-surfaces" }
+  channels: [render]
+  render:
+    check: caret-unthemed
+    params:
+      minFields: 1
+  why: >-
+    A black caret blinking inside a carefully coloured field. It is one
+    property, and it is the detail that separates a themed input from a styled
+    one.
+  fix: >-
+    `caret-color: var(--color-accent)` on inputs, textareas, and anything
+    contenteditable.
+
+- id: unthemed-scrollbar
+  kind: slop
+  title: Custom scroll container with an unthemed scrollbar
+  category: chrome
+  severity: low
+  weight: 42
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: "craft-floor:skill-craft-browser-surfaces" }
+  channels: [render]
+  render:
+    check: scrollbar-unthemed
+  why: >-
+    A designed panel with a platform scrollbar bolted to its edge. The page
+    built the container and then let the browser finish it.
+  fix: >-
+    `scrollbar-color: <thumb> <track>` and `scrollbar-width: thin`, with a
+    `::-webkit-scrollbar` block for the browsers that need it. Theme only the
+    containers you drew — never the document scrollbar without reason.
+
+- id: unthemed-focus-ring
+  kind: quality
+  title: Focus ring is the browser default, or switched off
+  category: chrome
+  severity: high
+  weight: 72
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: "craft-floor:skill-craft-browser-surfaces" }
+    - { catalogue: hallmark, ref: "slop-gate:26" }
+  channels: [render]
+  render:
+    check: focus-ring-unthemed
+  why: >-
+    Two failures with one detector. A ring switched off with nothing in its
+    place strands every keyboard user; a ring left at the UA default was never
+    checked against the surface it lands on, and the default is tuned for white.
+  fix: >-
+    `:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px }`.
+    The ring needs 3:1 against the adjacent surface, not against the control.
+
+- id: default-underline-offset
+  kind: slop
+  title: In-prose links at the default underline offset
+  category: chrome
+  severity: low
+  weight: 38
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: "craft-floor:skill-craft-browser-surfaces" }
+  channels: [render]
+  render:
+    check: underline-default
+    params:
+      minLinks: 2
+  why: >-
+    The browser underline sits on the baseline and cuts every descender it
+    meets. Two properties move it clear, and almost nothing generated sets them.
+  fix: >-
+    `text-underline-offset: 0.15em; text-decoration-thickness: 1px` on prose
+    links.
+
+- id: no-tabular-nums
+  kind: quality
+  title: Numeric table columns without tabular figures
+  category: chrome
+  severity: medium
+  weight: 55
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: "craft-floor:skill-craft-browser-surfaces" }
+    - { catalogue: hallmark, ref: "antipattern:tabular-data-without-tabular-nums" }
+  channels: [render]
+  render:
+    check: tabular-nums-missing
+  why: >-
+    Proportional digits make a column of numbers ragged — the 1s are narrow and
+    nothing lines up, so the column cannot be scanned vertically, which is the
+    only reason it is a column.
+  fix: >-
+    `font-variant-numeric: tabular-nums` on the numeric cells, or on the table.

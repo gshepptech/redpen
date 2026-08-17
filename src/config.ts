@@ -30,6 +30,23 @@ export interface RedpenConfig {
   tolerance: number;
   /** Rule ids suppressed project-wide, each with a mandatory reason. */
   ignore: Record<string, string>;
+  /**
+   * What this project is able to do. A rule whose fix requires a capability the
+   * project does not have is not a finding — it is a standing complaint the
+   * reader can never act on.
+   *
+   * Reported from the field: a deliberately no-JavaScript dashboard was told to
+   * add inline validation, an unsaved-changes warning and autosave on every
+   * scan forever.
+   */
+  capabilities: Capabilities;
+}
+
+export interface Capabilities {
+  /** False for server-rendered projects that ship no client JS by rule. */
+  javascript: boolean;
+  /** False where no off-host asset may be referenced. */
+  externalAssets: boolean;
 }
 
 export const DEFAULT_CONFIG: RedpenConfig = {
@@ -41,6 +58,7 @@ export const DEFAULT_CONFIG: RedpenConfig = {
   skipCategories: [],
   tolerance: 0,
   ignore: {},
+  capabilities: { javascript: true, externalAssets: true },
 };
 
 const DIR = '.redpen';
@@ -52,7 +70,11 @@ export function loadConfig(root: string): RedpenConfig {
   if (!existsSync(file)) return { ...DEFAULT_CONFIG };
   try {
     const parsed = JSON.parse(readFileSync(file, 'utf8')) as Partial<RedpenConfig>;
-    return { ...DEFAULT_CONFIG, ...parsed };
+    return {
+      ...DEFAULT_CONFIG,
+      ...parsed,
+      capabilities: { ...DEFAULT_CONFIG.capabilities, ...(parsed.capabilities ?? {}) },
+    };
   } catch (err) {
     throw new Error(`redpen: ${file} is not valid JSON — ${err}`);
   }

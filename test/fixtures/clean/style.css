@@ -8,6 +8,9 @@
   --ink:        oklch(0.228 0.018 60);
   --ink-muted:  oklch(0.452 0.016 60);
   --accent:     oklch(0.552 0.148 28);
+  --accent-hover: oklch(0.495 0.148 28);
+  --accent-press: oklch(0.445 0.148 28);
+  --accent-wash:  oklch(0.552 0.148 28 / 0.18);
   --accent-ink: oklch(0.982 0.010 28);
   --focus:      oklch(0.480 0.170 250);
 
@@ -60,6 +63,29 @@ a { color: var(--ink); text-decoration-thickness: 1px; text-underline-offset: 2p
 :focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
+}
+
+/* Browser surfaces. The parts nobody draws still carry the design — selection,
+   caret, scrollbar and underline offset all ship with defaults belonging to no
+   design system. */
+
+::selection {
+  background: var(--accent-wash);
+  color: var(--ink);
+}
+
+input, textarea {
+  caret-color: var(--accent);
+}
+
+html {
+  scrollbar-color: var(--rule) var(--paper);
+  scrollbar-width: thin;
+}
+
+p a, li a {
+  text-underline-offset: 0.15em;
+  text-decoration-thickness: 1px;
 }
 
 .skip {
@@ -146,8 +172,8 @@ a { color: var(--ink); text-decoration-thickness: 1px; text-underline-offset: 2p
   border: 1px solid transparent;
   transition: background-color 120ms ease-out;
 }
-.button:hover { background: oklch(0.495 0.148 28); }
-.button:active { background: oklch(0.445 0.148 28); }
+.button:hover { background: var(--accent-hover); }
+.button:active { background: var(--accent-press); }
 .button:disabled,
 .button[aria-disabled="true"] {
   opacity: 0.55;
@@ -203,6 +229,7 @@ caption { text-align: left; color: var(--ink-muted); font-size: 15px; padding-bo
 th, td { text-align: left; padding: var(--space-sm) var(--space-md) var(--space-sm) 0; border-bottom: 1px solid var(--rule); }
 th { font-weight: 600; font-size: 14px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-muted); }
 td { font-variant-numeric: tabular-nums; }
+th { font-variant-numeric: tabular-nums; }
 
 /* ---- note: a short plain block, tighter than the sections above ---- */
 
@@ -251,8 +278,8 @@ button[type="submit"] {
   border-radius: var(--radius-sm);
   cursor: pointer;
 }
-button[type="submit"]:hover { background: oklch(0.495 0.148 28); }
-button[type="submit"]:active { background: oklch(0.445 0.148 28); }
+button[type="submit"]:hover { background: var(--accent-hover); }
+button[type="submit"]:active { background: var(--accent-press); }
 button[type="submit"]:disabled { opacity: 0.55; cursor: not-allowed; }
 
 .subscribe__help { font-size: 14px; color: var(--ink-muted); min-height: 1lh; }

@@ -7,6 +7,7 @@
 # by how often the tell is named.
 
 - id: no-loading-state
+  requires: [javascript]
   kind: quality
   title: Async action with no loading state
   category: usability
@@ -31,6 +32,7 @@
     Restore on both success and failure.
 
 - id: no-empty-state
+  requires: [javascript]
   kind: quality
   title: List with no empty state
   category: usability
@@ -55,6 +57,7 @@
     Say what would be here, and give the action that puts something here.
 
 - id: destructive-without-confirm
+  requires: [javascript]
   kind: quality
   title: Destructive action with no confirmation or undo
   category: usability
@@ -80,6 +83,7 @@
     Reserve the modal for genuinely permanent actions and name the object in it.
 
 - id: confirm-for-reversible
+  requires: [javascript]
   kind: quality
   title: Confirmation dialog for a reversible action
   category: usability
@@ -99,6 +103,7 @@
     Do the thing, show an undo.
 
 - id: no-inline-validation
+  requires: [javascript]
   kind: quality
   title: Form validation only on submit
   category: usability
@@ -146,6 +151,7 @@
     sign in instead?"
 
 - id: form-data-loss
+  requires: [javascript]
   kind: quality
   title: Form clears on error
   category: usability
@@ -168,6 +174,7 @@
     to fill.
 
 - id: no-unsaved-warning
+  requires: [javascript]
   kind: quality
   title: No warning when leaving unsaved work
   category: usability
@@ -240,6 +247,7 @@
     need 3:1 against the adjacent surface.
 
 - id: div-as-button
+  requires: [javascript]
   kind: quality
   title: Clickable element that is not a button or link
   category: usability
@@ -309,6 +317,7 @@
     not colour alone.
 
 - id: modal-no-escape
+  requires: [javascript]
   kind: quality
   title: Modal with no escape route
   category: usability
@@ -336,6 +345,7 @@
     trigger on close.
 
 - id: no-autosave-long-form
+  requires: [javascript]
   kind: quality
   title: Long form with no autosave
   category: usability

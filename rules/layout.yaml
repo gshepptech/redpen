@@ -93,6 +93,9 @@
     params:
       signals: [borderRadius, boxShadow, borderWidth, backgroundContrast]
       minSignals: 2
+      # Below a tap target it is an indicator, not a card. Reported from the
+      # field: a 5px status dot inside a menu item was flagged as a nested card.
+      minSurfacePx: 24
   why: >-
     Two levels of border, radius, and shadow around the same content. It happens
     when a card component gets dropped inside a section that was already a card.

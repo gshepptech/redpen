@@ -1,0 +1,106 @@
+# Design-system drift.
+#
+# impeccable checks literal values against a declared DESIGN.md — four rules
+# that ask "is this value part of the system, or did somebody improvise it?".
+# redpen had one of the four, and it was a proxy: a count of distinct colours,
+# which flags a rich palette and misses a project that declared six tokens and
+# then hard-coded twelve hexes.
+#
+# These read the declaration the project already has: the custom properties on
+# :root. A project that defines --color-* and then writes #7c3aed in a component
+# has drifted from its own system, and no external file is needed to prove it.
+#
+# Every rule here is silent on a project with no declared tokens — there is
+# nothing to drift from, and "you have no design system" is a different finding
+# that these rules would state badly.
+
+- id: color-token-drift
+  kind: quality
+  title: Literal colours outside the project's own tokens
+  category: system
+  severity: medium
+  weight: 63
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: design-system-color }
+  channels: [render]
+  render:
+    check: color-token-drift
+    params:
+      minTokens: 4
+      minDrift: 3
+  why: >-
+    The tokens exist and later components stopped using them. This is how a
+    generated page ends up with nineteen near-identical greys — each one written
+    where it was needed rather than referenced.
+  fix: >-
+    Replace each literal with the token it is approximating. If a value is
+    genuinely new, add it to the token block first — the point is that the
+    addition is a decision rather than a side effect.
+
+- id: radius-token-drift
+  kind: quality
+  title: Radius values outside the project's own scale
+  category: system
+  severity: low
+  weight: 48
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: design-system-radius }
+  channels: [render]
+  render:
+    check: radius-token-drift
+    params:
+      minTokens: 2
+      minDrift: 3
+  why: >-
+    A radius scale is information — small for controls, medium for cards, full
+    for avatars. Improvised values erase the distinction the scale was carrying.
+  fix: >-
+    Snap each value to a declared step. If none fits, the scale is missing a
+    step; add it deliberately.
+
+- id: font-size-token-drift
+  kind: quality
+  title: Font sizes off the declared type ramp
+  category: system
+  severity: medium
+  weight: 57
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: design-system-font-size }
+  channels: [render]
+  render:
+    check: font-size-token-drift
+    params:
+      minTokens: 3
+      minDrift: 4
+  why: >-
+    A ramp with four declared steps and nine sizes in use is not a ramp. The
+    off-ramp values are where a component was sized to fit its box rather than
+    to its role.
+  fix: >-
+    Move each value onto a declared step. A size that genuinely needs to exist
+    is a new step in the ramp, not an exception to it.
+
+- id: font-family-drift
+  kind: quality
+  title: Typefaces outside the declared type system
+  category: system
+  severity: medium
+  weight: 60
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: design-system-font }
+  channels: [render]
+  render:
+    check: font-family-drift
+    params:
+      minDrift: 1
+  why: >-
+    A face reaching the page without passing through the type tokens. Usually a
+    component library shipping its own stack, or a fallback quietly winning
+    because the intended face never loaded.
+  fix: >-
+    Route every family through a token. If the face is intentional, declare it;
+    if it is a fallback that won, fix the loading rather than the symptom.

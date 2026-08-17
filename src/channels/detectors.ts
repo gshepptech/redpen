@@ -163,7 +163,11 @@ const HELPERS_LIB = `
 
   function selectorFor(el) {
     if (!el || el === document.body) return 'body';
-    if (el.id) return '#' + el.id;
+    // A form whose control is named "id" shadows form.id with the element
+    // itself, so a naive '#' + el.id stringifies a DOM node. Only trust a
+    // string, and only one that can actually be written as a selector.
+    var id = el.getAttribute ? el.getAttribute('id') : null;
+    if (typeof id === 'string' && id && /^[A-Za-z_][\\w:.-]*$/.test(id)) return '#' + id;
     var parts = [];
     var node = el;
     var depth = 0;
@@ -694,7 +698,12 @@ const CHECKS_LIB = `
   CHECKS['nested-surface'] = function (p) {
     var signals = p.signals || ['borderRadius', 'boxShadow', 'borderWidth'];
     var minSignals = p.minSignals || 2;
+    var minPx = p.minSurfacePx || 24;
     function isSurface(el) {
+      // Anything smaller than a tap target is an indicator, not a card. A 5px
+      // status dot inside a menu item is not a nested surface.
+      var r = el.getBoundingClientRect();
+      if (r.width < minPx || r.height < minPx) return false;
       var s = getComputedStyle(el);
       var n = 0;
       if (parseFloat(s.borderRadius) > 2) n++;
@@ -1310,6 +1319,261 @@ const CHECKS_LIB = `
       if (el.hasAttribute('disabled') || el.getAttribute('aria-disabled') === 'true') channels++;
       return channels < min;
     }).map(function (el) { return hit(el, 'disabled signalled through too few channels'); });
+  };
+
+
+  /* ---- browser surfaces -------------------------------------------------
+   * The parts nobody drew still carry the design. Selection, caret, scrollbar,
+   * focus ring, underline offset and tabular numerals all ship with browser
+   * defaults belonging to no design system — impeccable's craft floor calls
+   * this the cheapest signal a page was built rather than assembled, and the
+   * one models skip most reliably.
+   *
+   * All six read the stylesheets rather than computed styles, because a
+   * pseudo-element that was never authored has no computed style to inspect.
+   * ------------------------------------------------------------------- */
+
+  function eachRule(fn) {
+    // Since CSS Nesting shipped, every CSSStyleRule carries a cssRules list —
+    // usually empty. An empty CSSRuleList is still an object, so a truthiness
+    // check descends into nothing and never visits the rule itself. Visit
+    // first, then recurse only when there is something to recurse into.
+    function walk(r) {
+      if (r.selectorText || r.style) fn(r);
+      if (r.cssRules && r.cssRules.length) {
+        for (var k = 0; k < r.cssRules.length; k++) walk(r.cssRules[k]);
+      }
+    }
+    for (var i = 0; i < document.styleSheets.length; i++) {
+      var rules;
+      try { rules = document.styleSheets[i].cssRules; } catch (e) { continue; }
+      if (!rules) continue;
+      for (var j = 0; j < rules.length; j++) walk(rules[j]);
+    }
+  }
+
+  function anySelector(re) {
+    var found = false;
+    eachRule(function (r) { if (r.selectorText && re.test(r.selectorText)) found = true; });
+    return found;
+  }
+
+  function anyDeclaration(prop) {
+    var found = false;
+    eachRule(function (r) {
+      if (r.style && r.style.getPropertyValue(prop)) found = true;
+    });
+    return found;
+  }
+
+  CHECKS['selection-unthemed'] = function () {
+    if (anySelector(/::(-moz-)?selection/)) return [];
+    // Only a finding on a page with enough prose for anyone to select any.
+    var prose = all('p, li, article, main').reduce(function (n, el) {
+      return n + textOf(el).length;
+    }, 0);
+    if (prose < 400) return [];
+    return [hit(document.body, 'no ::selection rule — highlight falls back to the browser blue')];
+  };
+
+  CHECKS['caret-unthemed'] = function (p) {
+    var fields = all('input:not([type=checkbox]):not([type=radio]):not([type=hidden]), textarea, [contenteditable="true"]');
+    if (fields.length < (p.minFields || 1)) return [];
+    if (anyDeclaration('caret-color')) return [];
+    return [hit(fields[0], fields.length + ' text field(s) with no caret-color')];
+  };
+
+  CHECKS['scrollbar-unthemed'] = function () {
+    var scrollers = all('*').filter(function (el) {
+      var s = getComputedStyle(el);
+      if (!/auto|scroll/.test(s.overflowY + ' ' + s.overflowX)) return false;
+      return el.scrollHeight > el.clientHeight + 8 || el.scrollWidth > el.clientWidth + 8;
+    });
+    if (!scrollers.length) return [];
+    if (anySelector(/::-webkit-scrollbar/) || anyDeclaration('scrollbar-color') ||
+        anyDeclaration('scrollbar-width')) return [];
+    return scrollers.slice(0, 4).map(function (el) {
+      return hit(el, 'scrolling container with an unthemed scrollbar');
+    });
+  };
+
+  CHECKS['focus-ring-unthemed'] = function () {
+    // A page with no :focus-visible rule at all is already caught by
+    // interactive-state-coverage. This is the subtler case: the rule exists
+    // but only turns the ring off, or leaves the UA default in place.
+    var themed = false, suppressedOnly = false;
+    eachRule(function (r) {
+      if (!r.selectorText || !/:focus(-visible)?/.test(r.selectorText)) return;
+      // "outline" is a shorthand and the CSSOM expands it, so a rule that sets
+      // it correctly returns empty for the shorthand. Read the longhands too.
+      var outline = [
+        'outline', 'outline-style', 'outline-width', 'outline-color', 'box-shadow',
+      ].map(function (prop) { return r.style.getPropertyValue(prop); }).join(' ');
+      if (/none|0px|^\\s*$/.test(outline) && !/solid|auto|rgb|#|var\\(/.test(outline)) {
+        suppressedOnly = true;
+      }
+      if (/solid|double|dashed|rgb|#|var\\(/.test(outline)) themed = true;
+    });
+    if (themed) return [];
+    if (!all('a, button, input, select, textarea, [tabindex]').length) return [];
+    return [hit(document.body, suppressedOnly
+      ? 'focus rings are switched off without a replacement'
+      : 'no themed focus ring — the browser default is doing the work')];
+  };
+
+  CHECKS['underline-default'] = function (p) {
+    var links = all('p a, li a, article a, main a').filter(function (a) {
+      return getComputedStyle(a).textDecorationLine.indexOf('underline') !== -1;
+    });
+    if (links.length < (p.minLinks || 2)) return [];
+    if (anyDeclaration('text-underline-offset') || anyDeclaration('text-decoration-thickness')) return [];
+    return [hit(links[0], links.length + ' underlined in-prose link(s) at the default offset and thickness')];
+  };
+
+  CHECKS['tabular-nums-missing'] = function () {
+    var out = [];
+    all('table').forEach(function (table) {
+      var cells = Array.prototype.slice.call(table.querySelectorAll('td'));
+      // A column is numeric when most of its cells are numbers.
+      var numeric = cells.filter(function (c) {
+        return /^[\\s$£€]*[\\d,.]+\\s*[%a-zA-Z]{0,3}$/.test(textOf(c));
+      });
+      if (cells.length < 4 || numeric.length < cells.length * 0.4) return;
+      var variant = getComputedStyle(numeric[0]).fontVariantNumeric || '';
+      var feature = getComputedStyle(numeric[0]).fontFeatureSettings || '';
+      if (/tabular-nums/.test(variant) || /tnum/.test(feature)) return;
+      out.push(hit(table, numeric.length + ' numeric cells without tabular-nums — digits will not align'));
+    });
+    return out;
+  };
+
+  /* ---- token drift ------------------------------------------------------
+   * impeccable checks literal values against a declared DESIGN.md. redpen
+   * reads the declaration the project already has: the custom properties on
+   * :root. A project that defines --color-* and then hard-codes hex values
+   * elsewhere has drifted from its own system, and no external file is needed
+   * to prove it.
+   * ------------------------------------------------------------------- */
+
+  /**
+   * Tokens declared for one role, found by NAME not by value.
+   *
+   * Matching on value shape alone is what made the first version noise: a
+   * --space-2xs of 4px looks exactly like a font-size token, so a project with
+   * a spacing scale and no type scale was told its type scale was broken. A
+   * design system names its roles; read the names.
+   */
+  function declaredTokens(namePattern) {
+    var out = {};
+    var found = 0;
+    eachRule(function (r) {
+      if (!r.style || !r.selectorText || !/(^|,)\s*(:root|html)\s*($|,)/.test(r.selectorText)) return;
+      for (var i = 0; i < r.style.length; i++) {
+        var name = r.style[i];
+        if (name.indexOf('--') !== 0 || !namePattern.test(name)) continue;
+        var value = r.style.getPropertyValue(name).trim().toLowerCase();
+        if (!value) continue;
+        out[value] = name;
+        found++;
+        // A stack is a declaration of every face in it, not just the first.
+        if (value.indexOf(',') !== -1) {
+          value.split(',').forEach(function (part) {
+            var f = part.replace(/["']/g, '').trim();
+            if (f) out[f] = name;
+          });
+        }
+      }
+    });
+    out.__count = found;
+    return out;
+  }
+
+  function usedLiterals(props, valuePattern) {
+    var seen = {};
+    eachRule(function (r) {
+      if (!r.style || !r.selectorText) return;
+      if (/(^|,)\s*(:root|html)\s*($|,)/.test(r.selectorText)) return;
+      props.forEach(function (prop) {
+        var v = r.style.getPropertyValue(prop);
+        // A value routed through a token is by definition not drift.
+        if (!v || v.indexOf('var(') !== -1) return;
+        var m = String(v).match(valuePattern);
+        if (m) m.forEach(function (x) { seen[x.toLowerCase()] = 1; });
+      });
+    });
+    return Object.keys(seen);
+  }
+
+  function driftCheck(opts) {
+    var tokens = declaredTokens(opts.namePattern);
+    var declared = tokens.__count;
+    // No tokens for this role means there is no system to drift from. That is
+    // a different (and weaker) finding, and stating it here would state it
+    // badly — so stay silent.
+    if (declared < opts.minTokens) return [];
+    var off = usedLiterals(opts.props, opts.valuePattern).filter(function (v) {
+      return !(v in tokens);
+    });
+    if (off.length < opts.minDrift) return [];
+    return [hit(document.body,
+      off.length + ' ' + opts.label + ' outside the ' + declared +
+      ' declared token(s): ' + off.slice(0, 6).join(', '))];
+  }
+
+  CHECKS['color-token-drift'] = function (p) {
+    return driftCheck({
+      namePattern: /color|colour|bg|background|surface|ink|paper|accent|brand|fg|foreground|border/i,
+      props: ['color', 'background-color', 'border-color', 'fill', 'stroke'],
+      valuePattern: /#[0-9a-f]{3,8}\b|rgba?\([^)]*\)|oklch\([^)]*\)|hsla?\([^)]*\)/gi,
+      label: 'literal colour(s)',
+      minTokens: p.minTokens || 4,
+      minDrift: p.minDrift || 4,
+    });
+  };
+
+  CHECKS['radius-token-drift'] = function (p) {
+    return driftCheck({
+      namePattern: /radius|rounded|corner/i,
+      props: ['border-radius'],
+      valuePattern: /\b\d+(?:\.\d+)?(?:px|rem|em)\b/gi,
+      label: 'literal radius value(s)',
+      minTokens: p.minTokens || 2,
+      minDrift: p.minDrift || 3,
+    });
+  };
+
+  CHECKS['font-size-token-drift'] = function (p) {
+    return driftCheck({
+      // Type-scale names only. A --space-* of 4px is not a font size, and
+      // treating it as one told projects with a spacing scale that their
+      // (nonexistent) type scale was broken.
+      namePattern: /font-size|fontsize|text-(xs|sm|base|md|lg|xl|\d)|type-(scale|step)|step-\d/i,
+      props: ['font-size'],
+      valuePattern: /\b\d+(?:\.\d+)?(?:px|rem)\b/gi,
+      label: 'literal font-size(s)',
+      minTokens: p.minTokens || 3,
+      minDrift: p.minDrift || 4,
+    });
+  };
+
+  CHECKS['font-family-drift'] = function (p) {
+    var tokens = declaredTokens(/font(?!-size)|typeface|family/i);
+    if (tokens.__count < 1) return [];
+    var used = {};
+    all('*').forEach(function (el) {
+      if (!isTextBearing(el)) return;
+      var f = getComputedStyle(el).fontFamily.split(',')[0].replace(/["']/g, '').trim().toLowerCase();
+      if (f) used[f] = 1;
+    });
+    var off = Object.keys(used).filter(function (f) {
+      // Generic and platform families are never "declared" and never drift.
+      if (/^(ui-|system-|-apple-)/.test(f)) return false;
+      if (/^(serif|sans-serif|monospace|cursive|fantasy|system-ui)$/.test(f)) return false;
+      return !(f in tokens);
+    });
+    if (off.length < (p.minDrift || 1)) return [];
+    return [hit(document.body,
+      'face(s) not in the declared type system: ' + off.slice(0, 4).join(', '))];
   };
 
   CHECKS['console-errors'] = function () {

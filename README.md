@@ -3,7 +3,7 @@
 One verdict on your UI.
 
 ```
-npx redpen scan . --url http://localhost:3000
+npx @gshepptech/redpen scan . --url http://localhost:3000
 ```
 
 ```
@@ -78,10 +78,11 @@ variety; the metric is weighted so that it barely moves.
 /plugin install redpen
 ```
 
-**As a CLI**, for CI or for use outside an agent:
+**As a CLI**, for CI or for use outside an agent. Note the `-cli` — the bare
+`redpen` name on npm belongs to an unrelated tool:
 
 ```
-npm i -D redpen
+npm i -D @gshepptech/redpen
 npm i -D playwright && npx playwright install chromium   # for the browser pass
 ```
 
@@ -127,8 +128,11 @@ redpen init [path]        write .redpen/config.json
 ```json
 {
   "urls": ["http://localhost:3000", "http://localhost:3000/pricing"],
+  "surface": "operate",
+  "surfaceByUrl": { "http://localhost:3000/": "persuade" },
   "viewports": [375, 768, 1440],
   "minConfidence": "likely",
+  "capabilities": { "javascript": false },
   "skipCategories": [],
   "tolerance": 0,
   "ignore": {
@@ -137,6 +141,12 @@ redpen init [path]        write .redpen/config.json
 }
 ```
 
+**`capabilities`** declares what the project is able to do. A server-rendered
+project that ships no client JavaScript by rule should not be told to add inline
+validation, an unsaved-changes warning and autosave on every scan forever — 15
+rules depend on JavaScript and switch off with one line. A rule whose fix needs
+something you cannot do is not a finding, it is a standing complaint.
+
 ### CI
 
 `redpen check` is a regression gate, not a grader. A codebase that starts at 46
@@ -144,8 +154,8 @@ should not have to reach 90 before CI goes green — it has to stop getting wors
 
 ```yaml
 - run: npm run build && npm run preview &
-- run: npx redpen baseline . --url http://localhost:4173   # once, committed
-- run: npx redpen check . --url http://localhost:4173
+- run: npx @gshepptech/redpen baseline . --url http://localhost:4173   # once, committed
+- run: npx @gshepptech/redpen check . --url http://localhost:4173
 ```
 
 `check` fails when the score drops below the baseline by more than `tolerance`,

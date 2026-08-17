@@ -5,6 +5,7 @@
 # here mostly fire on uniformity, not on presence.
 
 - id: scroll-fade-everything
+  requires: [javascript]
   kind: slop
   title: Fade-up on scroll applied to every section
   category: motion
@@ -59,6 +60,7 @@
     Name the properties. `transition: color 120ms, background-color 120ms`.
 
 - id: uniform-hover-scale
+  requires: [javascript]
   kind: slop
   title: The same hover-scale on everything
   category: motion
@@ -113,6 +115,7 @@
     manipulation.
 
 - id: animated-layout-property
+  requires: [javascript]
   kind: quality
   title: Animating layout properties
   category: motion
@@ -212,6 +215,7 @@
     Static grid of logos. If it scrolls, give it pause on hover and focus.
 
 - id: celebratory-toast
+  requires: [javascript]
   kind: slop
   surfaces: [persuade, read]
   title: Success toast for a visible action

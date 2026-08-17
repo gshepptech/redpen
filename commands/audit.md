@@ -4,13 +4,37 @@ argument-hint: "[path] [--url <dev-server-url>]"
 allowed-tools: Bash, Read, Edit, Glob, Grep
 ---
 
+## Running redpen
+
+The plugin ships the CLI. Resolve it once and reuse the variable — **do not use
+`npx redpen`**, which resolves to an unrelated package of the same name on npm:
+
+```bash
+REDPEN="${CLAUDE_PLUGIN_ROOT:-$(npm root -g)/@gshepptech/redpen}/dist/cli.js"
+node "$REDPEN" --help    # confirm it resolved before doing anything else
+```
+
+If that path does not exist, the plugin is not installed; fall back to
+`npx @gshepptech/redpen` (note the `-cli`) and say which one you used.
+
 Audit the UI at `$ARGUMENTS` (default: this project) using redpen.
 
 ## Run it
 
+**Parse `$ARGUMENTS` — do not interpolate it.** The argument is prose written by
+a person: it may carry a path, one or more URLs, and a sentence of context in any
+order. Extract the parts and build the command yourself:
+
+- every `http://…` / `https://…` token becomes its own `--url`
+- the first path-like token that exists on disk becomes the scan path
+- everything else is context for your report, not argv
+
 ```bash
-npx redpen scan $ARGUMENTS
+node "$REDPEN" scan <path> --url <url> [--url <url> …]
 ```
+
+Interpolating the raw string produces nonsense like
+`scan http://127.0.0.1:7788 — the board, a local no-JavaScript dashboard`.
 
 **A `--url` is not optional in practice.** Without one the browser pass never
 runs, every finding it could have confirmed is capped at `possible`, and the
