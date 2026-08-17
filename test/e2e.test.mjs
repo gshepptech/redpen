@@ -261,3 +261,25 @@ test('visually-hidden content is not a finding', opts, async () => {
     );
   }
 });
+
+test('bare urls on the command line are urls, not a root path', opts, async () => {
+  // They were taken as the root, so the source channel scanned a directory that
+  // cannot exist while the config's urls silently stood in for what was typed —
+  // and the report described pages the command never named.
+  const { parseArgs } = await import('../dist/cli.js');
+  const args = parseArgs(['scan', 'http://127.0.0.1:9/', './src']);
+  assert.deepEqual(args.urls, ['http://127.0.0.1:9/']);
+  assert.deepEqual(args.positional, ['./src']);
+});
+
+test('a source pass that read nothing says so', opts, async () => {
+  const result = await runScan({
+    root: join(HERE, 'fixtures', 'clean', 'does-not-exist'),
+    urls: [],
+    ephemeral: true,
+  });
+  assert.ok(
+    result.warnings.some((w) => w.includes('no files to read')),
+    'scanning nothing must never look like a clean codebase',
+  );
+});

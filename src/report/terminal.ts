@@ -1,6 +1,6 @@
 import pc from 'picocolors';
 import type { Finding, ScanResult, Confidence, Evidence } from '../types.js';
-import { grade, scoreByCategory } from '../score.js';
+import { verdict, scoreByCategory } from '../score.js';
 
 /**
  * Terminal output.
@@ -33,7 +33,7 @@ export function renderTerminal(result: ScanResult, opts: TerminalOptions): strin
   const { score: value, findings } = result;
 
   out.push('');
-  out.push(scoreLine(value));
+  out.push(scoreLine(value, result.slopScore, result.qualityScore));
   out.push('');
   out.push(kindLine(result));
   out.push('');
@@ -205,8 +205,8 @@ function surfaceLine(result: ScanResult): string | null {
   return pc.dim(`  surface  ${entries.map(([u, v]) => `${short(u)}=${v.surface}`).join(', ')} (${how})`);
 }
 
-function scoreLine(value: number): string {
-  const label = grade(value);
+function scoreLine(value: number, slop: number, quality: number): string {
+  const label = verdict(slop, quality);
   const num = colorScore(value);
   const bar = meter(value);
   return `  ${pc.bold('redpen')}  ${num}  ${bar}  ${pc.dim(label)}`;

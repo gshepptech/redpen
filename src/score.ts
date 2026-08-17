@@ -146,3 +146,24 @@ export function grade(value: number): string {
   if (value >= 35) return 'heavily templated';
   return 'slop';
 }
+
+/** Quality-axis vocabulary. Nothing here is about looking machine-made. */
+function qualityGrade(value: number): string {
+  if (value >= 90) return 'clean';
+  if (value >= 75) return 'minor defects';
+  if (value >= 55) return 'visibly rough';
+  if (value >= 35) return 'broken in places';
+  return 'broken';
+}
+
+/**
+ * The headline verdict, named after whichever axis is actually worse.
+ *
+ * `grade()` alone speaks only slop ("templated", "generated"), so a page that
+ * scored 78 on slop and 55 on quality was headlined "heavily templated" while
+ * the report under it listed clipped text and unhittable controls and not one
+ * sameness finding. The word has to match the evidence.
+ */
+export function verdict(slop: number, quality: number): string {
+  return quality < slop ? qualityGrade(quality) : grade(slop);
+}

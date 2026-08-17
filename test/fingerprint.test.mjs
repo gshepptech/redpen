@@ -142,3 +142,21 @@ test('corpus-wide rules stay quiet with fewer than three pages', () => {
   assert.ok(!ids.includes('single-section-vocabulary'));
   assert.ok(!ids.includes('palette-monoculture'));
 });
+
+test('a page the surface pass called operate never clashes, whatever its skeleton', () => {
+  // The macrostructure guess is a second, weaker classifier answering the same
+  // question. On a real dashboard it returned "manifesto" for ten routes the
+  // surface pass had called operate at 0.94, and sameness fired on all of them.
+  const a = withChanges({ page: 'a', macrostructure: 'manifesto' });
+  const b = withChanges({ page: 'b', macrostructure: 'manifesto' });
+  assert.equal(findClashes([a, b]).length, 1, 'without the surface hint these still clash');
+  assert.deepEqual(findClashes([a, b], new Set(['a', 'b'])), []);
+});
+
+test('the corpus-wide sameness rules also respect the surface hint', () => {
+  const pages = ['a', 'b', 'c'].map((page) =>
+    withChanges({ page, macrostructure: 'manifesto', sectionRhythm: ['nav', 'hero-full', 'cta'] }),
+  );
+  assert.ok(fingerprintFindings(pages, []).length > 0, 'marketing pages still report');
+  assert.deepEqual(fingerprintFindings(pages, [], new Set(['a', 'b', 'c'])), []);
+});

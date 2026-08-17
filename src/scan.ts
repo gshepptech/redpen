@@ -74,6 +74,13 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
   channelsRun.push('source');
   raw.push(...src.findings);
   opts.onProgress?.(`source: ${src.findings.length} rule(s) hit across ${src.filesScanned} files`);
+  if (src.filesScanned === 0) {
+    // A source pass over nothing raises nothing, which reads exactly like a
+    // clean codebase. Not looking and finding nothing must never look the same.
+    warnings.push(
+      `the source channel found no files to read under ${root} — every source rule was skipped, and findings the render pass could only have confirmed are reported as one-channel. Check the path.`,
+    );
+  }
 
   // ---- render ----
   let renderRan = false;
@@ -229,8 +236,11 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
     channelsRun.push('fingerprint');
     const prior = opts.ephemeral ? [] : store.priorPages(root, fingerprints.map((f) => f.page));
     const all = [...prior, ...fingerprints];
-    clashes = findClashes(all);
-    raw.push(...fingerprintFindings(all, clashes));
+    const operatePages = new Set(
+      Object.entries(surfaces).filter(([, v]) => v.surface === 'operate').map(([url]) => url),
+    );
+    clashes = findClashes(all, operatePages);
+    raw.push(...fingerprintFindings(all, clashes, operatePages));
     if (!opts.ephemeral) store.save(root, fingerprints);
     opts.onProgress?.(
       `fingerprint: ${fingerprints.length} page(s) recorded, ${prior.length} prior on file, ${clashes.length} clash(es)`,

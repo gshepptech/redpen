@@ -117,11 +117,24 @@ const APP_SHAPES: ReadonlySet<string> = new Set([
   'workbench',
 ]);
 
-export function isAppShape(print: Fingerprint): boolean {
-  return APP_SHAPES.has(print.macrostructure);
+/**
+ * Pages the surface channel classified as `operate`.
+ *
+ * The macrostructure guess below is a second, weaker classifier answering the
+ * same question the surface detector already answered from richer signal. On a
+ * real dashboard it returned "manifesto" for ten routes the surface pass had
+ * called `operate` with 0.94 confidence, and sameness fired on all of them. So
+ * the surface verdict wins where there is one, and APP_SHAPES is the fallback
+ * for prints replayed from the store, which carry no surface.
+ */
+export function isAppShape(print: Fingerprint, operatePages?: ReadonlySet<string>): boolean {
+  return operatePages?.has(print.page) || APP_SHAPES.has(print.macrostructure);
 }
 
-export function findClashes(prints: Fingerprint[]): FingerprintClash[] {
+export function findClashes(
+  prints: Fingerprint[],
+  operatePages?: ReadonlySet<string>,
+): FingerprintClash[] {
   const clashes: FingerprintClash[] = [];
   for (let i = 0; i < prints.length; i++) {
     for (let j = i + 1; j < prints.length; j++) {
@@ -130,7 +143,7 @@ export function findClashes(prints: Fingerprint[]): FingerprintClash[] {
       // A backlog and a search results page are both record lists. That is the
       // product being coherent; telling the author to give one of them a
       // different skeleton would make the product worse.
-      if (isAppShape(a) && isAppShape(b)) continue;
+      if (isAppShape(a, operatePages) && isAppShape(b, operatePages)) continue;
       const d = distance(a, b);
       if (d < CLASH_THRESHOLD) {
         clashes.push({
@@ -152,6 +165,7 @@ export function findClashes(prints: Fingerprint[]): FingerprintClash[] {
 export function fingerprintFindings(
   prints: Fingerprint[],
   clashes: FingerprintClash[],
+  operatePages?: ReadonlySet<string>,
 ): RawFinding[] {
   const findings: RawFinding[] = [];
 
@@ -168,7 +182,7 @@ export function fingerprintFindings(
   }
 
   const templated = prints.filter(
-    (p) => !isAppShape(p) && rhythmDistance(p.sectionRhythm, TEMPLATE_RHYTHM) < 0.25,
+    (p) => !isAppShape(p, operatePages) && rhythmDistance(p.sectionRhythm, TEMPLATE_RHYTHM) < 0.25,
   );
   if (templated.length) {
     findings.push({
@@ -184,7 +198,7 @@ export function fingerprintFindings(
 
   // The remaining sameness rules need a corpus, not a pair — and none of them
   // apply to an application, where a shared vocabulary is the goal.
-  const pages = prints.filter((p) => !isAppShape(p));
+  const pages = prints.filter((p) => !isAppShape(p, operatePages));
   if (pages.length >= 3) {
     const vocab = new Set(pages.flatMap((p) => p.sectionRhythm.map(family)));
     vocab.delete('nav');

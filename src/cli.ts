@@ -16,13 +16,13 @@ import {
   DEFAULT_CONFIG,
 } from './config.js';
 import * as store from './fingerprint/store.js';
-import { grade, explainScore } from './score.js';
+import { grade, verdict, explainScore } from './score.js';
 import type { Confidence } from './types.js';
 
 const HELP = `
 ${pc.bold('redpen')} — one verdict on your UI
 
-  ${pc.bold('redpen scan')} [path]        run every available channel and print the report
+  ${pc.bold('redpen scan')} [path] [url...]  run every available channel and print the report
   ${pc.bold('redpen check')} [path]       same, but exit non-zero when the score drops
   ${pc.bold('redpen baseline')} [path]    record the current score as the bar to hold
   ${pc.bold('redpen rules')}              list the merged corpus
@@ -34,7 +34,8 @@ ${pc.bold('redpen')} — one verdict on your UI
   ${pc.bold('redpen init')} [path]        write .redpen/config.json
 
 ${pc.dim('Options')}
-  --url <u>          page to render (repeatable). Without one, render never runs.
+  --url <u>          page to render (repeatable). Bare urls work too. Without
+                     one, render never runs and every source finding is capped.
   --viewport <n>     viewport width (repeatable). Default 375, 768, 1440.
   --json [file]      machine-readable output
   --markdown [file]  markdown report
@@ -72,7 +73,7 @@ interface Args {
   quiet: boolean;
 }
 
-function parseArgs(argv: string[]): Args {
+export function parseArgs(argv: string[]): Args {
   const args: Args = {
     command: 'scan',
     positional: [],
@@ -126,6 +127,10 @@ function parseArgs(argv: string[]): Args {
       continue;
     }
     first = false;
+    // A bare URL is what everyone types, and taking it as the root path meant
+    // scanning a directory that cannot exist while quietly using the config's
+    // urls instead — so the report described pages the command never named.
+    if (/^https?:\/\//i.test(a)) { args.urls.push(a); continue; }
     args.positional.push(a);
   }
   return args;
@@ -145,6 +150,9 @@ async function main(): Promise<void> {
   }
 
   const root = resolve(args.positional[0] ?? '.');
+  if (args.positional[0] && !existsSync(root)) {
+    fail(`no such directory: ${args.positional[0]}`);
+  }
 
   switch (args.command) {
     case 'rules':
@@ -199,7 +207,7 @@ async function cmdScan(root: string, args: Args, gating: boolean): Promise<void>
         score: result.score,
         slopScore: result.slopScore,
         qualityScore: result.qualityScore,
-        grade: grade(result.score),
+        grade: verdict(result.slopScore, result.qualityScore),
         surfaces: result.surfaces,
         channelsRun: result.channelsRun,
         findings: result.findings,

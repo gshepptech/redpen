@@ -1,5 +1,5 @@
 import type { ScanResult, Finding, Evidence } from '../types.js';
-import { grade, scoreByCategory } from '../score.js';
+import { verdict, scoreByCategory } from '../score.js';
 
 /**
  * Markdown report — the format an agent reads back and a human pastes into a
@@ -10,7 +10,7 @@ export function renderMarkdown(result: ScanResult): string {
   const out: string[] = [];
   const { score, findings, clashes } = result;
 
-  out.push(`# redpen — ${score}/100 (${grade(score)})`);
+  out.push(`# redpen — ${score}/100 (${verdict(result.slopScore, result.qualityScore)})`);
   out.push('');
   out.push(`| | Score | |`);
   out.push(`| --- | --- | --- |`);

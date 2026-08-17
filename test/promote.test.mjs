@@ -178,3 +178,13 @@ test('a hidden input is not an unlabelled input', async () => {
   re.lastIndex = 0;
   assert.ok(real.match(re), 'a real unlabelled input must still match');
 });
+
+test('the headline verdict names whichever axis is actually worse', async () => {
+  const { verdict } = await import('../dist/score.js');
+  // A real dashboard scored 78 slop / 55 quality and was headlined "heavily
+  // templated" while the report under it listed clipped text and unhittable
+  // controls and not one sameness finding.
+  assert.equal(verdict(78, 55), 'visibly rough');
+  assert.equal(verdict(40, 95), 'heavily templated');
+  assert.equal(verdict(100, 100), 'clean');
+});
