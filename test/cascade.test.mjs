@@ -36,13 +36,31 @@ test('the reported pair names both rules and both specificities', () => {
   assert.match(c.summary, /\(0,1,0\)/);
 });
 
-test('a media block restoring the same selector clears the conflict', () => {
+test('a restore under @supports covers everywhere the promise does', () => {
   const css = `
     .btn { min-height: 44px }
     .qacts .btn { height: 32px }
-    @media (pointer: coarse) { .qacts .btn { min-height: 44px } }
+    @supports (display: grid) { .qacts .btn { min-height: 44px } }
   `;
   assert.deepEqual(find(css), []);
+});
+
+test('a restore that only matches coarse pointers still leaves the desktop short', () => {
+  // The production case this rule was built from. The restore is real, so the
+  // first version treated the conflict as resolved — and declined to report a
+  // control that is 44px on a phone and 32px on every desktop, which is where
+  // almost everyone uses it.
+  const css = `
+    .btn { min-height: 44px }
+    .qacts .btn { height: 32px }
+    @media (pointer: coarse), (max-width: 720px) { .qacts .btn { min-height: 44px } }
+  `;
+  const [c] = find(css);
+  assert.ok(c, 'a partially-restored floor is still short somewhere');
+  assert.match(c.summary, /restored only under/);
+  assert.match(c.summary, /pointer: coarse/);
+  assert.match(c.summary, /stays 32px everywhere else/);
+  assert.ok(c.restoredUnder, 'the condition must be reported, not just the conflict');
 });
 
 test('one restored selector does not excuse its siblings', () => {
@@ -54,10 +72,32 @@ test('one restored selector does not excuse its siblings', () => {
     .qacts .btn { height: 32px }
     .acts .btn { height: 32px }
     .prompt-side .btn { height: 40px }
-    @media (pointer: coarse) { .qacts .btn { min-height: 44px } }
+    @supports (display: grid) { .qacts .btn { min-height: 44px } }
   `;
   const found = find(css).map((c) => c.offender.selector);
   assert.deepEqual(found.sort(), ['.acts .btn', '.prompt-side .btn']);
+});
+
+test('all three are reported when the one fix only covers coarse pointers', () => {
+  // The stylesheet as it actually is. The .qacts restore is real but narrow,
+  // so it earns a caveat rather than an exemption — it is still 32px on every
+  // desktop, and the other two are short everywhere.
+  const css = `
+    .btn { min-height: 44px }
+    .qacts .btn { height: 32px }
+    .acts .btn { height: 32px }
+    .prompt-side .btn { height: 40px }
+    @media (pointer: coarse), (max-width: 720px) { .qacts .btn { min-height: 44px } }
+  `;
+  const found = find(css);
+  assert.deepEqual(
+    found.map((c) => c.offender.selector).sort(),
+    ['.acts .btn', '.prompt-side .btn', '.qacts .btn'],
+  );
+  const qacts = found.find((c) => c.offender.selector === '.qacts .btn');
+  assert.ok(qacts.restoredUnder, 'the partial restore must be named');
+  const acts = found.find((c) => c.offender.selector === '.acts .btn');
+  assert.equal(acts.restoredUnder, null, 'an unrestored floor carries no caveat');
 });
 
 test('a weaker or equal rule cannot cancel the floor', () => {

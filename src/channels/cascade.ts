@@ -35,6 +35,11 @@ export interface CascadeConflict {
   promise: { selector: string; declaration: string; specificity: [number, number, number] };
   /** 1-indexed line of the offending declaration. */
   line: number;
+  /**
+   * Set when a conditional rule restores the floor for part of the space —
+   * the finding still stands for everywhere that condition does not match.
+   */
+  restoredUnder?: string | null;
   /** Human-readable summary for the evidence excerpt. */
   summary: string;
 }
@@ -94,6 +99,20 @@ export function specificity(selector: string): [number, number, number] {
 
   c += (s.match(/\b[a-zA-Z][\w-]*/g) ?? []).length;
   return [a, b, c];
+}
+
+/**
+ * Does this condition restrict *where* a rule applies, rather than whether the
+ * browser supports it?
+ *
+ * A restore under `@supports` or a bare `@media screen` covers every context
+ * the promise does. One under a width, a pointer type or an orientation covers
+ * only part of it, and the part it misses is usually the common one.
+ */
+function isNarrowing(condition: string): boolean {
+  return /\b(max-width|min-width|max-height|min-height|pointer|any-pointer|hover|any-hover|orientation|max-device-width|min-device-width)\b/i.test(
+    condition,
+  );
 }
 
 /** Whitespace-insensitive selector identity, so formatting is not semantics. */
@@ -236,9 +255,15 @@ export function findCancelledFloors(css: string, opts: CascadeOptions = {}): Cas
       const weak = specificity(p.rule.selector);
       if (compare(off, weak) <= 0) continue;
 
-      // A conditional rule that pins the height is only a defect if it applies
-      // where the promise does. A media block narrowing to coarse pointers does
-      // not cancel the desktop promise.
+      // A restore inside a condition only covers what that condition matches.
+      //
+      // The first version treated any conditional restore as a full one, which
+      // declined to report a control that is under the floor at the *most
+      // common* viewport on the grounds that it is fine at an uncommon one.
+      // Reported from the field, from the stylesheet this rule was built for:
+      // a restore under `(pointer: coarse), (max-width: 720px)` leaves the
+      // control at 44px on a phone and 32px on every desktop.
+      let partialUnder: string | null = null;
       const restored = sets.some((other) => {
         if (other === r) return false;
         if (!other.conditions.length) return false;
@@ -251,19 +276,31 @@ export function findCancelledFloors(css: string, opts: CascadeOptions = {}): Cas
         // `.qacts .btn` restore silently excused `.acts .btn` and
         // `.prompt-side .btn` too — which is exactly the bug this rule exists
         // to find, suppressed by the check meant to avoid false positives.
-        return compare(specificity(other.selector), off) >= 0 &&
-          normalise(other.selector) === normalise(r.selector);
+        if (compare(specificity(other.selector), off) < 0) return false;
+        if (normalise(other.selector) !== normalise(r.selector)) return false;
+        const narrowing = other.conditions.filter(isNarrowing);
+        if (narrowing.length) {
+          // Covers some contexts, not all. Keep looking for a full restore;
+          // if none exists this becomes a finding that says where it holds.
+          partialUnder = narrowing.join(' and ');
+          return false;
+        }
+        return true;
       });
       if (restored) continue;
 
       const fmt = (s: [number, number, number]) => `(${s.join(',')})`;
+      const caveat = partialUnder
+        ? ` — restored only under ${partialUnder}, so it stays ${value}px everywhere else`
+        : ` — computes to ${value}px, floor is ${floor}px`;
       conflicts.push({
         offender: { selector: r.selector, declaration: `height: ${d.value}`, specificity: off },
         promise: { selector: p.rule.selector, declaration: p.decl, specificity: weak },
         line: r.line,
+        restoredUnder: partialUnder,
         summary:
           `${r.selector} { height: ${d.value} } ${fmt(off)} cancels ` +
-          `${p.rule.selector} { ${p.decl} } ${fmt(weak)} — computes to ${value}px, floor is ${floor}px`,
+          `${p.rule.selector} { ${p.decl} } ${fmt(weak)}${caveat}`,
       });
       break;
     }
