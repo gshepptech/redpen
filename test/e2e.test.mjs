@@ -224,3 +224,23 @@ test('an app surface raises no slop findings and still catches real defects', op
     'sameness across app routes is consistency, not slop',
   );
 });
+
+test('scan and why-score report the same number', opts, async () => {
+  // They disagreed by nine points and a whole verdict band, because why-score
+  // scored everything in scope while scan scores only what meets the
+  // confidence floor — so the command you run to improve the score was the
+  // pessimistic one.
+  const { explainScore } = await import('../dist/score.js');
+  const { meetsThreshold } = await import('../dist/promote.js');
+
+  const result = await runScan({
+    root: join(HERE, 'fixtures', 'sloppy'),
+    urls: [sloppyUrl],
+    viewports: [1440],
+    ephemeral: true,
+  });
+  const scorable = result.findings.filter((f) =>
+    meetsThreshold(f, result.config.minConfidence),
+  );
+  assert.equal(explainScore(scorable).score, result.score);
+});

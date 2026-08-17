@@ -89,6 +89,7 @@ export interface VisionAnswer {
 }
 
 const INSTRUCTIONS = [
+  'ANSWER ONLY FROM THE SCREENSHOTS. If you built these pages, stop and get someone who did not — you cannot unsee your own intent, and half these questions are about the impression a page makes on someone meeting it for the first time.',
   'You are being asked to look at some screenshots and say what you see. You are not expected to know this project, and you should not go and read it — the value of this file is that it can be answered by someone who was not there.',
   'Read "context" first: it says what the product is and what each page is for. Then open each file in "screenshots".',
   'Answer every row in "answers". Each row names a page and a question id; look up the question in "questions" by that id.',

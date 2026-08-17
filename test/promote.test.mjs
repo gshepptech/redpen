@@ -164,3 +164,17 @@ test('scoreKind isolates one axis from the other', () => {
   assert.ok(slop < quality, 'a heavy slop finding must not drag the quality score down with it');
   assert.equal(scoreKind([], 'slop'), 100);
 });
+
+test('a hidden input is not an unlabelled input', async () => {
+  // A hidden field cannot be labelled and must not be. Reported from the
+  // field: three CSRF/routing hidden inputs per form made this the most-cited
+  // rule in an entire scan, at 12 occurrences.
+  const { loadCorpus } = await import('../dist/corpus/load.js');
+  const rule = loadCorpus().find((r) => r.id === 'unlabelled-input');
+  const re = new RegExp(rule.source.patterns[0], 'giu');
+  const hidden = '<input type="hidden" name="csrf" value="x">';
+  const real = '<input name="email" placeholder="Email">';
+  assert.equal(hidden.match(re), null, 'a hidden input must not match');
+  re.lastIndex = 0;
+  assert.ok(real.match(re), 'a real unlabelled input must still match');
+});

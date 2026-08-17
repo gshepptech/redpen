@@ -3,6 +3,7 @@ import { writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import pc from 'picocolors';
 import { runScan, ruleIds } from './scan.js';
+import { meetsThreshold } from './promote.js';
 import { renderTerminal } from './report/terminal.js';
 import { renderMarkdown } from './report/markdown.js';
 import { loadCorpus, catalogueCounts, ruleById } from './corpus/load.js';
@@ -392,7 +393,12 @@ async function cmdWhyScore(root: string, args: Args): Promise<void> {
     onProgress: args.quiet ? undefined : (m) => process.stderr.write(pc.dim(`  … ${m}\n`)),
   });
 
-  const { score: total, contributions } = explainScore(result.findings);
+  // Score exactly what `scan` scores. Anything below the confidence floor is
+  // reported but never counted, and counting it here made `why-score` disagree
+  // with `scan` by nine points and a whole verdict band.
+  const scorable = result.findings.filter((f) => meetsThreshold(f, result.config.minConfidence));
+  const { score: total, contributions } = explainScore(scorable);
+  const excluded = result.findings.length - scorable.length;
   const w = process.stdout.write.bind(process.stdout);
 
   w(`\n  ${pc.bold('redpen')}  ${pc.bold(String(total))}${pc.dim('/100')}   ${pc.dim(grade(total))}\n`);
@@ -434,6 +440,12 @@ async function cmdWhyScore(root: string, args: Args): Promise<void> {
   const advisory = result.advisory.length;
   if (advisory) {
     w(pc.dim(`\n  ${advisory} advisory finding(s) cost nothing and never will.\n`));
+  }
+  if (excluded) {
+    w(pc.dim(
+      `  ${excluded} finding(s) below the "${result.config.minConfidence}" floor are not counted here` +
+      ' — the render pass checked them and did not agree.\n',
+    ));
   }
   w('\n');
 }

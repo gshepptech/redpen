@@ -39,7 +39,10 @@
   channels: [source, render]
   source:
     patterns:
-      - '<(input|select|textarea)(?![^>]*(aria-label|aria-labelledby|id=))[^>]*>'
+      # Hidden inputs, and the button-like input types, carry no visible label
+      # by definition. Reported from the field: three CSRF/routing hidden
+      # fields per form made this the most-cited rule in a whole scan.
+      - '<(?!input[^>]*type=["'']?(hidden|submit|button|image|reset))(input|select|textarea)(?![^>]*(aria-label|aria-labelledby|id=))[^>]*>'
   render:
     check: control-accessible-name
   why: >-
