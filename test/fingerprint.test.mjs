@@ -6,7 +6,8 @@ const base = {
   page: 'a',
   recordedAt: '2026-01-01T00:00:00.000Z',
   macrostructure: 'hero-triptych',
-  sectionRhythm: ['nav', 'hero-full', 'card-grid-3', 'cta', 'footer'],
+  sectionRhythm: ['hero-full', 'card-grid-3', 'cta'],
+  shell: ['nav', 'footer'],
   typeScale: [14, 16, 20, 32, 56],
   families: ['inter'],
   paletteAnchor: 270,
@@ -34,7 +35,7 @@ test('a different skeleton is variety', () => {
   const doc = withChanges({
     page: 'b',
     macrostructure: 'long-document',
-    sectionRhythm: ['nav', 'prose', 'prose', 'prose', 'table', 'footer'],
+    sectionRhythm: ['prose', 'prose', 'prose', 'table'],
     hero: 'asymmetric',
   });
   assert.ok(distance(base, doc) > CLASH_THRESHOLD, 'a genuinely different page should not clash');
@@ -55,7 +56,7 @@ test('section rhythm dominates the metric', () => {
   const differentStructureSameEverythingElse = withChanges({
     page: 'c',
     macrostructure: 'catalogue',
-    sectionRhythm: ['nav', 'catalogue', 'catalogue', 'footer'],
+    sectionRhythm: ['catalogue', 'catalogue'],
     hero: 'asymmetric',
   });
   assert.ok(
@@ -71,7 +72,7 @@ test('findClashes pairs every colliding page and sorts by closeness', () => {
   const d = withChanges({
     page: 'd',
     macrostructure: 'long-document',
-    sectionRhythm: ['nav', 'prose', 'prose', 'prose', 'footer'],
+    sectionRhythm: ['prose', 'prose', 'prose'],
     hero: 'asymmetric',
   });
 
@@ -88,6 +89,29 @@ test('a single page never clashes with itself', () => {
   assert.deepEqual(findClashes([base]), []);
 });
 
+test('an app shape never clashes with another app shape', () => {
+  // Two routes of the same product sharing a skeleton is the consistency
+  // heuristic working. Telling the author to reshape one would make the
+  // product worse — reported from the field twice.
+  const a = withChanges({ page: 'a', macrostructure: 'record-list', sectionRhythm: ['table'] });
+  const b = withChanges({ page: 'b', macrostructure: 'record-list', sectionRhythm: ['table'] });
+  assert.deepEqual(findClashes([a, b]), []);
+});
+
+test('two marketing pages sharing a skeleton still clash', () => {
+  const a = withChanges({ page: 'a' });
+  const b = withChanges({ page: 'b', paletteAnchor: 180 });
+  assert.equal(findClashes([a, b]).length, 1);
+});
+
+test('the shell is excluded from the compared rhythm', () => {
+  // Same content, different chrome. The shell is not what makes two pages the
+  // same page, so this must still clash.
+  const a = withChanges({ page: 'a', shell: ['nav', 'footer'] });
+  const b = withChanges({ page: 'b', shell: ['nav', 'side-rail', 'footer'] });
+  assert.ok(findClashes([a, b]).length === 1, 'differing shells must not clear a clash');
+});
+
 test('the generic template archetype is reported on its own', () => {
   const findings = fingerprintFindings([base], []);
   const ids = findings.map((f) => f.ruleId);
@@ -97,7 +121,7 @@ test('the generic template archetype is reported on its own', () => {
 test('a non-template page raises no archetype finding', () => {
   const doc = withChanges({
     macrostructure: 'long-document',
-    sectionRhythm: ['nav', 'prose', 'prose', 'table', 'footer'],
+    sectionRhythm: ['prose', 'prose', 'table'],
   });
   const ids = fingerprintFindings([doc], []).map((f) => f.ruleId);
   assert.ok(!ids.includes('template-archetype'));

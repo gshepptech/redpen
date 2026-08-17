@@ -580,12 +580,30 @@ const CHECKS_LIB = `
   };
 
   CHECKS['font-size-floor'] = function (p) {
+    // The rule's own fix promises "14px for anything read as prose, 12px for
+    // incidental UI chrome". Treating only interactive elements as chrome broke
+    // that promise: an id, a timestamp or a unit label is chrome by any reading,
+    // and was being held to the prose floor with no way to satisfy the rule.
+    function isChrome(el) {
+      if (isInteractive(el)) return true;
+      var t = textOf(el);
+      if (!t) return true;
+      // A short, sentence-less label is chrome. Prose has sentences.
+      if (t.length <= 24 && !/[.!?]\\s/.test(t)) return true;
+      return /^(label|badge|chip|tag|meta|caption|id|count|unit|hint|status)$/i.test(
+        (el.getAttribute('class') || '').split(/[\\s_-]/).pop() || '',
+      );
+    }
     return all('*').filter(function (el) {
       if (!isTextBearing(el)) return false;
       var px = parseFloat(getComputedStyle(el).fontSize);
-      var floor = isInteractive(el) ? (p.uiFloorPx || 12) : (p.bodyFloorPx || 14);
+      var floor = isChrome(el) ? (p.uiFloorPx || 12) : (p.bodyFloorPx || 14);
       return px < floor;
-    }).map(function (el) { return hit(el, getComputedStyle(el).fontSize + ' — "' + textOf(el) + '"'); });
+    }).map(function (el) {
+      var chrome = isChrome(el);
+      return hit(el, getComputedStyle(el).fontSize + (chrome ? ' chrome' : ' prose') +
+        ' (floor ' + (chrome ? (p.uiFloorPx || 12) : (p.bodyFloorPx || 14)) + 'px) — "' + textOf(el) + '"');
+    });
   };
 
   CHECKS['tracking-bounds'] = function (p) {

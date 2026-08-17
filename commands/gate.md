@@ -6,8 +6,15 @@ allowed-tools: Bash, Read, Write, Edit, Glob
 
 ## Running redpen
 
-The plugin ships the CLI. Resolve it once and reuse the variable — **do not use
-`npx redpen`**, which resolves to an unrelated package of the same name on npm:
+```bash
+REDPEN="${CLAUDE_PLUGIN_ROOT:-$(npm root -g)/@gshepptech/redpen}/dist/cli.js"
+node "$REDPEN" --help >/dev/null || REDPEN=""   # falls back to the global binary
+run() { if [ -n "$REDPEN" ]; then node "$REDPEN" "$@"; else redpen "$@"; fi; }
+```
+
+If neither resolves, the plugin is not installed and `redpen` is not on PATH —
+say so rather than guessing. **Never `npx redpen`**: that name belongs to an
+unrelated package.
 
 ```bash
 REDPEN="${CLAUDE_PLUGIN_ROOT:-$(npm root -g)/@gshepptech/redpen}/dist/cli.js"
@@ -28,9 +35,9 @@ baseline, so fixing one problem while introducing another still fails.
 
 1. Find how this project builds and serves itself (`package.json` scripts, or
    the existing CI workflow).
-2. Run `node "$REDPEN" init` and put the real dev-server URLs in
+2. Run `run init` and put the real dev-server URLs in
    `.redpen/config.json`. List every route worth gating, not just the homepage.
-3. Start the server, run `node "$REDPEN" baseline . --url <url>`, and **commit
+3. Start the server, run `run baseline . --url <url>`, and **commit
    `.redpen/baseline.json`** — the gate is meaningless without it in the repo.
 4. Add the check to the existing CI workflow. Do not create a new workflow file
    if one already exists.
@@ -38,7 +45,7 @@ baseline, so fixing one problem while introducing another still fails.
 ```yaml
 - run: npm run build && npm run preview &
 - run: npx playwright install --with-deps chromium
-- run: node "$REDPEN" check . --url http://localhost:4173
+- run: run check . --url http://localhost:4173
 ```
 
 5. Tell the user the baseline score you recorded and what `tolerance` is set to,

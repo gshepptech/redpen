@@ -72,21 +72,26 @@ export function surfaceSource(): string {
     all('*').forEach(function (parent) {
       var kids = Array.prototype.slice.call(parent.children).filter(visible);
       if (kids.length < 3) return;
+      // Actions only. Counting inputs and selects made a form's field wrappers
+      // — one label and one input each — look exactly like record rows, which
+      // is why a page with zero rows reported seven of them.
+      var ACTIONS = 'button, a[class], a[href], [role="button"]';
       var withControls = kids.filter(function (k) {
-        return k.querySelector('button, a[class], [role="button"], input, select');
+        if (!k.querySelector(ACTIONS)) return false;
+        // A record carries content of its own, not just a control.
+        return (k.textContent || '').replace(/\s+/g, ' ').trim().length > 12;
       });
       if (withControls.length < 3) return;
-      // Same control vocabulary in each child means these are records, not
-      // sections that happen to have buttons.
+
+      // Compare structure, not labels. Row actions legitimately differ by
+      // state — Start / Claim / Close — and matching on text meant a real list
+      // with per-row state failed while a uniform form passed.
       var sig = withControls.map(function (k) {
-        return Array.prototype.slice.call(
-          k.querySelectorAll('button, a[class], [role="button"], input, select'),
-        ).map(function (c) {
-          return (c.tagName + ':' + (c.textContent || c.getAttribute('aria-label') || '').trim()).slice(0, 40);
-        }).sort().join('|');
+        return Array.prototype.slice.call(k.querySelectorAll(ACTIONS))
+          .map(function (c) { return c.tagName; }).sort().join('|');
       });
       var same = sig.filter(function (x) { return x === sig[0]; }).length;
-      if (same >= Math.max(3, Math.floor(withControls.length * 0.6))) {
+      if (sig[0] && same >= Math.max(3, Math.floor(withControls.length * 0.6))) {
         best = Math.max(best, withControls.length);
       }
     });
@@ -199,7 +204,10 @@ export function classify(s: SurfaceSignals): SurfaceVerdict {
   if (s.testimonial > 0) { persuade += 1.5; reasons.persuade.push('testimonial'); }
   if (s.logoWall >= 3) { persuade += 1.5; reasons.persuade.push('logo wall'); }
   // Only counts standalone calls to action — row actions are excluded above.
-  if (s.h1 === 1 && s.ctas >= 2 && s.prose < 2500 && s.recordRows < 3) {
+  // A page with almost no content is not evidence of a landing page: an empty
+  // list and a hero look alike, and guessing there was worth 0.67 of confidence
+  // on four routes that were plainly app pages.
+  if (s.h1 === 1 && s.ctas >= 2 && s.prose < 2500 && s.recordRows < 3 && s.total > 600) {
     persuade += 2;
     reasons.persuade.push('single headline with repeated CTAs and little prose');
   }

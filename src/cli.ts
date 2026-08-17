@@ -37,6 +37,9 @@ ${pc.dim('Options')}
   --screenshots      capture full-page PNGs to .redpen/screenshots
   --vision           capture screenshots and write .redpen/vision-brief.json
   --answers <file>   fold answered vision questions back into the verdict
+  --only <cats>      report only these categories, comma separated
+                     (color typography layout depth motion iconography copy
+                      usability a11y sameness chrome system composition)
   --min <level>      confidence floor for scoring: confirmed | likely | possible
   --verbose          include single-channel findings and rule provenance
   --show-ignored     list findings suppressed by redpen-ignore
@@ -58,6 +61,7 @@ interface Args {
   screenshots: boolean;
   vision: boolean;
   answers: string | null;
+  only: string[];
   min: Confidence | null;
   verbose: boolean;
   showIgnored: boolean;
@@ -75,6 +79,7 @@ function parseArgs(argv: string[]): Args {
     screenshots: false,
     vision: false,
     answers: null,
+    only: [],
     min: null,
     verbose: false,
     showIgnored: false,
@@ -103,6 +108,7 @@ function parseArgs(argv: string[]): Args {
     if (a === '--screenshots') { args.screenshots = true; continue; }
     if (a === '--vision') { args.vision = true; continue; }
     if (a === '--answers') { args.answers = argv[++i] ?? null; continue; }
+    if (a === '--only') { args.only = (argv[++i] ?? '').split(',').map((x) => x.trim()).filter(Boolean); continue; }
     if (a === '--min') { args.min = argv[++i] as Confidence; continue; }
     if (a === '--verbose' || a === '-v') { args.verbose = true; continue; }
     if (a === '--show-ignored') { args.showIgnored = true; continue; }
@@ -168,6 +174,7 @@ async function cmdScan(root: string, args: Args, gating: boolean): Promise<void>
     screenshots: args.screenshots,
     vision: args.vision,
     answers: args.answers,
+    only: args.only,
     ephemeral: gating,
     onProgress,
   });

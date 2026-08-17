@@ -216,8 +216,13 @@ export interface Fingerprint {
   recordedAt: string;
   /** Named skeleton: hero-3col-cta, stat-led, long-document, ... */
   macrostructure: string;
-  /** Ordered section kinds top to bottom. The strongest sameness signal. */
+  /**
+   * Content-region section kinds, top to bottom, with the shell removed.
+   * The strongest sameness signal — and only once the shell is out of it.
+   */
   sectionRhythm: string[];
+  /** The shared frame that was excluded: masthead, nav, footer, side rail. */
+  shell: string[];
   /** Distinct font sizes in px, ascending. */
   typeScale: number[];
   /** Font families in use, deduped and lowercased. */

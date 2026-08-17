@@ -76,6 +76,25 @@ The `[source+render]` tag on each finding names the channels that saw it.
 `weight` is 0–100 and comes from measured human complaint data where it exists —
 that is the ordering that matters, not the severity label.
 
+## Fixing, not only judging
+
+Five commands scope a fix pass to one concern and re-scan afterwards. Reach for
+the one that matches the complaint rather than fixing everything at once — a
+pass that changes typography and palette together cannot be reviewed:
+
+| | |
+| --- | --- |
+| `/redpen:typeset` | faces, scale, leading, measure, type tokens, browser surfaces |
+| `/redpen:layout` | overflow and geometry first, then spacing rhythm, then composition |
+| `/redpen:color` | contrast first, then the anchor hue, then tokens, then accent footprint |
+| `/redpen:polish` | the `quality` axis only — broken things, never taste |
+| `/redpen:distill` | removal, one thing at a time |
+
+`redpen scan --only <categories>` is what they are built on, and it narrows the
+*report* without narrowing what runs: every channel still executes, so
+cross-channel confirmation is unaffected and both scores still describe the
+whole page.
+
 ## The verbs
 
 **Audit.** Run the scan, then work the confirmed list top-down. Report the

@@ -6,8 +6,15 @@ allowed-tools: Bash, Read, Edit, Glob, Grep
 
 ## Running redpen
 
-The plugin ships the CLI. Resolve it once and reuse the variable — **do not use
-`npx redpen`**, which resolves to an unrelated package of the same name on npm:
+```bash
+REDPEN="${CLAUDE_PLUGIN_ROOT:-$(npm root -g)/@gshepptech/redpen}/dist/cli.js"
+node "$REDPEN" --help >/dev/null || REDPEN=""   # falls back to the global binary
+run() { if [ -n "$REDPEN" ]; then node "$REDPEN" "$@"; else redpen "$@"; fi; }
+```
+
+If neither resolves, the plugin is not installed and `redpen` is not on PATH —
+say so rather than guessing. **Never `npx redpen`**: that name belongs to an
+unrelated package.
 
 ```bash
 REDPEN="${CLAUDE_PLUGIN_ROOT:-$(npm root -g)/@gshepptech/redpen}/dist/cli.js"
@@ -30,7 +37,7 @@ order. Extract the parts and build the command yourself:
 - everything else is context for your report, not argv
 
 ```bash
-node "$REDPEN" scan <path> --url <url> [--url <url> …]
+run scan <path> --url <url> [--url <url> …]
 ```
 
 Interpolating the raw string produces nonsense like

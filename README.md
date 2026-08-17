@@ -78,8 +78,14 @@ variety; the metric is weighted so that it barely moves.
 /plugin install redpen
 ```
 
-**As a CLI**, for CI or for use outside an agent. Note the `-cli` — the bare
-`redpen` name on npm belongs to an unrelated tool:
+**From a terminal**, globally, so `redpen` works from any directory:
+
+```
+npm i -g @gshepptech/redpen && redpen --help
+```
+
+**As a project dependency**, for CI. Note the `-cli` — the bare `redpen` name on
+npm belongs to an unrelated tool:
 
 ```
 npm i -D @gshepptech/redpen
@@ -94,8 +100,20 @@ missing channel is reported as unconfirmed, never as clean.
 | | |
 | --- | --- |
 | `/redpen:audit [path] [--url ...]` | scan, report the confirmed findings, apply the fixes you approve |
+| `/redpen:typeset` | fix typography — faces, scale, leading, measure, tokens |
+| `/redpen:layout` | fix layout, spacing rhythm, and composition |
+| `/redpen:color` | fix palette, contrast, and colour tokens |
+| `/redpen:polish` | fix everything mechanically wrong, leaving taste alone |
+| `/redpen:distill` | remove what is not earning its place |
 | `/redpen:why <rule-id>` | what a rule means, who named it, whether humans actually notice it |
 | `/redpen:gate` | wire the regression gate into this project's CI |
+
+The five fix commands are scoped passes, not a different tool: each one scans
+with `--only <categories>`, works the findings in an order where each step
+changes what the next measures, and re-scans. `/redpen:polish` works the
+`quality` axis and is forbidden from touching taste, so its diff is reviewable;
+`/redpen:distill` is the only subtractive one and removes a single thing at a
+time so the score can attribute the change.
 
 ## Use
 

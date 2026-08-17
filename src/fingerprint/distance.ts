@@ -100,8 +100,26 @@ function sharedDimensions(a: Fingerprint, b: Fingerprint): string[] {
   return shared;
 }
 
-/** The archetype every generated page converges on. */
-const TEMPLATE_RHYTHM = ['nav', 'hero-full', 'card-grid-3', 'cta', 'footer'];
+/** The archetype every generated page converges on, shell already excluded. */
+const TEMPLATE_RHYTHM = ['hero-full', 'card-grid-3', 'cta'];
+
+/**
+ * Macrostructures that describe an application rather than a page.
+ *
+ * Two app routes sharing a skeleton is the consistency heuristic working, not
+ * repetition — so sameness does not fire between them. It still fires between
+ * two *marketing* pages that share a skeleton, which is the case it exists for.
+ */
+const APP_SHAPES: ReadonlySet<string> = new Set([
+  'record-list',
+  'form-page',
+  'data-table',
+  'workbench',
+]);
+
+export function isAppShape(print: Fingerprint): boolean {
+  return APP_SHAPES.has(print.macrostructure);
+}
 
 export function findClashes(prints: Fingerprint[]): FingerprintClash[] {
   const clashes: FingerprintClash[] = [];
@@ -109,6 +127,10 @@ export function findClashes(prints: Fingerprint[]): FingerprintClash[] {
     for (let j = i + 1; j < prints.length; j++) {
       const a = prints[i]!;
       const b = prints[j]!;
+      // A backlog and a search results page are both record lists. That is the
+      // product being coherent; telling the author to give one of them a
+      // different skeleton would make the product worse.
+      if (isAppShape(a) && isAppShape(b)) continue;
       const d = distance(a, b);
       if (d < CLASH_THRESHOLD) {
         clashes.push({
@@ -146,7 +168,7 @@ export function fingerprintFindings(
   }
 
   const templated = prints.filter(
-    (p) => rhythmDistance(p.sectionRhythm, TEMPLATE_RHYTHM) < 0.25,
+    (p) => !isAppShape(p) && rhythmDistance(p.sectionRhythm, TEMPLATE_RHYTHM) < 0.25,
   );
   if (templated.length) {
     findings.push({
@@ -160,9 +182,11 @@ export function fingerprintFindings(
     });
   }
 
-  // The remaining sameness rules need a corpus, not a pair.
-  if (prints.length >= 3) {
-    const vocab = new Set(prints.flatMap((p) => p.sectionRhythm.map(family)));
+  // The remaining sameness rules need a corpus, not a pair — and none of them
+  // apply to an application, where a shared vocabulary is the goal.
+  const pages = prints.filter((p) => !isAppShape(p));
+  if (pages.length >= 3) {
+    const vocab = new Set(pages.flatMap((p) => p.sectionRhythm.map(family)));
     vocab.delete('nav');
     vocab.delete('footer');
     if (vocab.size <= 3) {
@@ -172,38 +196,38 @@ export function fingerprintFindings(
         evidence: [
           {
             channel: 'fingerprint',
-            location: `${prints.length} pages`,
+            location: `${pages.length} pages`,
             excerpt: `every page built from only: ${[...vocab].join(', ')}`,
           },
         ],
       });
     }
 
-    const scaleKeys = new Set(prints.map((p) => p.typeScale.join(',')));
-    const familyKeys = new Set(prints.map((p) => p.families.join(',')));
-    if (scaleKeys.size === 1 && familyKeys.size === 1 && prints.length >= 3) {
+    const scaleKeys = new Set(pages.map((p) => p.typeScale.join(',')));
+    const familyKeys = new Set(pages.map((p) => p.families.join(',')));
+    if (scaleKeys.size === 1 && familyKeys.size === 1 && pages.length >= 3) {
       findings.push({
         ruleId: 'uniform-type-scale-across-pages',
         channel: 'fingerprint',
         evidence: [
           {
             channel: 'fingerprint',
-            location: `${prints.length} pages`,
-            excerpt: `identical scale ${prints[0]!.typeScale.join('/')} and identical families on every page`,
+            location: `${pages.length} pages`,
+            excerpt: `identical scale ${pages[0]!.typeScale.join('/')} and identical families on every page`,
           },
         ],
       });
     }
 
-    const hues = prints.map((p) => p.paletteAnchor).filter((h): h is number => h !== null);
-    if (hues.length === prints.length && new Set(hues).size === 1) {
+    const hues = pages.map((p) => p.paletteAnchor).filter((h): h is number => h !== null);
+    if (hues.length === pages.length && new Set(hues).size === 1) {
       findings.push({
         ruleId: 'palette-monoculture',
         channel: 'fingerprint',
         evidence: [
           {
             channel: 'fingerprint',
-            location: `${prints.length} pages`,
+            location: `${pages.length} pages`,
             excerpt: `every page anchored to hue ${hues[0]}`,
           },
         ],

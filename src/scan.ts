@@ -1,5 +1,5 @@
-import { resolve } from 'node:path';
-import { mkdirSync } from 'node:fs';
+import { resolve, join } from 'node:path';
+import { mkdirSync, existsSync } from 'node:fs';
 import { scanSource } from './channels/source.js';
 import { scanRender } from './channels/render.js';
 import { buildBrief, writeBrief, readAnswers } from './channels/vision.js';
@@ -29,6 +29,8 @@ export interface ScanOptions {
   vision?: boolean;
   /** Path to answers produced from a brief. Folds them in as a vision channel. */
   answers?: string | null;
+  /** Restrict the report to these categories. Everything else still runs. */
+  only?: string[];
   /**
    * Neither read nor write the fingerprint store. Used by `redpen check` on
    * throwaway branches and by tests. Skipping only the write was wrong: the run
@@ -52,6 +54,11 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
 
   const warnings: string[] = [];
   const state = stateRoot(root);
+  if (!existsSync(join(state, '.redpen', 'config.json'))) {
+    warnings.push(
+      `no .redpen/config.json found (looked in ${state}) — running with defaults, so every capability is assumed available and no surface is declared`,
+    );
+  }
   if (state !== root) {
     opts.onProgress?.(`state: writing .redpen/ to the project root (${state}), not the scanned path`);
   }
@@ -139,7 +146,8 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
       visionCleared = answers.cleared;
       for (const d of answers.discarded) warnings.push(`vision answer discarded: ${d}`);
       opts.onProgress?.(
-        `vision: ${answers.checked.length} question(s) judged — ${answers.findings.length} present, ${answers.cleared} cleared`,
+        `vision: ${answers.accepted + answers.cleared} answer(s) across ${answers.checked.length} rule(s) — ` +
+        `${answers.accepted} present, ${answers.cleared} cleared`,
       );
     }
   }
@@ -219,7 +227,14 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
     warnings.push(`unknown rule ids reported by a channel: ${promoted.unknownRules.join(', ')}`);
   }
 
-  const inScope = promoted.findings.filter((f) => !config.skipCategories.includes(f.category));
+  let inScope = promoted.findings.filter((f) => !config.skipCategories.includes(f.category));
+  // `--only` narrows what is *reported*, never what is measured: every channel
+  // still runs, so cross-channel confirmation is unaffected and the scores
+  // below still describe the whole page.
+  if (opts.only?.length) {
+    const wanted = new Set(opts.only);
+    inScope = inScope.filter((f) => wanted.has(f.category));
+  }
 
   // Everything in scope is returned so the report can offer the low-confidence
   // fold, but only findings at or above the confidence threshold move the

@@ -12,7 +12,17 @@
 
 export interface RawFingerprint {
   macrostructure: string;
+  /**
+   * The content region's rhythm, with the persistent shell removed.
+   *
+   * This is what sameness is compared on. Two app routes share a header, a nav
+   * and a footer by design — that is consistency, not repetition — so including
+   * the shell made every page of every app look identical to every other. Two
+   * field reports flagged it independently.
+   */
   sectionRhythm: string[];
+  /** The shell that was excluded, kept so the report can say what it ignored. */
+  shell: string[];
   typeScale: number[];
   families: string[];
   paletteAnchor: number | null;
@@ -40,21 +50,53 @@ export function fingerprintSource(): string {
   var NON_SECTION = { SVG: 1, IMG: 1, SCRIPT: 1, STYLE: 1, NOSCRIPT: 1, CANVAS: 1, TEMPLATE: 1, LINK: 1, DIALOG: 1 };
 
   function layoutChildren(parent) {
-    return Array.prototype.slice.call(parent.children).filter(function (el) {
+    var kids = Array.prototype.slice.call(parent.children).filter(function (el) {
       if (NON_SECTION[String(el.tagName).toUpperCase()]) return false;
       if (el.getAttribute && el.getAttribute('aria-hidden') === 'true') return false;
-      return visible(el) && el.getBoundingClientRect().height > 80;
+      return visible(el);
     });
+    var tall = kids.filter(function (el) { return el.getBoundingClientRect().height > 80; });
+    // Fall back to every visible child rather than returning nothing: a dense
+    // app page can be built entirely from blocks under 80px.
+    return tall.length ? tall : kids;
   }
 
   function sections() {
     var main = document.querySelector('main') || document.body;
     var kids = layoutChildren(main);
-    // A single wrapper div is the common case; descend through it once.
-    if (kids.length === 1 && kids[0].children.length > 2) {
-      kids = layoutChildren(kids[0]);
+    // A single wrapper div is the common case; descend through it once — but
+    // only when it is a layout wrapper. Descending into a list of records
+    // turned every row into a "section", and since rows are short they were
+    // then all filtered out, leaving an empty rhythm.
+    if (kids.length === 1) {
+      var only = kids[0];
+      var isCollection = /^(UL|OL|TABLE|TBODY|DL|FORM|FIELDSET)$/.test(only.tagName.toUpperCase()) ||
+        /^(list|table|grid|feed)$/.test(only.getAttribute('role') || '');
+      if (!isCollection && only.children.length > 2) kids = layoutChildren(only);
     }
     return kids;
+  }
+
+  /**
+   * Is this element part of the page shell rather than its content?
+   *
+   * The shell is the frame every route shares: masthead, primary nav, footer,
+   * side rail, and anything pinned to the viewport. Comparing two pages on
+   * their shells says only that they belong to the same product.
+   */
+  function isShell(el) {
+    var tag = el.tagName.toUpperCase();
+    if (tag === 'HEADER' || tag === 'FOOTER' || tag === 'NAV' || tag === 'ASIDE') return true;
+    if (el.getAttribute && /^(banner|navigation|contentinfo|complementary)$/.test(el.getAttribute('role') || '')) {
+      return true;
+    }
+    var s = getComputedStyle(el);
+    // Pinned chrome spanning the viewport is a shell whatever it is called.
+    if ((s.position === 'fixed' || s.position === 'sticky') &&
+        el.getBoundingClientRect().width > window.innerWidth * 0.8) return true;
+    // A wrapper whose only job is to hold the nav.
+    if (el.querySelector(':scope > nav') && text(el).length < 200) return true;
+    return false;
   }
 
   /**
@@ -122,9 +164,30 @@ export function fingerprintSource(): string {
    * Deliberately coarse — two pages should collide here only when they really
    * are the same skeleton.
    */
-  function macrostructure(rhythm) {
+  function macrostructure(rhythm, els) {
     var body = rhythm.filter(function (r) { return r !== 'nav' && r !== 'footer'; });
     var joined = body.join('|');
+
+    // An app shell: a toolbar and a list, or a page that is one form. The
+    // marketing taxonomy below has no bucket for this, and forcing the nearest
+    // archetype produced "manifesto" for a work queue — a wrong label makes a
+    // correct sameness finding read as noise.
+    var records = 0, forms = 0;
+    (els || []).forEach(function (el) {
+      var rows = el.querySelectorAll('tbody tr, [role="row"], ul > li, ol > li');
+      var acted = 0;
+      for (var i = 0; i < rows.length; i++) {
+        if (rows[i].querySelector('button, a[class], [role="button"], input, select')) acted++;
+      }
+      if (acted >= 3) records++;
+      if (el.querySelectorAll('label').length >= 4 &&
+          el.querySelector('button[type=submit], input[type=submit]')) forms++;
+    });
+    if (records) return 'record-list';
+    if (forms) return 'form-page';
+    if (body.length && body.every(function (r) { return r === 'table' || r === 'catalogue'; })) {
+      return 'data-table';
+    }
 
     if (/^hero(-full)?\\|card-grid-3/.test(joined)) return 'hero-triptych';
     if (/^hero(-full)?\\|(cta|media)?\\|?stat-strip/.test(joined)) return 'stat-led';
@@ -142,18 +205,24 @@ export function fingerprintSource(): string {
   }
 
   function navShape() {
-    var nav = document.querySelector('header nav, nav, header');
+    // Prefer a real <nav>: counting every anchor under <header> made four text
+    // tabs read as a mega-menu.
+    var nav = document.querySelector('nav') || document.querySelector('header');
     if (!nav || !visible(nav)) return 'none';
     var s = getComputedStyle(nav);
     var r = nav.getBoundingClientRect();
-    var links = nav.querySelectorAll('a').length;
+    var links = nav.querySelectorAll('a, [role="tab"], button').length;
     var radius = parseFloat(s.borderRadius) || 0;
+    var current = nav.querySelector('[aria-current], .active, [class*="active"]');
 
+    if (r.height > window.innerHeight * 0.5) return 'side-rail';
+    // A short row of peer links with one marked current is app navigation, not
+    // a marketing menu — even when it is pinned.
+    if (current && links <= 8) return 'app-tabs';
     if (s.position === 'fixed' || s.position === 'sticky') {
       if (radius > 16 && r.width < window.innerWidth * 0.9) return 'floating-pill';
       return 'sticky-bar';
     }
-    if (r.height > window.innerHeight * 0.5) return 'side-rail';
     if (links <= 3) return 'wordmark-links';
     if (links >= 8) return 'mega-menu';
     return 'bar';
@@ -161,6 +230,10 @@ export function fingerprintSource(): string {
 
   function heroShape(first) {
     if (!first) return 'none';
+    // No h1-bearing opener and no media means there is no hero to name. Calling
+    // a toolbar "asymmetric" is a wrong label, not a cautious one.
+    if (!first.querySelector('h1, img, video, canvas, picture') &&
+        first.getBoundingClientRect().height < window.innerHeight * 0.4) return 'none';
     var r = first.getBoundingClientRect();
     var tall = r.height / window.innerHeight;
     var s = getComputedStyle(first);
@@ -254,16 +327,21 @@ export function fingerprintSource(): string {
     return Number(best) % 360;
   }
 
-  var secs = sections();
+  var allSecs = sections();
+  var shellSecs = allSecs.filter(isShell);
+  var secs = allSecs.filter(function (el) { return !isShell(el); });
+
+  var shell = shellSecs.map(classify);
+  if (!shell.length && document.querySelector('header, nav')) shell.push('nav');
+  if (shell.indexOf('footer') === -1 && document.querySelector('footer')) shell.push('footer');
+
+  // The rhythm compared for sameness is content only.
   var rhythm = secs.map(classify);
-  // The nav and footer bookends are structural even when they sit outside
-  // <main>, but they must appear exactly once.
-  if (rhythm[0] !== 'nav' && document.querySelector('header, nav')) rhythm.unshift('nav');
-  if (rhythm.indexOf('footer') === -1 && document.querySelector('footer')) rhythm.push('footer');
 
   return {
-    macrostructure: macrostructure(rhythm),
+    macrostructure: macrostructure(rhythm, secs),
     sectionRhythm: rhythm,
+    shell: shell,
     typeScale: typeScale(),
     families: families(),
     paletteAnchor: paletteAnchor(),
