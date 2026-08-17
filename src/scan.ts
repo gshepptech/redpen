@@ -94,7 +94,14 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
     const screenshotDir = wantShots ? resolve(stateRoot(root), '.redpen', 'screenshots') : null;
     if (screenshotDir) mkdirSync(screenshotDir, { recursive: true });
 
-    const render = await scanRender({ urls, viewports, screenshotDir });
+    const render = await scanRender({
+      urls,
+      viewports,
+      screenshotDir,
+      ...(config.schemes === 'auto'
+        ? { autoScheme: true }
+        : { schemes: config.schemes }),
+    });
     timing.render = Date.now() - t1;
 
     if (render.unavailable && !render.findings.length && !render.fingerprints.length) {
@@ -106,7 +113,22 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
       fingerprints = render.fingerprints;
       screenshots = render.screenshots;
       if (render.unavailable) warnings.push(render.unavailable);
-      opts.onProgress?.(`render: ${render.findings.length} rule(s) hit`);
+      const schemesSeen = new Set(
+        render.findings.flatMap((f) => f.evidence.map((e) => e.scheme).filter(Boolean)),
+      );
+      opts.onProgress?.(
+        `render: ${render.findings.length} rule(s) hit` +
+          (schemesSeen.size > 1 ? ` across ${[...schemesSeen].join(' and ')}` : ''),
+      );
+      // A finding only one scheme can see is the case this pass exists for.
+      const darkOnly = render.findings.filter(
+        (f) => f.evidence.length && f.evidence.every((e) => e.scheme === 'dark'),
+      );
+      if (darkOnly.length) {
+        opts.onProgress?.(
+          `render: ${darkOnly.length} rule(s) fire only in dark mode — ${darkOnly.map((f) => f.ruleId).join(', ')}`,
+        );
+      }
 
       // Surface resolution, in three passes: declared beats detected, detected
       // beats inherited, and inherited beats failing open.

@@ -357,3 +357,29 @@ test('a filled mark beside stroked icons is not two icon libraries', opts, async
     'a path with no spaces in it is never prose',
   );
 });
+
+test('a contrast failure that only exists in dark mode is found', opts, async () => {
+  // Every render pass before this opened a default context, so
+  // prefers-color-scheme: dark never applied and half of a themed app went
+  // unscanned. Reported from a project whose only destructive control measured
+  // 6.15:1 light and 3.14:1 dark — below AA, on a confirmation page — and
+  // scanned clean.
+  const url = await serve(join(HERE, 'fixtures', 'themed'));
+  const result = await runScan({
+    root: join(HERE, 'fixtures', 'themed'),
+    urls: [url],
+    viewports: [1440],
+    ephemeral: true,
+  });
+
+  const contrast = result.findings.find((f) => f.ruleId === 'low-contrast');
+  assert.ok(contrast, 'the dark-mode contrast failure must be found');
+  assert.ok(
+    contrast.evidence.some((e) => e.scheme === 'dark'),
+    'the evidence must say which scheme it was seen under',
+  );
+  assert.ok(
+    !contrast.evidence.some((e) => e.scheme === 'light'),
+    'light mode passes honestly at ~6.2:1 and must not be blamed',
+  );
+});

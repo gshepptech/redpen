@@ -164,8 +164,11 @@ function formatEvidence(e: Evidence): string {
         ? `${short(e.location)} ${e.selector}`
         : short(e.location);
   const vp = e.viewport ? ` @${e.viewport}px` : '';
+  // Only say the scheme when it is dark. Light is the assumption, and printing
+  // it on every line of an unthemed site is noise.
+  const scheme = e.scheme === 'dark' ? ' dark' : '';
   const excerpt = e.excerpt ? `  ${e.excerpt}` : '';
-  return `${where}${vp}${excerpt}`;
+  return `${where}${vp}${scheme}${excerpt}`;
 }
 
 function describeConfidence(c: Confidence): string {

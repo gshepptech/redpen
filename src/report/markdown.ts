@@ -121,6 +121,6 @@ function findingBlock(f: Finding): string[] {
 
 function evidenceLine(e: Evidence): string {
   const where = e.line !== undefined ? `${e.location}:${e.line}` : `${e.location} ${e.selector ?? ''}`;
-  const vp = e.viewport ? ` @${e.viewport}px` : '';
+  const vp = e.viewport ? ` @${e.viewport}px${e.scheme === 'dark' ? ' dark' : ''}` : '';
   return `${where.trim()}${vp}${e.excerpt ? `  ${e.excerpt}` : ''}`;
 }

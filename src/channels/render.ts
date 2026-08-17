@@ -21,6 +21,13 @@ export interface RenderOptions {
   settleMs?: number;
   /** Capture PNGs to this directory for the vision channel and fix-verify. */
   screenshotDir?: string | null;
+  /**
+   * Colour schemes to render. Dark adds one pass per url at the widest
+   * viewport. Omit or pass ['light'] to skip it.
+   */
+  schemes?: Array<'light' | 'dark'>;
+  /** Probe the page for a dark theme and add the pass only if it has one. */
+  autoScheme?: boolean;
 }
 
 export interface RenderResult {
@@ -151,13 +158,40 @@ export async function scanRender(opts: RenderOptions): Promise<RenderResult> {
   const detectedSurfaces = new Map<string, SurfaceVerdict>();
   const detectorErrors: string[] = [];
 
+  const widest = Math.max(...opts.viewports);
+
+  /**
+   * Which passes to run, as (viewport, scheme) pairs.
+   *
+   * Every pass before this one opened a default context, so `prefers-color-
+   * scheme: dark` never applied and half of a themed app went unscanned. A
+   * project's dark `--on-danger` measured 3.14:1 on its only destructive
+   * control — below AA, on a confirmation page — and redpen reported the light
+   * value of 6.15 and called it clean.
+   *
+   * Dark runs at the widest viewport only. What it uniquely catches is colour,
+   * and colour does not change with width, so a second full sweep would double
+   * the wall clock to re-measure layout that cannot differ.
+   */
+  let wantsDark = opts.schemes?.includes('dark') ?? false;
+  if (opts.schemes === undefined || opts.autoScheme) {
+    // Probe once rather than assuming. A site with no dark theme should not pay
+    // for a pass whose findings would be identical to the light one.
+    wantsDark = await probeDarkTheme(browser, opts.urls[0]!);
+  }
+
+  const passes: Array<{ width: number; scheme: 'light' | 'dark' }> = [];
+  for (const width of opts.viewports) passes.push({ width, scheme: 'light' });
+  if (wantsDark) passes.push({ width: widest, scheme: 'dark' });
+
   try {
     for (const url of opts.urls) {
-      for (const width of opts.viewports) {
+      for (const { width, scheme } of passes) {
         const context = await browser.newContext({
           viewport: { width, height: 900 },
           deviceScaleFactor: 1,
           reducedMotion: 'no-preference',
+          colorScheme: scheme,
         });
         const page = await context.newPage();
         await page.addInitScript(ERROR_TRAP);
@@ -170,7 +204,7 @@ export async function scanRender(opts: RenderOptions): Promise<RenderResult> {
           try {
             await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 15_000 });
           } catch (err) {
-            detectorErrors.push(`${url} @${width}px: ${err instanceof Error ? err.message : err}`);
+            detectorErrors.push(`${url} @${width}px ${scheme}: ${err instanceof Error ? err.message : err}`);
             await context.close();
             continue;
           }
@@ -192,6 +226,7 @@ export async function scanRender(opts: RenderOptions): Promise<RenderResult> {
             location: url,
             selector: h.selector,
             viewport: width,
+            scheme,
             excerpt: h.excerpt,
           });
           hits.set(h.ruleId, list);
@@ -199,7 +234,7 @@ export async function scanRender(opts: RenderOptions): Promise<RenderResult> {
 
         // Fingerprint once per url, at the widest viewport, because the
         // structural signature is a desktop-layout property.
-        if (width === Math.max(...opts.viewports)) {
+        if (width === widest && scheme === 'light') {
           const signals = await page.evaluate<SurfaceSignals>('window.__redpenSurface()');
           if (signals) detectedSurfaces.set(url, classify(signals));
 
@@ -237,6 +272,50 @@ export async function scanRender(opts: RenderOptions): Promise<RenderResult> {
     detectedSurfaces,
     unavailable: detectorErrors.length ? detectorErrors.join('; ') : null,
   };
+}
+
+/**
+ * Does this page actually ship a dark theme?
+ *
+ * Two ways to have one: a prefers-color-scheme rule in a stylesheet, or a
+ * repaint under an emulated dark preference. The second catches themes driven
+ * by a class or a data attribute that follows the media query, which the first
+ * cannot see. Same-origin stylesheets only — a cross-origin sheet throws on
+ * .cssRules and is not worth a permission fight.
+ */
+async function probeDarkTheme(browser: BrowserLike, url: string): Promise<boolean> {
+  const read = async (scheme: 'light' | 'dark') => {
+    const context = await browser.newContext({ colorScheme: scheme });
+    const page = await context.newPage();
+    try {
+      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 15_000 });
+      return await page.evaluate<{ declared: boolean; paint: string }>(`(function () {
+        var declared = false;
+        for (var i = 0; i < document.styleSheets.length; i++) {
+          try {
+            var rules = document.styleSheets[i].cssRules;
+            for (var j = 0; j < rules.length; j++) {
+              if (rules[j].conditionText && /prefers-color-scheme/.test(rules[j].conditionText)) {
+                declared = true;
+              }
+            }
+          } catch (e) { /* cross-origin sheet */ }
+        }
+        var cs = getComputedStyle(document.body);
+        return { declared: declared, paint: cs.backgroundColor + '|' + cs.color };
+      })()`);
+    } catch {
+      return null;
+    } finally {
+      await context.close();
+    }
+  };
+
+  const light = await read('light');
+  if (!light) return false;
+  if (light.declared) return true;
+  const dark = await read('dark');
+  return !!dark && dark.paint !== light.paint;
 }
 
 function slug(url: string): string {

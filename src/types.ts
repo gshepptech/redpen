@@ -187,6 +187,8 @@ export interface Evidence {
   selector?: string;
   /** Viewport width in px, for render hits. */
   viewport?: number;
+  /** Colour scheme the hit was seen under. Absent means the pass predates schemes. */
+  scheme?: 'light' | 'dark';
   /** The matched text or the offending computed value. Trimmed to 160 chars. */
   excerpt?: string;
 }

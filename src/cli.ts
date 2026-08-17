@@ -600,7 +600,9 @@ function cmdInit(root: string): void {
       pc.dim('                finding it could confirm is capped at "possible".\n') +
       pc.dim('    "product" — name, purpose, audience. The vision brief is meant to\n') +
       pc.dim('                be answerable by someone who has not seen the project,\n') +
-      pc.dim('                and several questions are unfair without it.\n\n'),
+      pc.dim('                and several questions are unfair without it.\n\n') +
+      pc.dim('  "schemes" defaults to "auto": redpen probes the first page for a dark\n') +
+      pc.dim('  theme and scans it too if there is one. Set ["light"] to skip that.\n\n'),
   );
 }
 

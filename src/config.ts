@@ -24,6 +24,12 @@ export interface RedpenConfig {
   /** url -> surface, for projects that mix marketing and app routes. */
   surfaceByUrl: Record<string, Surface>;
   viewports: number[];
+  /**
+   * Colour schemes to render. "auto" adds a dark pass only when the page
+   * actually ships a prefers-color-scheme rule, so an unthemed site pays
+   * nothing for the check.
+   */
+  schemes: 'auto' | Array<'light' | 'dark'>;
   minConfidence: Confidence;
   skipCategories: Category[];
   /** Allowed drop below the baseline before `check` fails. */
@@ -85,6 +91,7 @@ export const DEFAULT_CONFIG: RedpenConfig = {
   surface: null,
   surfaceByUrl: {},
   viewports: [375, 768, 1440],
+  schemes: 'auto',
   minConfidence: 'likely',
   skipCategories: [],
   tolerance: 0,

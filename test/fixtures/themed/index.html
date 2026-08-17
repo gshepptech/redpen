@@ -1,0 +1,30 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Themed confirm</title>
+<style>
+  /* The shape of a real failure: --on-danger was authored once against the
+     light red and copied verbatim into the dark block. But the dark theme's
+     red is *lighter* — it has to survive a near-black canvas — so its
+     on-colour has to be darker. The one value that looked like a constant
+     could not be one. Light measures ~6.2:1 and passes; dark measures ~3.1:1
+     and fails AA, and a light-only scan reports the page as clean. */
+  :root { --bg: #fdfcfb; --fg: #16161a; --danger: #b3261e; --on-danger: #fdf6f6; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0d0d10; --fg: #e8e8ea; --danger: #f85149; --on-danger: #fdf6f6; }
+  }
+  body { background: var(--bg); color: var(--fg); font: 16px/1.6 system-ui; margin: 0; padding: 48px; }
+  h1 { font-size: 28px; margin: 0 0 16px; }
+  p { max-width: 60ch; }
+  .btn-danger {
+    background: var(--danger); color: var(--on-danger);
+    font-size: 14px; font-weight: 500;
+    border: 0; border-radius: 6px; padding: 12px 20px; min-height: 44px;
+  }
+</style>
+<h1>Drop this item?</h1>
+<p>Dropping removes it from the board. This cannot be undone, so the reason below is recorded against the item and is required.</p>
+<form>
+  <label for="why">Reason</label>
+  <input id="why" name="why" required>
+  <button type="submit" class="btn-danger">Drop it</button>
+</form>
