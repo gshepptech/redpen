@@ -29,15 +29,15 @@ export type Category =
 export type Channel = 'source' | 'render' | 'vision' | 'fingerprint';
 
 /**
- * What kind of failure a rule describes. Borrowed from impeccable, and the most
- * useful single distinction in the corpus: "this looks machine-made" and "this
+ * What kind of failure a rule describes — the most useful single distinction
+ * in the corpus: "this looks machine-made" and "this
  * is broken" are different questions with different urgency, and collapsing
  * them into one score answers neither.
  */
 export type Kind = 'slop' | 'quality';
 
 /**
- * What the visitor is doing on this surface. impeccable's insight, and the one
+ * What the visitor is doing on this surface. the prior art's insight, and the one
  * redpen most needed: familiarity is a *feature* on a dashboard and a tell on a
  * landing page, so a rule set that fires identically on both is wrong half the
  * time.
@@ -59,10 +59,20 @@ export type Confidence = 'confirmed' | 'likely' | 'possible';
 /**
  * Provenance for a merged rule. Keeping this per-rule is what lets `redpen why`
  * answer "who says so" — and what keeps the NOTICE file honest.
+ *
+ * `origin` records what *kind* of authority stands behind the rule, which is
+ * the part a reader can act on: a rule backed by a measured study is a
+ * different claim from one backed by a catalogue author's taste. The specific
+ * projects each origin draws on are named once, in NOTICE.
  */
 export interface Provenance {
-  /** One of: impeccable | hallmark | unslop-ui | frontend-design-audit | redpen */
-  catalogue: string;
+  /**
+   * catalogue  — a curated list of design tells
+   * study      — the Reddit comment tabulation behind `evidenceRank`
+   * heuristics — the usability/a11y heuristic tradition
+   * redpen     — named here first
+   */
+  origin: 'catalogue' | 'study' | 'heuristics' | 'redpen';
   /** The upstream identifier, verbatim where one exists. */
   ref: string;
 }

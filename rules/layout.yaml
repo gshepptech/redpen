@@ -14,10 +14,10 @@
   weight: 89
   evidenceRank: 9
   sources:
-    - { catalogue: unslop-ui, ref: hero-three-cards }
-    - { catalogue: hallmark, ref: "slop-gate:3" }
-    - { catalogue: hallmark, ref: "antipattern:the-3-column-feature-grid" }
-    - { catalogue: impeccable, ref: icon-tile-stack }
+    - { origin: study, ref: hero-three-cards }
+    - { origin: catalogue, ref: "slop-gate:3" }
+    - { origin: catalogue, ref: "antipattern:the-3-column-feature-grid" }
+    - { origin: catalogue, ref: icon-tile-stack }
   channels: [source, render, vision]
   source:
     patterns:
@@ -50,9 +50,9 @@
   weight: 79
   evidenceRank: 9
   sources:
-    - { catalogue: hallmark, ref: "slop-gate:6" }
-    - { catalogue: hallmark, ref: "antipattern:full-viewport-centred-hero" }
-    - { catalogue: impeccable, ref: hero-eyebrow-chip }
+    - { origin: catalogue, ref: "slop-gate:6" }
+    - { origin: catalogue, ref: "antipattern:full-viewport-centred-hero" }
+    - { origin: catalogue, ref: hero-eyebrow-chip }
   channels: [source, render, vision]
   source:
     patterns:
@@ -84,9 +84,9 @@
   weight: 73
   evidenceRank: null
   sources:
-    - { catalogue: impeccable, ref: nested-cards }
-    - { catalogue: hallmark, ref: "slop-gate:4" }
-    - { catalogue: hallmark, ref: "antipattern:card-in-card" }
+    - { origin: catalogue, ref: nested-cards }
+    - { origin: catalogue, ref: "slop-gate:4" }
+    - { origin: catalogue, ref: "antipattern:card-in-card" }
   channels: [render]
   render:
     check: nested-surface
@@ -111,9 +111,9 @@
   weight: 61
   evidenceRank: null
   sources:
-    - { catalogue: impeccable, ref: side-tab }
-    - { catalogue: impeccable, ref: border-accent-on-rounded }
-    - { catalogue: hallmark, ref: "antipattern:the-side-stripe-card" }
+    - { origin: catalogue, ref: side-tab }
+    - { origin: catalogue, ref: border-accent-on-rounded }
+    - { origin: catalogue, ref: "antipattern:the-side-stripe-card" }
   channels: [source, render]
   source:
     patterns:
@@ -140,9 +140,9 @@
   weight: 64
   evidenceRank: null
   sources:
-    - { catalogue: impeccable, ref: monotonous-spacing }
-    - { catalogue: hallmark, ref: "slop-gate:9" }
-    - { catalogue: hallmark, ref: "antipattern:every-section-padded-the-same" }
+    - { origin: catalogue, ref: monotonous-spacing }
+    - { origin: catalogue, ref: "slop-gate:9" }
+    - { origin: catalogue, ref: "antipattern:every-section-padded-the-same" }
   channels: [render]
   render:
     check: section-rhythm-variance
@@ -164,8 +164,8 @@
   weight: 46
   evidenceRank: null
   sources:
-    - { catalogue: hallmark, ref: "slop-gate:24" }
-    - { catalogue: frontend-design-audit, ref: "pattern:spacing-hierarchy" }
+    - { origin: catalogue, ref: "slop-gate:24" }
+    - { origin: heuristics, ref: "pattern:spacing-hierarchy" }
   channels: [source]
   source:
     patterns:
@@ -188,9 +188,9 @@
   weight: 83
   evidenceRank: 10
   sources:
-    - { catalogue: unslop-ui, ref: layout-quality }
-    - { catalogue: hallmark, ref: "slop-gate:34" }
-    - { catalogue: impeccable, ref: first-viewport-column-overflow }
+    - { origin: study, ref: layout-quality }
+    - { origin: catalogue, ref: "slop-gate:34" }
+    - { origin: catalogue, ref: first-viewport-column-overflow }
   channels: [render]
   render:
     check: horizontal-scroll
@@ -212,10 +212,10 @@
   weight: 77
   evidenceRank: 10
   sources:
-    - { catalogue: impeccable, ref: text-overflow }
-    - { catalogue: impeccable, ref: clipped-overflow-container }
-    - { catalogue: impeccable, ref: text-occlusion }
-    - { catalogue: unslop-ui, ref: layout-quality }
+    - { origin: catalogue, ref: text-overflow }
+    - { origin: catalogue, ref: clipped-overflow-container }
+    - { origin: catalogue, ref: text-occlusion }
+    - { origin: study, ref: layout-quality }
   channels: [render, vision]
   render:
     check: clipped-text
@@ -240,8 +240,8 @@
   weight: 59
   evidenceRank: null
   sources:
-    - { catalogue: impeccable, ref: body-text-viewport-edge }
-    - { catalogue: impeccable, ref: edge-flush-cards }
+    - { origin: catalogue, ref: body-text-viewport-edge }
+    - { origin: catalogue, ref: edge-flush-cards }
   channels: [render]
   render:
     check: edge-gutter
@@ -263,8 +263,8 @@
   weight: 54
   evidenceRank: null
   sources:
-    - { catalogue: impeccable, ref: cramped-padding }
-    - { catalogue: frontend-design-audit, ref: "pattern:minimum-touch-targets" }
+    - { origin: catalogue, ref: cramped-padding }
+    - { origin: heuristics, ref: "pattern:minimum-touch-targets" }
   channels: [render]
   render:
     check: control-padding-floor
@@ -286,8 +286,8 @@
   weight: 57
   evidenceRank: null
   sources:
-    - { catalogue: hallmark, ref: "slop-gate:39" }
-    - { catalogue: frontend-design-audit, ref: "heuristic:4-consistency" }
+    - { origin: catalogue, ref: "slop-gate:39" }
+    - { origin: heuristics, ref: "heuristic:4-consistency" }
   channels: [render]
   render:
     check: sibling-control-height
@@ -308,7 +308,7 @@
   weight: 45
   evidenceRank: null
   sources:
-    - { catalogue: hallmark, ref: "slop-gate:36" }
+    - { origin: catalogue, ref: "slop-gate:36" }
   channels: [render]
   render:
     check: flex-baseline-drift
@@ -329,7 +329,7 @@
   weight: 42
   evidenceRank: null
   sources:
-    - { catalogue: impeccable, ref: repeated-container-text }
+    - { origin: catalogue, ref: repeated-container-text }
   channels: [render]
   render:
     check: duplicate-block-text
@@ -350,8 +350,8 @@
   weight: 40
   evidenceRank: null
   sources:
-    - { catalogue: impeccable, ref: codex-grid-background }
-    - { catalogue: impeccable, ref: repeating-stripes-gradient }
+    - { origin: catalogue, ref: codex-grid-background }
+    - { origin: catalogue, ref: repeating-stripes-gradient }
   channels: [source, render]
   source:
     patterns:

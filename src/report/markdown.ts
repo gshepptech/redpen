@@ -113,7 +113,7 @@ function findingBlock(f: Finding): string[] {
     out.push('');
   }
   out.push(
-    `<sub>from ${f.sources.map((s) => `${s.catalogue}:${s.ref}`).join(', ')}</sub>`,
+    `<sub>from ${f.sources.map((s) => `${s.origin}:${s.ref}`).join(', ')}</sub>`,
   );
   out.push('');
   return out;

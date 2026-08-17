@@ -26,7 +26,7 @@
   weight: 76
   evidenceRank: null
   sources:
-    - { catalogue: impeccable, ref: "layout:squint-test" }
+    - { origin: catalogue, ref: "layout:squint-test" }
   channels: [vision]
   vision:
     ask: >-
@@ -51,8 +51,8 @@
   weight: 74
   evidenceRank: null
   sources:
-    - { catalogue: redpen, ref: composition-focal-point }
-    - { catalogue: hallmark, ref: "critique-axis:B-hierarchy" }
+    - { origin: redpen, ref: composition-focal-point }
+    - { origin: catalogue, ref: "critique-axis:B-hierarchy" }
   channels: [vision]
   vision:
     ask: >-
@@ -76,8 +76,8 @@
   weight: 66
   evidenceRank: null
   sources:
-    - { catalogue: redpen, ref: composition-proximity }
-    - { catalogue: impeccable, ref: monotonous-spacing }
+    - { origin: redpen, ref: composition-proximity }
+    - { origin: catalogue, ref: monotonous-spacing }
   channels: [vision]
   vision:
     ask: >-
@@ -100,7 +100,7 @@
   weight: 68
   evidenceRank: null
   sources:
-    - { catalogue: redpen, ref: composition-intent }
+    - { origin: redpen, ref: composition-intent }
   channels: [vision]
   vision:
     ask: >-
@@ -122,8 +122,8 @@
   weight: 79
   evidenceRank: 0
   sources:
-    - { catalogue: redpen, ref: composition-specificity }
-    - { catalogue: hallmark, ref: "critique-axis:D-specificity" }
+    - { origin: redpen, ref: composition-specificity }
+    - { origin: catalogue, ref: "critique-axis:D-specificity" }
   channels: [vision]
   vision:
     ask: >-
@@ -149,8 +149,8 @@
   weight: 61
   evidenceRank: null
   sources:
-    - { catalogue: redpen, ref: composition-memory }
-    - { catalogue: hallmark, ref: "critique-axis:A-philosophy" }
+    - { origin: redpen, ref: composition-memory }
+    - { origin: catalogue, ref: "critique-axis:A-philosophy" }
   channels: [vision]
   vision:
     ask: >-
@@ -174,8 +174,8 @@
   weight: 72
   evidenceRank: null
   sources:
-    - { catalogue: redpen, ref: composition-affordance }
-    - { catalogue: frontend-design-audit, ref: "heuristic:11-affordances-and-signifiers" }
+    - { origin: redpen, ref: composition-affordance }
+    - { origin: heuristics, ref: "heuristic:11-affordances-and-signifiers" }
   channels: [vision]
   vision:
     ask: >-

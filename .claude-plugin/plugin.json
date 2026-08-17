@@ -1,7 +1,7 @@
 {
   "name": "redpen",
   "version": "0.1.0",
-  "description": "One verdict on your UI. Merges impeccable, hallmark, unslop-ui and frontend-design-audit into 96 rules, then cross-checks each finding against a real browser before reporting it.",
+  "description": "One verdict on your UI. 113 design rules merged from four catalogues, then cross-checked against a real browser before anything is reported.",
   "author": {
     "name": "redpen"
   },

@@ -14,9 +14,9 @@
   weight: 74
   evidenceRank: 8
   sources:
-    - { catalogue: unslop-ui, ref: generic-font }
-    - { catalogue: impeccable, ref: overused-font }
-    - { catalogue: hallmark, ref: "slop-gate:1" }
+    - { origin: study, ref: generic-font }
+    - { origin: catalogue, ref: overused-font }
+    - { origin: catalogue, ref: "slop-gate:1" }
   channels: [source, render]
   source:
     patterns:
@@ -46,8 +46,8 @@
   weight: 57
   evidenceRank: null
   sources:
-    - { catalogue: hallmark, ref: "slop-gate:37" }
-    - { catalogue: impeccable, ref: design-system-font }
+    - { origin: catalogue, ref: "slop-gate:37" }
+    - { origin: catalogue, ref: design-system-font }
   channels: [render]
   render:
     check: family-count
@@ -69,9 +69,9 @@
   weight: 76
   evidenceRank: null
   sources:
-    - { catalogue: impeccable, ref: italic-serif-display }
-    - { catalogue: hallmark, ref: "slop-gate:38a" }
-    - { catalogue: hallmark, ref: "antipattern:italic-headers" }
+    - { origin: catalogue, ref: italic-serif-display }
+    - { origin: catalogue, ref: "slop-gate:38a" }
+    - { origin: catalogue, ref: "antipattern:italic-headers" }
   channels: [source, render, vision]
   source:
     patterns:
@@ -101,10 +101,10 @@
   weight: 68
   evidenceRank: null
   sources:
-    - { catalogue: impeccable, ref: flat-type-hierarchy }
-    - { catalogue: impeccable, ref: heading-rhythm }
-    - { catalogue: frontend-design-audit, ref: "pattern:typography-hierarchy" }
-    - { catalogue: hallmark, ref: "critique-axis:B-hierarchy" }
+    - { origin: catalogue, ref: flat-type-hierarchy }
+    - { origin: catalogue, ref: heading-rhythm }
+    - { origin: heuristics, ref: "pattern:typography-hierarchy" }
+    - { origin: catalogue, ref: "critique-axis:B-hierarchy" }
   channels: [render, vision]
   render:
     check: type-scale-spread
@@ -132,8 +132,8 @@
   weight: 60
   evidenceRank: null
   sources:
-    - { catalogue: impeccable, ref: line-length }
-    - { catalogue: hallmark, ref: "slop-gate:25" }
+    - { origin: catalogue, ref: line-length }
+    - { origin: catalogue, ref: "slop-gate:25" }
   channels: [render]
   render:
     check: measure-range
@@ -155,7 +155,7 @@
   weight: 52
   evidenceRank: null
   sources:
-    - { catalogue: impeccable, ref: tight-leading }
+    - { origin: catalogue, ref: tight-leading }
   channels: [render]
   render:
     check: leading-ratio
@@ -178,9 +178,9 @@
   weight: 66
   evidenceRank: null
   sources:
-    - { catalogue: impeccable, ref: tiny-text }
-    - { catalogue: impeccable, ref: undersized-ui-text }
-    - { catalogue: frontend-design-audit, ref: "heuristic:14-perceptibility" }
+    - { origin: catalogue, ref: tiny-text }
+    - { origin: catalogue, ref: undersized-ui-text }
+    - { origin: heuristics, ref: "heuristic:14-perceptibility" }
   channels: [render]
   render:
     check: font-size-floor
@@ -202,8 +202,8 @@
   weight: 41
   evidenceRank: null
   sources:
-    - { catalogue: impeccable, ref: extreme-negative-tracking }
-    - { catalogue: impeccable, ref: wide-tracking }
+    - { origin: catalogue, ref: extreme-negative-tracking }
+    - { origin: catalogue, ref: wide-tracking }
   channels: [render]
   render:
     check: tracking-bounds
@@ -225,7 +225,7 @@
   weight: 47
   evidenceRank: null
   sources:
-    - { catalogue: impeccable, ref: all-caps-body }
+    - { origin: catalogue, ref: all-caps-body }
   channels: [render]
   render:
     check: uppercase-run-length
@@ -245,7 +245,7 @@
   weight: 38
   evidenceRank: null
   sources:
-    - { catalogue: impeccable, ref: justified-text }
+    - { origin: catalogue, ref: justified-text }
   channels: [render]
   render:
     check: text-align-justify
@@ -264,7 +264,7 @@
   weight: 50
   evidenceRank: null
   sources:
-    - { catalogue: impeccable, ref: oversized-h1 }
+    - { origin: catalogue, ref: oversized-h1 }
   channels: [render]
   render:
     check: display-size-vs-viewport
@@ -285,8 +285,8 @@
   weight: 56
   evidenceRank: null
   sources:
-    - { catalogue: impeccable, ref: skipped-heading }
-    - { catalogue: frontend-design-audit, ref: "heuristic:12-structure" }
+    - { origin: catalogue, ref: skipped-heading }
+    - { origin: heuristics, ref: "heuristic:12-structure" }
   channels: [source, render]
   source:
     patterns:
@@ -308,9 +308,9 @@
   weight: 43
   evidenceRank: null
   sources:
-    - { catalogue: impeccable, ref: numbered-section-labels }
-    - { catalogue: hallmark, ref: "slop-gate:21" }
-    - { catalogue: hallmark, ref: "antipattern:eyebrow-on-every-section" }
+    - { origin: catalogue, ref: numbered-section-labels }
+    - { origin: catalogue, ref: "slop-gate:21" }
+    - { origin: catalogue, ref: "antipattern:eyebrow-on-every-section" }
   channels: [source, render]
   source:
     patterns:

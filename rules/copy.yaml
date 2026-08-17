@@ -13,9 +13,9 @@
   weight: 51
   evidenceRank: 11
   sources:
-    - { catalogue: unslop-ui, ref: hype-copy }
-    - { catalogue: impeccable, ref: marketing-buzzword }
-    - { catalogue: impeccable, ref: theater-slop-phrase }
+    - { origin: study, ref: hype-copy }
+    - { origin: catalogue, ref: marketing-buzzword }
+    - { origin: catalogue, ref: theater-slop-phrase }
   channels: [source, vision]
   source:
     patterns:
@@ -43,8 +43,8 @@
   weight: 54
   evidenceRank: 11
   sources:
-    - { catalogue: impeccable, ref: marketing-buzzword }
-    - { catalogue: hallmark, ref: "critique-axis:D-specificity" }
+    - { origin: catalogue, ref: marketing-buzzword }
+    - { origin: catalogue, ref: "critique-axis:D-specificity" }
   channels: [vision]
   vision:
     ask: >-
@@ -66,8 +66,8 @@
   weight: 46
   evidenceRank: 11
   sources:
-    - { catalogue: impeccable, ref: em-dash-overuse }
-    - { catalogue: unslop-ui, ref: copy-tells }
+    - { origin: catalogue, ref: em-dash-overuse }
+    - { origin: study, ref: copy-tells }
   channels: [source]
   source:
     patterns:
@@ -89,8 +89,8 @@
   weight: 45
   evidenceRank: 11
   sources:
-    - { catalogue: impeccable, ref: aphoristic-cadence }
-    - { catalogue: unslop-ui, ref: copy-tells }
+    - { origin: catalogue, ref: aphoristic-cadence }
+    - { origin: study, ref: copy-tells }
   channels: [source]
   source:
     patterns:
@@ -113,8 +113,8 @@
   weight: 49
   evidenceRank: null
   sources:
-    - { catalogue: impeccable, ref: marketing-buzzword }
-    - { catalogue: frontend-design-audit, ref: "heuristic:2-match-real-world" }
+    - { origin: catalogue, ref: marketing-buzzword }
+    - { origin: heuristics, ref: "heuristic:2-match-real-world" }
   channels: [source, render]
   source:
     patterns:
@@ -138,8 +138,8 @@
   weight: 50
   evidenceRank: null
   sources:
-    - { catalogue: hallmark, ref: "slop-gate:19" }
-    - { catalogue: hallmark, ref: "antipattern:placeholder-names" }
+    - { origin: catalogue, ref: "slop-gate:19" }
+    - { origin: catalogue, ref: "antipattern:placeholder-names" }
   channels: [source]
   source:
     patterns:
@@ -161,8 +161,8 @@
   weight: 67
   evidenceRank: null
   sources:
-    - { catalogue: hallmark, ref: "antipattern:invented-metrics" }
-    - { catalogue: hallmark, ref: "slop-gate:honest-copy" }
+    - { origin: catalogue, ref: "antipattern:invented-metrics" }
+    - { origin: catalogue, ref: "slop-gate:honest-copy" }
   channels: [source, vision]
   source:
     patterns:
@@ -188,9 +188,9 @@
   weight: 32
   evidenceRank: null
   sources:
-    - { catalogue: hallmark, ref: "antipattern:straight-quotes" }
-    - { catalogue: hallmark, ref: "antipattern:double-hyphen-dashes" }
-    - { catalogue: hallmark, ref: "antipattern:three-periods-instead-of-ellipsis" }
+    - { origin: catalogue, ref: "antipattern:straight-quotes" }
+    - { origin: catalogue, ref: "antipattern:double-hyphen-dashes" }
+    - { origin: catalogue, ref: "antipattern:three-periods-instead-of-ellipsis" }
   channels: [source]
   source:
     patterns:

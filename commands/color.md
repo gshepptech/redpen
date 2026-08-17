@@ -127,8 +127,5 @@ is what makes the whole path consistent.
 
 ---
 
-<sub>Structure and much of the craft guidance in this command is ported from
-[impeccable](https://github.com/pbakaus/impeccable) (Apache-2.0) — specifically
-`skill/reference/colorize.md`. The two-isolated-assessments method, the
-declare-intent-before-editing step, and the evidence-not-yes verification bar
-are all its ideas. See NOTICE.</sub>
+<sub>This command is built on redpen's rule corpus. See NOTICE for the
+catalogues the corpus draws on and the licences they carry.</sub>

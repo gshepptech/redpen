@@ -1,6 +1,6 @@
 # Design-system drift.
 #
-# impeccable checks literal values against a declared DESIGN.md — four rules
+# the prior art checks literal values against a declared DESIGN.md — four rules
 # that ask "is this value part of the system, or did somebody improvise it?".
 # redpen had one of the four, and it was a proxy: a count of distinct colours,
 # which flags a rich palette and misses a project that declared six tokens and
@@ -22,7 +22,7 @@
   weight: 63
   evidenceRank: null
   sources:
-    - { catalogue: impeccable, ref: design-system-color }
+    - { origin: catalogue, ref: design-system-color }
   channels: [render]
   render:
     check: color-token-drift
@@ -46,7 +46,7 @@
   weight: 48
   evidenceRank: null
   sources:
-    - { catalogue: impeccable, ref: design-system-radius }
+    - { origin: catalogue, ref: design-system-radius }
   channels: [render]
   render:
     check: radius-token-drift
@@ -68,7 +68,7 @@
   weight: 57
   evidenceRank: null
   sources:
-    - { catalogue: impeccable, ref: design-system-font-size }
+    - { origin: catalogue, ref: design-system-font-size }
   channels: [render]
   render:
     check: font-size-token-drift
@@ -91,7 +91,7 @@
   weight: 60
   evidenceRank: null
   sources:
-    - { catalogue: impeccable, ref: design-system-font }
+    - { origin: catalogue, ref: design-system-font }
   channels: [render]
   render:
     check: font-family-drift

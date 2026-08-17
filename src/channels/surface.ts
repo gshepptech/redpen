@@ -3,7 +3,7 @@ import type { Surface } from '../types.js';
 /**
  * Surface detection.
  *
- * impeccable's most useful idea, and the one redpen most needed. What the
+ * The idea redpen most needed: what the
  * visitor is doing on a page decides which rules are true there:
  *
  *   persuade — the visitor decides and acts. Landing, marketing, pricing.

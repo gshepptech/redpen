@@ -129,7 +129,5 @@ page behind it.
 
 ---
 
-<sub>Structure and much of the craft guidance in this command is ported from
-[impeccable](https://github.com/pbakaus/impeccable) (Apache-2.0) — specifically
-`skill/reference/polish.md`. The drift classification, the triage order, and the
-evidence-not-yes verification bar are its ideas. See NOTICE.</sub>
+<sub>This command is built on redpen's rule corpus. See NOTICE for the
+catalogues the corpus draws on and the licences they carry.</sub>

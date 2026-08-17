@@ -28,11 +28,8 @@ npx @gshepptech/redpen scan . --url http://localhost:3000
 
 ## Why this exists
 
-Four good catalogues already describe what AI-generated UI looks like:
-[impeccable](https://github.com/pbakaus/impeccable),
-[hallmark](https://github.com/nutlope/hallmark),
-[unslop-ui](https://github.com/JCarterJohnson/vibecoded-design-tells), and
-[frontend-design-audit](https://github.com/mistyhx/frontend-design-audit).
+Several good catalogues already describe what AI-generated UI looks like, and
+[NOTICE](NOTICE) names the ones redpen's corpus draws on.
 
 Running them together is worse than running one. They use different
 vocabularies, they contradict each other, and concatenating ~200 rules doubles
@@ -287,8 +284,8 @@ affected findings stay unconfirmed. Nothing degrades into a clean report.
 ## Two scores, not one
 
 "Does this look machine-made" and "is this broken" are different questions, and
-one number answers neither. Every rule declares which it is — a split taken
-directly from impeccable, where it is the most useful distinction in the corpus.
+one number answers neither. Every rule declares which it is, and that split
+turns out to be the most useful distinction in the corpus.
 
 ```
   redpen   62  ███████████████░░░░░░░░░  reads as generated
@@ -353,16 +350,17 @@ is how they get fixed. `redpen rules a11y` lists what remains.
 
 ## Attribution
 
-Every rule carries its upstream provenance. See [NOTICE](NOTICE) for licences
-and what redpen added on top. `redpen sources`:
+Every rule records what kind of authority stands behind it, because a rule
+backed by a measured study is a different claim from one backed by an author's
+taste. See [NOTICE](NOTICE) for the projects behind each and their licences.
+`redpen sources`:
 
 ```
   96 rules merged from:
-      67  hallmark
-      66  impeccable
-      46  frontend-design-audit
-      18  unslop-ui
-       5  redpen
+     132  catalogue     curated lists of design tells
+      46  heuristics    the usability and a11y tradition
+      18  study         a tabulation of 3,033 Reddit comments
+       5  redpen        named here first
 ```
 
 The counts exceed the rule total because most rules were named by more than one

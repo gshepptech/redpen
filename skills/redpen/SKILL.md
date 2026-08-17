@@ -8,9 +8,8 @@ description: Judge and fix UI that reads as AI-generated. Runs a source scan, a 
 One verdict on a UI, from four evidence channels, weighted by what people
 actually notice.
 
-Read this before styling anything. It replaces running impeccable, hallmark,
-unslop-ui, and frontend-design-audit separately — the corpus below is those four
-merged, deduplicated, and cross-checked.
+Read this before styling anything. It replaces running four separate design
+catalogues — the corpus below is those merged, deduplicated, and cross-checked.
 
 ## Run it
 

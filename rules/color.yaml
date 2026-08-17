@@ -13,9 +13,9 @@
   weight: 94
   evidenceRank: 2
   sources:
-    - { catalogue: unslop-ui, ref: ai-purple }
-    - { catalogue: impeccable, ref: ai-color-palette }
-    - { catalogue: hallmark, ref: "antipattern:the-purple-gradient-hero" }
+    - { origin: study, ref: ai-purple }
+    - { origin: catalogue, ref: ai-color-palette }
+    - { origin: catalogue, ref: "antipattern:the-purple-gradient-hero" }
   channels: [source, render]
   source:
     patterns:
@@ -48,9 +48,9 @@
   weight: 91
   evidenceRank: 3
   sources:
-    - { catalogue: unslop-ui, ref: gradient-text }
-    - { catalogue: impeccable, ref: gradient-text }
-    - { catalogue: hallmark, ref: "slop-gate:2" }
+    - { origin: study, ref: gradient-text }
+    - { origin: catalogue, ref: gradient-text }
+    - { origin: catalogue, ref: "slop-gate:2" }
   channels: [source, render, vision]
   source:
     patterns:
@@ -80,9 +80,9 @@
   weight: 88
   evidenceRank: 3
   sources:
-    - { catalogue: unslop-ui, ref: purple-blue-gradient }
-    - { catalogue: hallmark, ref: "slop-gate:2" }
-    - { catalogue: impeccable, ref: ai-color-palette }
+    - { origin: study, ref: purple-blue-gradient }
+    - { origin: catalogue, ref: "slop-gate:2" }
+    - { origin: catalogue, ref: ai-color-palette }
   channels: [source, render]
   source:
     patterns:
@@ -109,9 +109,9 @@
   weight: 82
   evidenceRank: 1
   sources:
-    - { catalogue: unslop-ui, ref: claude-default-look }
-    - { catalogue: impeccable, ref: cream-palette }
-    - { catalogue: impeccable, ref: italic-serif-display }
+    - { origin: study, ref: claude-default-look }
+    - { origin: catalogue, ref: cream-palette }
+    - { origin: catalogue, ref: italic-serif-display }
   channels: [source, render]
   source:
     patterns:
@@ -143,8 +143,8 @@
   weight: 58
   evidenceRank: null
   sources:
-    - { catalogue: hallmark, ref: "slop-gate:7" }
-    - { catalogue: hallmark, ref: "antipattern:pure-black-pure-white" }
+    - { origin: catalogue, ref: "slop-gate:7" }
+    - { origin: catalogue, ref: "antipattern:pure-black-pure-white" }
   channels: [source, render]
   source:
     patterns:
@@ -170,7 +170,7 @@
   weight: 44
   evidenceRank: null
   sources:
-    - { catalogue: hallmark, ref: "slop-gate:22" }
+    - { origin: catalogue, ref: "slop-gate:22" }
   channels: [render]
   render:
     check: neutral-chroma-floor
@@ -197,9 +197,9 @@
   weight: 86
   evidenceRank: null
   sources:
-    - { catalogue: impeccable, ref: low-contrast }
-    - { catalogue: hallmark, ref: "slop-gate:40" }
-    - { catalogue: frontend-design-audit, ref: "heuristic:13-accessibility" }
+    - { origin: catalogue, ref: low-contrast }
+    - { origin: catalogue, ref: "slop-gate:40" }
+    - { origin: heuristics, ref: "heuristic:13-accessibility" }
   channels: [render]
   render:
     check: contrast-threshold
@@ -225,7 +225,7 @@
   weight: 55
   evidenceRank: null
   sources:
-    - { catalogue: impeccable, ref: gray-on-color }
+    - { origin: catalogue, ref: gray-on-color }
   channels: [render]
   render:
     check: neutral-text-on-chromatic-ground
@@ -247,9 +247,9 @@
   weight: 71
   evidenceRank: 6
   sources:
-    - { catalogue: unslop-ui, ref: neon-glow }
-    - { catalogue: impeccable, ref: dark-glow }
-    - { catalogue: hallmark, ref: "antipattern:shadow-glow-on-dark" }
+    - { origin: study, ref: neon-glow }
+    - { origin: catalogue, ref: dark-glow }
+    - { origin: catalogue, ref: "antipattern:shadow-glow-on-dark" }
   channels: [source, render]
   source:
     patterns:
@@ -282,9 +282,9 @@
   # it must never outrank a measured tell.
   evidenceRank: null
   sources:
-    - { catalogue: impeccable, ref: radial-halo }
-    - { catalogue: impeccable, ref: radial-spotlight-glow }
-    - { catalogue: hallmark, ref: "antipattern:aurora-blob-background" }
+    - { origin: catalogue, ref: radial-halo }
+    - { origin: catalogue, ref: radial-spotlight-glow }
+    - { origin: catalogue, ref: "antipattern:aurora-blob-background" }
   channels: [source, render]
   source:
     patterns:
@@ -314,9 +314,9 @@
   weight: 62
   evidenceRank: null
   sources:
-    - { catalogue: impeccable, ref: design-system-color }
-    - { catalogue: hallmark, ref: "antipattern:mid-render-token-improvisation" }
-    - { catalogue: frontend-design-audit, ref: "pattern:coherence-pass" }
+    - { origin: catalogue, ref: design-system-color }
+    - { origin: catalogue, ref: "antipattern:mid-render-token-improvisation" }
+    - { origin: heuristics, ref: "pattern:coherence-pass" }
   channels: [source, render]
   source:
     patterns:

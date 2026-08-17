@@ -12,8 +12,8 @@
   weight: 72
   evidenceRank: 5
   sources:
-    - { catalogue: unslop-ui, ref: rounded-everything }
-    - { catalogue: impeccable, ref: border-accent-on-rounded }
+    - { origin: study, ref: rounded-everything }
+    - { origin: catalogue, ref: border-accent-on-rounded }
   channels: [source, render]
   source:
     patterns:
@@ -43,8 +43,8 @@
   weight: 61
   evidenceRank: null
   sources:
-    - { catalogue: impeccable, ref: gpt-thin-border-wide-shadow }
-    - { catalogue: hallmark, ref: "antipattern:icon-tile-feature-card" }
+    - { origin: catalogue, ref: gpt-thin-border-wide-shadow }
+    - { origin: catalogue, ref: "antipattern:icon-tile-feature-card" }
   channels: [source, render]
   source:
     patterns:
@@ -72,7 +72,7 @@
   weight: 56
   evidenceRank: null
   sources:
-    - { catalogue: impeccable, ref: gpt-thin-border-wide-shadow }
+    - { origin: catalogue, ref: gpt-thin-border-wide-shadow }
   channels: [render]
   render:
     check: border-and-shadow-double-edge
@@ -92,8 +92,8 @@
   weight: 43
   evidenceRank: null
   sources:
-    - { catalogue: hallmark, ref: "antipattern:glassmorphism-without-purpose" }
-    - { catalogue: unslop-ui, ref: lower-signal-tells }
+    - { origin: catalogue, ref: "antipattern:glassmorphism-without-purpose" }
+    - { origin: study, ref: lower-signal-tells }
   channels: [source, render]
   source:
     patterns:
@@ -117,8 +117,8 @@
   weight: 52
   evidenceRank: null
   sources:
-    - { catalogue: impeccable, ref: content-hidden-at-rest }
-    - { catalogue: frontend-design-audit, ref: "pattern:card-content-differentiation" }
+    - { origin: catalogue, ref: content-hidden-at-rest }
+    - { origin: heuristics, ref: "pattern:card-content-differentiation" }
   channels: [render, vision]
   render:
     check: card-content-uniformity
@@ -145,8 +145,8 @@
   weight: 47
   evidenceRank: null
   sources:
-    - { catalogue: impeccable, ref: side-tab }
-    - { catalogue: impeccable, ref: hero-eyebrow-chip }
+    - { origin: catalogue, ref: side-tab }
+    - { origin: catalogue, ref: hero-eyebrow-chip }
   channels: [render]
   render:
     check: chip-density
@@ -168,7 +168,7 @@
   weight: 36
   evidenceRank: null
   sources:
-    - { catalogue: hallmark, ref: "antipattern:z-index-9999" }
+    - { origin: catalogue, ref: "antipattern:z-index-9999" }
   channels: [source]
   source:
     patterns:

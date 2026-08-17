@@ -13,9 +13,9 @@
   weight: 78
   evidenceRank: 4
   sources:
-    - { catalogue: unslop-ui, ref: fade-in-animations }
-    - { catalogue: hallmark, ref: "antipattern:animate-on-scroll-on-everything" }
-    - { catalogue: hallmark, ref: "antipattern:universal-scroll-triggered-fade-up" }
+    - { origin: study, ref: fade-in-animations }
+    - { origin: catalogue, ref: "antipattern:animate-on-scroll-on-everything" }
+    - { origin: catalogue, ref: "antipattern:universal-scroll-triggered-fade-up" }
   channels: [source, render]
   source:
     patterns:
@@ -43,8 +43,8 @@
   weight: 63
   evidenceRank: null
   sources:
-    - { catalogue: hallmark, ref: "slop-gate:10" }
-    - { catalogue: hallmark, ref: "antipattern:transition-all" }
+    - { origin: catalogue, ref: "slop-gate:10" }
+    - { origin: catalogue, ref: "antipattern:transition-all" }
   channels: [source, render]
   source:
     patterns:
@@ -68,9 +68,9 @@
   weight: 65
   evidenceRank: 4
   sources:
-    - { catalogue: unslop-ui, ref: fade-in-animations }
-    - { catalogue: hallmark, ref: "slop-gate:11" }
-    - { catalogue: impeccable, ref: image-hover-transform }
+    - { origin: study, ref: fade-in-animations }
+    - { origin: catalogue, ref: "slop-gate:11" }
+    - { origin: catalogue, ref: image-hover-transform }
   channels: [source, render]
   source:
     patterns:
@@ -97,8 +97,8 @@
   weight: 55
   evidenceRank: null
   sources:
-    - { catalogue: impeccable, ref: bounce-easing }
-    - { catalogue: hallmark, ref: "slop-gate:12" }
+    - { origin: catalogue, ref: bounce-easing }
+    - { origin: catalogue, ref: "slop-gate:12" }
   channels: [source, render]
   source:
     patterns:
@@ -123,8 +123,8 @@
   weight: 58
   evidenceRank: null
   sources:
-    - { catalogue: hallmark, ref: "slop-gate:14" }
-    - { catalogue: impeccable, ref: layout-transition }
+    - { origin: catalogue, ref: "slop-gate:14" }
+    - { origin: catalogue, ref: layout-transition }
   channels: [source, render]
   source:
     patterns:
@@ -146,8 +146,8 @@
   weight: 70
   evidenceRank: null
   sources:
-    - { catalogue: hallmark, ref: "slop-gate:27" }
-    - { catalogue: frontend-design-audit, ref: "heuristic:13-accessibility" }
+    - { origin: catalogue, ref: "slop-gate:27" }
+    - { origin: heuristics, ref: "heuristic:13-accessibility" }
   channels: [source, render]
   source:
     patterns:
@@ -172,8 +172,8 @@
   weight: 44
   evidenceRank: null
   sources:
-    - { catalogue: impeccable, ref: pulsing-dot }
-    - { catalogue: impeccable, ref: blinking-cursor }
+    - { origin: catalogue, ref: pulsing-dot }
+    - { origin: catalogue, ref: blinking-cursor }
   channels: [source, render]
   source:
     patterns:
@@ -198,8 +198,8 @@
   weight: 39
   evidenceRank: null
   sources:
-    - { catalogue: impeccable, ref: marquee }
-    - { catalogue: hallmark, ref: "slop-gate:18" }
+    - { origin: catalogue, ref: marquee }
+    - { origin: catalogue, ref: "slop-gate:18" }
   channels: [source, render]
   source:
     patterns:
@@ -224,8 +224,8 @@
   weight: 41
   evidenceRank: null
   sources:
-    - { catalogue: hallmark, ref: "slop-gate:16" }
-    - { catalogue: hallmark, ref: "antipattern:celebratory-success-toasts" }
+    - { origin: catalogue, ref: "slop-gate:16" }
+    - { origin: catalogue, ref: "antipattern:celebratory-success-toasts" }
   channels: [source]
   source:
     patterns:
@@ -248,7 +248,7 @@
   weight: 53
   evidenceRank: null
   sources:
-    - { catalogue: hallmark, ref: "slop-gate:15" }
+    - { origin: catalogue, ref: "slop-gate:15" }
   channels: [source, render]
   source:
     patterns:

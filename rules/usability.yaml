@@ -15,8 +15,8 @@
   weight: 69
   evidenceRank: null
   sources:
-    - { catalogue: frontend-design-audit, ref: "heuristic:1-visibility-of-system-status" }
-    - { catalogue: frontend-design-audit, ref: "pattern:button-loading-state" }
+    - { origin: heuristics, ref: "heuristic:1-visibility-of-system-status" }
+    - { origin: heuristics, ref: "pattern:button-loading-state" }
   channels: [source]
   source:
     patterns:
@@ -40,8 +40,8 @@
   weight: 57
   evidenceRank: null
   sources:
-    - { catalogue: frontend-design-audit, ref: "pattern:empty-states-with-guidance" }
-    - { catalogue: frontend-design-audit, ref: "heuristic:10-help-and-documentation" }
+    - { origin: heuristics, ref: "pattern:empty-states-with-guidance" }
+    - { origin: heuristics, ref: "heuristic:10-help-and-documentation" }
   channels: [source, render]
   source:
     patterns:
@@ -65,9 +65,9 @@
   weight: 81
   evidenceRank: null
   sources:
-    - { catalogue: frontend-design-audit, ref: "heuristic:5-error-prevention" }
-    - { catalogue: frontend-design-audit, ref: "pattern:confirmation-dialog" }
-    - { catalogue: frontend-design-audit, ref: "pattern:undo-with-toast" }
+    - { origin: heuristics, ref: "heuristic:5-error-prevention" }
+    - { origin: heuristics, ref: "pattern:confirmation-dialog" }
+    - { origin: heuristics, ref: "pattern:undo-with-toast" }
   channels: [source]
   source:
     patterns:
@@ -91,7 +91,7 @@
   weight: 38
   evidenceRank: null
   sources:
-    - { catalogue: hallmark, ref: "antipattern:confirmation-dialogs-for-reversible-actions" }
+    - { origin: catalogue, ref: "antipattern:confirmation-dialogs-for-reversible-actions" }
   channels: [source]
   source:
     patterns:
@@ -111,8 +111,8 @@
   weight: 62
   evidenceRank: null
   sources:
-    - { catalogue: frontend-design-audit, ref: "heuristic:9-error-recovery" }
-    - { catalogue: frontend-design-audit, ref: "pattern:inline-validation" }
+    - { origin: heuristics, ref: "heuristic:9-error-recovery" }
+    - { origin: heuristics, ref: "pattern:inline-validation" }
   channels: [source]
   source:
     # Three or more text inputs before the form closes. A single-field
@@ -137,8 +137,8 @@
   weight: 59
   evidenceRank: null
   sources:
-    - { catalogue: frontend-design-audit, ref: "pattern:specific-actionable-error-messages" }
-    - { catalogue: frontend-design-audit, ref: "heuristic:9-error-recovery" }
+    - { origin: heuristics, ref: "pattern:specific-actionable-error-messages" }
+    - { origin: heuristics, ref: "heuristic:9-error-recovery" }
   channels: [source]
   source:
     patterns:
@@ -159,8 +159,8 @@
   weight: 71
   evidenceRank: null
   sources:
-    - { catalogue: frontend-design-audit, ref: "heuristic:15-tolerance-and-forgiveness" }
-    - { catalogue: frontend-design-audit, ref: "pattern:preserve-form-data-on-error" }
+    - { origin: heuristics, ref: "heuristic:15-tolerance-and-forgiveness" }
+    - { origin: heuristics, ref: "pattern:preserve-form-data-on-error" }
   channels: [source]
   source:
     patterns:
@@ -182,7 +182,7 @@
   weight: 58
   evidenceRank: null
   sources:
-    - { catalogue: frontend-design-audit, ref: "pattern:unsaved-changes-warning" }
+    - { origin: heuristics, ref: "pattern:unsaved-changes-warning" }
   channels: [source]
   source:
     patterns:
@@ -202,9 +202,9 @@
   weight: 68
   evidenceRank: null
   sources:
-    - { catalogue: hallmark, ref: "antipattern:hover-only-affordances" }
-    - { catalogue: impeccable, ref: content-hidden-at-rest }
-    - { catalogue: frontend-design-audit, ref: "heuristic:11-affordances-and-signifiers" }
+    - { origin: catalogue, ref: "antipattern:hover-only-affordances" }
+    - { origin: catalogue, ref: content-hidden-at-rest }
+    - { origin: heuristics, ref: "heuristic:11-affordances-and-signifiers" }
   channels: [source, render]
   source:
     patterns:
@@ -227,9 +227,9 @@
   weight: 79
   evidenceRank: null
   sources:
-    - { catalogue: hallmark, ref: "slop-gate:26" }
-    - { catalogue: frontend-design-audit, ref: "pattern:focus-visible-styles" }
-    - { catalogue: frontend-design-audit, ref: "heuristic:13-accessibility" }
+    - { origin: catalogue, ref: "slop-gate:26" }
+    - { origin: heuristics, ref: "pattern:focus-visible-styles" }
+    - { origin: heuristics, ref: "heuristic:13-accessibility" }
   channels: [source, render]
   source:
     patterns:
@@ -255,8 +255,8 @@
   weight: 73
   evidenceRank: null
   sources:
-    - { catalogue: frontend-design-audit, ref: "pattern:link-vs-button-semantics" }
-    - { catalogue: frontend-design-audit, ref: "pattern:keyboard-accessible-custom-elements" }
+    - { origin: heuristics, ref: "pattern:link-vs-button-semantics" }
+    - { origin: heuristics, ref: "pattern:keyboard-accessible-custom-elements" }
   channels: [source, render]
   source:
     patterns:
@@ -278,7 +278,7 @@
   weight: 44
   evidenceRank: null
   sources:
-    - { catalogue: frontend-design-audit, ref: "pattern:skip-navigation-link" }
+    - { origin: heuristics, ref: "pattern:skip-navigation-link" }
   channels: [source, render]
   source:
     patterns:
@@ -300,8 +300,8 @@
   weight: 55
   evidenceRank: null
   sources:
-    - { catalogue: frontend-design-audit, ref: "pattern:active-navigation-state" }
-    - { catalogue: frontend-design-audit, ref: "heuristic:1-visibility-of-system-status" }
+    - { origin: heuristics, ref: "pattern:active-navigation-state" }
+    - { origin: heuristics, ref: "heuristic:1-visibility-of-system-status" }
   channels: [source, render]
   source:
     patterns:
@@ -325,8 +325,8 @@
   weight: 70
   evidenceRank: null
   sources:
-    - { catalogue: frontend-design-audit, ref: "pattern:modal-escape-mechanisms" }
-    - { catalogue: frontend-design-audit, ref: "heuristic:3-user-control-and-freedom" }
+    - { origin: heuristics, ref: "pattern:modal-escape-mechanisms" }
+    - { origin: heuristics, ref: "heuristic:3-user-control-and-freedom" }
   channels: [source, render]
   source:
     patterns:
@@ -353,7 +353,7 @@
   weight: 42
   evidenceRank: null
   sources:
-    - { catalogue: frontend-design-audit, ref: "pattern:auto-save-for-long-forms" }
+    - { origin: heuristics, ref: "pattern:auto-save-for-long-forms" }
   channels: [source]
   source:
     patterns:

@@ -20,8 +20,8 @@
   weight: 96
   evidenceRank: 0
   sources:
-    - { catalogue: redpen, ref: fingerprint-macrostructure }
-    - { catalogue: hallmark, ref: "slop-gate:8" }
+    - { origin: redpen, ref: fingerprint-macrostructure }
+    - { origin: catalogue, ref: "slop-gate:8" }
   channels: [fingerprint]
   why: >-
     Same macrostructure, same section rhythm, same hero treatment as another
@@ -41,9 +41,9 @@
   weight: 93
   evidenceRank: 0
   sources:
-    - { catalogue: redpen, ref: fingerprint-archetype }
-    - { catalogue: hallmark, ref: "slop-gate:8" }
-    - { catalogue: unslop-ui, ref: hero-three-cards }
+    - { origin: redpen, ref: fingerprint-archetype }
+    - { origin: catalogue, ref: "slop-gate:8" }
+    - { origin: study, ref: hero-three-cards }
   channels: [fingerprint]
   why: >-
     Hero, three features, testimonial, CTA, footer — in that order. This exact
@@ -60,7 +60,7 @@
   weight: 61
   evidenceRank: null
   sources:
-    - { catalogue: redpen, ref: fingerprint-typography }
+    - { origin: redpen, ref: fingerprint-typography }
   channels: [fingerprint]
   why: >-
     Shared type tokens across a site are correct. Identical *usage* — same
@@ -78,7 +78,7 @@
   weight: 64
   evidenceRank: null
   sources:
-    - { catalogue: redpen, ref: fingerprint-vocabulary }
+    - { origin: redpen, ref: fingerprint-vocabulary }
   channels: [fingerprint]
   why: >-
     Across every recorded page, the section kinds collapse to hero, card grid,
@@ -96,7 +96,7 @@
   weight: 40
   evidenceRank: null
   sources:
-    - { catalogue: redpen, ref: fingerprint-palette }
+    - { origin: redpen, ref: fingerprint-palette }
   channels: [fingerprint]
   why: >-
     Weaker than the structural rules and often correct — brand consistency is a

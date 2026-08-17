@@ -6,7 +6,7 @@ import { runScan, ruleIds } from './scan.js';
 import { meetsThreshold } from './promote.js';
 import { renderTerminal } from './report/terminal.js';
 import { renderMarkdown } from './report/markdown.js';
-import { loadCorpus, catalogueCounts, ruleById } from './corpus/load.js';
+import { loadCorpus, originCounts, ruleById } from './corpus/load.js';
 import {
   loadBaseline,
   saveBaseline,
@@ -375,7 +375,7 @@ function cmdWhy(args: Args): void {
     }\n`,
   );
   process.stdout.write(`  ${pc.dim('channels')}   ${rule.channels.join(', ')}\n`);
-  process.stdout.write(`  ${pc.dim('from')}       ${rule.sources.map((s) => `${s.catalogue}:${s.ref}`).join('\n             ')}\n\n`);
+  process.stdout.write(`  ${pc.dim('from')}       ${rule.sources.map((s) => `${s.origin}:${s.ref}`).join('\n             ')}\n\n`);
   process.stdout.write(`  ${rule.why}\n\n`);
   process.stdout.write(`  ${pc.green('fix')}  ${rule.fix}\n\n`);
   if (rule.legitimateWhen) {
@@ -451,7 +451,7 @@ async function cmdWhyScore(root: string, args: Args): Promise<void> {
 }
 
 function cmdSources(): void {
-  const counts = catalogueCounts();
+  const counts = originCounts();
   const total = loadCorpus().length;
   process.stdout.write(`\n  ${pc.bold(`${total} rules`)} merged from:\n\n`);
   for (const [cat, n] of Object.entries(counts).sort((a, b) => b[1] - a[1])) {

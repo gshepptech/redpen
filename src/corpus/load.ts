@@ -219,11 +219,11 @@ export function ruleById(id: string): Rule | undefined {
 }
 
 /** Provenance rollup, for `redpen sources` and the NOTICE check. */
-export function catalogueCounts(): Record<string, number> {
+export function originCounts(): Record<string, number> {
   const counts: Record<string, number> = {};
   for (const rule of loadCorpus()) {
     for (const s of rule.sources) {
-      counts[s.catalogue] = (counts[s.catalogue] ?? 0) + 1;
+      counts[s.origin] = (counts[s.origin] ?? 0) + 1;
     }
   }
   return counts;

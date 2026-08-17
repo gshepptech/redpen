@@ -11,9 +11,9 @@
   weight: 75
   evidenceRank: 7
   sources:
-    - { catalogue: unslop-ui, ref: emoji-as-icons }
-    - { catalogue: hallmark, ref: "slop-gate:30" }
-    - { catalogue: hallmark, ref: "antipattern:generic-emoji-as-feature-icon" }
+    - { origin: study, ref: emoji-as-icons }
+    - { origin: catalogue, ref: "slop-gate:30" }
+    - { origin: catalogue, ref: "antipattern:generic-emoji-as-feature-icon" }
   channels: [source, render]
   source:
     patterns:
@@ -40,9 +40,9 @@
   weight: 58
   evidenceRank: null
   sources:
-    - { catalogue: hallmark, ref: "slop-gate:30" }
-    - { catalogue: hallmark, ref: "antipattern:mismatched-icon-sets" }
-    - { catalogue: frontend-design-audit, ref: "pattern:consolidate-icon-usage" }
+    - { origin: catalogue, ref: "slop-gate:30" }
+    - { origin: catalogue, ref: "antipattern:mismatched-icon-sets" }
+    - { origin: heuristics, ref: "pattern:consolidate-icon-usage" }
   channels: [source, render]
   source:
     patterns:
@@ -71,8 +71,8 @@
   weight: 64
   evidenceRank: 9
   sources:
-    - { catalogue: impeccable, ref: icon-tile-stack }
-    - { catalogue: hallmark, ref: "antipattern:icon-tile-feature-card" }
+    - { origin: catalogue, ref: icon-tile-stack }
+    - { origin: catalogue, ref: "antipattern:icon-tile-feature-card" }
   channels: [render, vision]
   render:
     check: icon-tile-above-heading
@@ -97,7 +97,7 @@
   weight: 84
   evidenceRank: null
   sources:
-    - { catalogue: impeccable, ref: broken-image }
+    - { origin: catalogue, ref: broken-image }
   channels: [render]
   render:
     check: image-load-failure
@@ -115,8 +115,8 @@
   weight: 40
   evidenceRank: null
   sources:
-    - { catalogue: impeccable, ref: shape-assembled-illustration }
-    - { catalogue: hallmark, ref: "antipattern:ai-illustration-look" }
+    - { origin: catalogue, ref: shape-assembled-illustration }
+    - { origin: catalogue, ref: "antipattern:ai-illustration-look" }
   channels: [render, vision]
   render:
     check: primitive-shape-cluster
@@ -142,8 +142,8 @@
   weight: 60
   evidenceRank: null
   sources:
-    - { catalogue: hallmark, ref: "slop-gate:33" }
-    - { catalogue: frontend-design-audit, ref: "heuristic:13-accessibility" }
+    - { origin: catalogue, ref: "slop-gate:33" }
+    - { origin: heuristics, ref: "heuristic:13-accessibility" }
   channels: [source, render]
   source:
     patterns:
@@ -165,8 +165,8 @@
   weight: 80
   evidenceRank: null
   sources:
-    - { catalogue: frontend-design-audit, ref: "pattern:image-alt-text" }
-    - { catalogue: frontend-design-audit, ref: "heuristic:13-accessibility" }
+    - { origin: heuristics, ref: "pattern:image-alt-text" }
+    - { origin: heuristics, ref: "heuristic:13-accessibility" }
   channels: [source, render]
   source:
     patterns:

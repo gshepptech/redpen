@@ -1416,9 +1416,8 @@ const CHECKS_LIB = `
   /* ---- browser surfaces -------------------------------------------------
    * The parts nobody drew still carry the design. Selection, caret, scrollbar,
    * focus ring, underline offset and tabular numerals all ship with browser
-   * defaults belonging to no design system — impeccable's craft floor calls
-   * this the cheapest signal a page was built rather than assembled, and the
-   * one models skip most reliably.
+   * defaults belonging to no design system — the cheapest signal a page was built
+   * rather than assembled, and the one models skip most reliably.
    *
    * All six read the stylesheets rather than computed styles, because a
    * pseudo-element that was never authored has no computed style to inspect.
@@ -1539,7 +1538,7 @@ const CHECKS_LIB = `
   };
 
   /* ---- token drift ------------------------------------------------------
-   * impeccable checks literal values against a declared DESIGN.md. redpen
+   * the prior art checks literal values against a declared DESIGN.md. redpen
    * reads the declaration the project already has: the custom properties on
    * :root. A project that defines --color-* and then hard-codes hex values
    * elsewhere has drifted from its own system, and no external file is needed

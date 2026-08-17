@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { loadCorpus, rulesForChannel, ruleById, catalogueCounts } from '../dist/corpus/load.js';
+import { loadCorpus, rulesForChannel, ruleById, originCounts } from '../dist/corpus/load.js';
 
 test('corpus loads and every rule validates', () => {
   const rules = loadCorpus();
@@ -11,7 +11,7 @@ test('every rule carries provenance', () => {
   for (const r of loadCorpus()) {
     assert.ok(r.sources.length > 0, `${r.id} has no sources`);
     for (const s of r.sources) {
-      assert.ok(s.catalogue && s.ref, `${r.id} has a malformed source`);
+      assert.ok(s.origin && s.ref, `${r.id} has a malformed source`);
     }
   }
 });
@@ -52,16 +52,18 @@ test('weights sit in range and measured tells outrank unmeasured ones on average
 });
 
 test('the merge collapsed real overlap', () => {
-  const counts = catalogueCounts();
+  const counts = originCounts();
   const references = Object.values(counts).reduce((a, b) => a + b, 0);
   const rules = loadCorpus().length;
   assert.ok(
     references > rules * 1.5,
-    `expected heavy overlap between catalogues; ${references} refs across ${rules} rules`,
+    `expected heavy overlap between sources; ${references} refs across ${rules} rules`,
   );
-  // Every upstream catalogue must actually be represented.
-  for (const c of ['impeccable', 'hallmark', 'unslop-ui', 'frontend-design-audit']) {
-    assert.ok(counts[c] > 0, `${c} contributed nothing`);
+  // Every kind of authority must actually be represented. A corpus that lost
+  // its `study` refs would be pure taste; one that lost `redpen` would be a
+  // reprint rather than a merge.
+  for (const c of ['catalogue', 'study', 'heuristics', 'redpen']) {
+    assert.ok(counts[c] > 0, `nothing in the corpus is backed by ${c}`);
   }
 });
 
@@ -78,7 +80,7 @@ test('rulesForChannel and ruleById agree with the corpus', () => {
   assert.equal(ruleById('does-not-exist'), undefined);
 });
 
-/* ---- ported from impeccable: kind, surfaces, advisory ---------------- */
+/* ---- kind, surfaces, advisory ----------------------------------------- */
 
 test('every rule declares whether it is slop or quality', () => {
   for (const r of loadCorpus()) {
@@ -118,9 +120,8 @@ test('a rule that names surfaces never names all three', () => {
 });
 
 test('the rules that punish familiarity are off on an operate surface', () => {
-  // impeccable's operate.md: on a task surface familiarity is a feature, one
-  // type family is often right, and consistent repeating components are the
-  // point. These rules must not fire there.
+  // On a task surface familiarity is a feature: one type family is often right,
+  // and consistent repeating components are the point. These must not fire there.
   const rules = new Map(loadCorpus().map((r) => [r.id, r]));
   for (const id of ['default-sans', 'monotonous-spacing', 'ghost-cards', 'over-rounding']) {
     const r = rules.get(id);

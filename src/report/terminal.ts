@@ -149,7 +149,7 @@ function renderFinding(f: Finding, opts: TerminalOptions): string[] {
   }
 
   if (opts.verbose) {
-    out.push(pc.dim(`      from ${f.sources.map((s) => `${s.catalogue}:${s.ref}`).join(', ')}`));
+    out.push(pc.dim(`      from ${f.sources.map((s) => `${s.origin}:${s.ref}`).join(', ')}`));
   }
 
   out.push('');
