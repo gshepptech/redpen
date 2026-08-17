@@ -383,3 +383,47 @@ test('a contrast failure that only exists in dark mode is found', opts, async ()
     'light mode passes honestly at ~6.2:1 and must not be blamed',
   );
 });
+
+test('a color-mix control is measured against its composited ground', opts, async () => {
+  // Three traps, reported from the field with measurements.
+  //
+  // 1. color-mix serialises as color(srgb r g b / a), never rgb(), so a parser
+  //    that only knows rgba() returns null for every tinted control.
+  // 2. The alpha is on the element being measured, not behind it. Used
+  //    directly it yields 1.00:1 — the loudest possible finding, on a control
+  //    that is actually past 13:1.
+  // 3. One level of compositing is not enough: the input sits on a panel which
+  //    sits on the body.
+  //
+  // The reason this needs its own fixture rather than riding on the dark-mode
+  // one: the naive numbers are 1.00 in light AND 1.00 in dark. Comparing the
+  // two schemes cannot find a bug that is equally wrong in both.
+  const url = await serve(join(HERE, 'fixtures', 'mixed'));
+  const result = await runScan({
+    root: join(HERE, 'fixtures', 'mixed'),
+    urls: [url],
+    viewports: [1440],
+    ephemeral: true,
+  });
+
+  const contrast = result.findings.find((f) => f.ruleId === 'low-contrast');
+  const onControls = (contrast?.evidence ?? []).filter((e) =>
+    /input|\.btn|button/.test(e.selector ?? ''),
+  );
+  assert.deepEqual(
+    onControls.map((e) => e.excerpt),
+    [],
+    'a control at >13:1 must not be reported as low contrast',
+  );
+
+  // The discriminating case. A 7% tint is forgiving — dropping the unparsed
+  // layer barely moves the ground, so the answer stays right by accident. A
+  // near-opaque wash is not: skip it and you measure light text against the
+  // light panel underneath and report a failure that does not exist.
+  const onWash = (contrast?.evidence ?? []).filter((e) => /wash/.test(e.selector ?? ''));
+  assert.deepEqual(
+    onWash.map((e) => e.excerpt),
+    [],
+    'light text on a near-opaque dark wash is readable; the wash must be composited, not skipped',
+  );
+});

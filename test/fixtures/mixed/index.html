@@ -1,0 +1,44 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>color-mix controls</title>
+<style>
+  /* Controls tinted with color-mix over a panel over the body — two levels of
+     translucency, which is the shape that breaks a naive contrast check.
+
+     The computed background comes back as color(srgb r g b / 0.07), not rgb(),
+     so a parser that only knows rgba() sees nothing. Used directly it puts the
+     text against a 7%-alpha colour and measures 1.00:1 — the strongest possible
+     "invisible text" finding on a control that is actually past 13:1.
+
+     The trap this fixture exists for: those numbers are 1.00 in BOTH schemes,
+     so comparing light against dark cannot find it. It is equally wrong twice. */
+  :root { --bg: #ddd; --panel: #eceae7; --fg: #16161a; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #06070a; --panel: #121419; --fg: #e9eaef; }
+  }
+  body { background: var(--bg); color: var(--fg); font: 16px/1.6 system-ui; margin: 0; padding: 40px; }
+  .panel { background: var(--panel); padding: 24px; border-radius: 8px; }
+  input[type="search"], .btn {
+    background: color-mix(in srgb, var(--fg) 7%, transparent);
+    color: var(--fg);
+    border: 0; border-radius: 6px; padding: 12px 14px; min-height: 44px;
+    font-size: 14px;
+  }
+  /* The case that actually distinguishes a parser that reads color-mix from
+     one that skips it. A near-opaque dark wash over the light panel, carrying
+     light text. Skip the wash and you measure light text on a light panel and
+     report a contrast failure that is not there; read it and the ground is
+     dark and the text is fine. Trap 1 is invisible on a 7% tint because
+     dropping the layer barely moves the ground — it bites here. */
+  .wash {
+    background: color-mix(in srgb, #101014 94%, transparent);
+    color: #f4f4f6; padding: 20px; border-radius: 8px; margin-top: 16px;
+  }
+</style>
+<div class="panel">
+  <label for="q">Search</label>
+  <input id="q" type="search" value="refund">
+  <button class="btn">Filter these results</button>
+  <p>A paragraph of ordinary prose sitting on the same panel, so the page has real text on it as well as controls.</p>
+  <div class="wash"><p>Light text on a near-opaque dark wash. Readable in fact, and reported as a contrast failure by anything that cannot parse the wash.</p></div>
+</div>

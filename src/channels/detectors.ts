@@ -76,6 +76,25 @@ ${CHECKS_LIB}
 const OKLCH_LIB = `
   function parseColor(str) {
     if (!str) return null;
+
+    // Anything that went through color-mix() serialises as color(srgb r g b / a)
+    // with 0-1 channels, not rgb(). A parser that only knows rgba() returns null
+    // for every control on a sheet that tints with color-mix — and null here
+    // means the translucent layer silently drops out of the composite, so the
+    // measured ground is the layer behind it rather than the one on screen.
+    var fn = /color\\(\\s*srgb\\s+([^)]+)\\)/.exec(str);
+    if (fn) {
+      var p = fn[1].split(/[\\s\\/]+/).filter(Boolean).map(parseFloat);
+      if (p.length < 3) return null;
+      var fa = p.length > 3 ? p[3] : 1;
+      return {
+        r: p[0] * 255,
+        g: p[1] * 255,
+        b: p[2] * 255,
+        a: isNaN(fa) ? 1 : fa,
+      };
+    }
+
     var m = /rgba?\\(([^)]+)\\)/.exec(str);
     if (!m) return null;
     var parts = m[1].split(/[\\s,\\/]+/).filter(Boolean).map(parseFloat);
