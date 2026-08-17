@@ -1,0 +1,20 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Four borrowed checks</title>
+<style>
+  body { background:#fdfcfb; color:#16161a; font:16px/1.6 system-ui; margin:0; padding:40px; }
+  /* 14px on a text field: fine as a label size, a defect on an input, because
+     iOS zooms the page and does not zoom back. */
+  input[type="search"] { font-size: 14px; padding: 10px; min-height: 44px; }
+  /* Two controls that each clear 44px and touch each other. */
+  .packed { display: flex; gap: 0; margin-top: 24px; }
+  .packed button { min-height: 44px; min-width: 44px; }
+  /* A control sized for a shorter string than it holds. */
+  .narrow { width: 90px; min-height: 44px; margin-top: 24px; }
+</style>
+<label for="q">Search</label>
+<input id="q" type="search" value="refund">
+
+<div class="packed"><button>Claim</button><button>Release</button></div>
+
+<button class="narrow">Start the agent now</button>

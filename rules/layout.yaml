@@ -377,3 +377,58 @@
   fix: >-
     Remove it and let the composition carry the space, or replace it with
     something that means something — a real diagram, a real image.
+
+- id: empty-grid-cell
+  kind: slop
+  surfaces: [persuade, read]
+  title: A grid whose last row does not fill
+  category: layout
+  severity: medium
+  weight: 57
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: empty-bento-cell }
+  channels: [render]
+  render:
+    check: empty-grid-cell
+    params:
+      minItems: 4
+  why: >-
+    Five cards in a three-column grid leaves a hole, and the hole reads as a
+    missing card rather than a choice. It happens when the layout was written
+    for a number of items the content did not supply — the grid was decided
+    first and the content counted afterwards.
+  fix: >-
+    Make the column count divide the item count, or let the last item span the
+    remaining space so the row closes. If neither works, the content probably
+    wants a different shape than a grid.
+  legitimateWhen: >-
+    A masonry or auto-flow layout where items are deliberately different sizes
+    has no concept of an unfilled row.
+
+- id: viewport-height-jump
+  kind: quality
+  title: Full-height sections measured against the wrong viewport
+  category: layout
+  severity: medium
+  weight: 63
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: dynamic-viewport-units }
+  channels: [source]
+  source:
+    patterns:
+      - '\b(h|min-h|max-h)-screen\b'
+      - '(?:^|[;{\s])(?:height|min-height|max-height)\s*:\s*100vh\b'
+    suppress: 'redpen-ignore|@supports|100dvh|100svh'
+    minHits: 2
+  why: >-
+    On mobile browsers `100vh` is the viewport with the address bar hidden, so
+    a section sized to it is taller than the screen on load and the page jumps
+    as the bar retracts. The author never sees it, because desktop has no
+    retracting bar — it is a defect that only exists on the device most of the
+    traffic uses.
+  fix: >-
+    Use `100dvh` for the height that follows the bar, or `100svh` for the
+    smallest guaranteed viewport when you need no jump at all. Keep `100vh` as
+    a fallback underneath if you support browsers without the dynamic units.

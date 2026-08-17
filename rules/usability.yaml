@@ -363,3 +363,83 @@
     Seven or more fields with no recovery path if the tab closes.
   fix: >-
     Debounced write to local storage, restored on mount, cleared on submit.
+
+- id: input-zoom-font-size
+  kind: quality
+  title: A text field below the size that stops iOS zooming
+  category: usability
+  severity: high
+  weight: 74
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: mobile-input-zoom-floor }
+    - { origin: heuristics, ref: "heuristic:14-perceptibility" }
+  channels: [render]
+  render:
+    check: input-zoom-font-size
+    params:
+      minFontSizePx: 16
+  why: >-
+    iOS Safari zooms the entire page when a text field under 16px takes focus,
+    and does not zoom back out when the field is blurred. The layout the author
+    tested is not the layout the user ends up in, and nothing looks wrong until
+    someone taps a field — which is why this survives review and ships.
+
+    It is a separate rule from the general type floor on purpose: 14px is a
+    perfectly good size for a label and a defect on an input, and one number
+    cannot say both.
+  fix: >-
+    16px minimum computed font-size on every text-entry field. Scale the field
+    down with padding and height if it needs to look smaller; the zoom triggers
+    on font-size alone.
+
+- id: adjacent-tap-targets
+  kind: quality
+  title: Controls with no gap between them
+  category: usability
+  severity: medium
+  weight: 66
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: tap-target-separation }
+    - { origin: heuristics, ref: "heuristic:13-touch-target-size" }
+  channels: [render]
+  render:
+    check: adjacent-tap-targets
+    params:
+      minGapPx: 8
+  why: >-
+    Size is only half of a tap target. Two controls that each clear 44px but
+    touch each other still produce mis-taps, because a finger contact patch is
+    wider than the gap and the wrong one wins. A row of icon buttons packed
+    edge to edge is the usual shape.
+  fix: >-
+    8px minimum between adjacent controls, measured between their boxes rather
+    than their icons. Padding inside a control does not count — the gap has to
+    be outside it.
+  legitimateWhen: >-
+    Segmented controls and button groups are deliberately contiguous, because
+    they read as one control with several states rather than several controls.
+
+- id: wrapped-control-label
+  kind: quality
+  title: A button label wrapping onto a second line
+  category: usability
+  severity: medium
+  weight: 58
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: button-label-wrap }
+  channels: [render]
+  render:
+    check: wrapped-control-label
+    params:
+      desktopOnlyAbovePx: 1000
+  why: >-
+    The control was sized for a shorter string than the one it holds. It reads
+    as an accident rather than a decision, and it is the first thing a longer
+    translation breaks — German runs about a third longer than English, so a
+    label that just fits in English does not.
+  fix: >-
+    Shorten the label or let the control size to its content. A fixed width on
+    a control that holds translatable text is the underlying mistake.

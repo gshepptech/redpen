@@ -456,3 +456,50 @@ test('a theme the page toggles itself is exercised, not just the OS preference',
     'the media-query theme passes honestly and must not be blamed',
   );
 });
+
+test('the four borrowed checks each fire on the shape they describe', opts, async () => {
+  // Ported from two upstream catalogues. Each is a defect a person can act on
+  // and none of them was reachable from an existing rule.
+  const url = await serve(join(HERE, 'fixtures', 'borrowed'));
+  const result = await runScan({
+    root: join(HERE, 'fixtures', 'borrowed'),
+    urls: [url],
+    viewports: [1440],
+    ephemeral: true,
+  });
+  const ids = new Set(result.findings.map((f) => f.ruleId));
+
+  assert.ok(ids.has('input-zoom-font-size'), '14px on a text field zooms iOS and does not zoom back');
+  assert.ok(ids.has('adjacent-tap-targets'), 'two 44px controls touching still produce mis-taps');
+  assert.ok(ids.has('wrapped-control-label'), 'a label wrapping means the control was sized for a shorter string');
+});
+
+test('an unfilled grid row is a hole on a marketing page and a record count in an app', opts, async () => {
+  // The rule is scoped away from operate deliberately: five records in a
+  // three-column grid is how many records there are. On a persuade surface the
+  // same shape means a sixth card was assumed and never written.
+  const url = await serve(join(HERE, 'fixtures', 'ragged'));
+  const result = await runScan({
+    root: join(HERE, 'fixtures', 'ragged'),
+    urls: [url],
+    viewports: [1440],
+    ephemeral: true,
+  });
+  assert.ok(
+    result.findings.some((f) => f.ruleId === 'empty-grid-cell'),
+    '5 cards in 3 columns leaves a hole in the last row',
+  );
+
+  // Pin the cause, not just the effect. The grid read as five rows of records
+  // and classified the page operate at 0.8, which switched the rule off along
+  // with 20 others written for exactly this kind of page.
+  //
+  // Abstaining is a fair outcome on a fixture this thin — what must not happen
+  // is calling it operate, because that is a confident wrong answer rather
+  // than an admitted absence of one.
+  assert.notEqual(
+    result.surfaces[url]?.surface,
+    'operate',
+    'a feature grid is cards side by side, not a list of records going down',
+  );
+});

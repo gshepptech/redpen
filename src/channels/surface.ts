@@ -144,7 +144,18 @@ export function surfaceSource(): string {
       // a page of sections, not a list of records.
       var heights = kids.map(function (k) { return Math.round(k.getBoundingClientRect().height); });
       var uniform = heights.filter(function (h) { return Math.abs(h - heights[0]) <= 8; }).length;
-      if (same >= kids.length * 0.8 && uniform >= kids.length * 0.8) {
+
+      // Stacked, not side by side. Without this a five-card feature grid on a
+      // marketing page read as five rows of records and classified the page
+      // operate at 0.8, switching off 21 rules that exist for exactly that
+      // page. Records are a list going down; feature cards sit in a row.
+      // Records shown as cards still stack into rows, so each row of them
+      // shares a top edge and the count still lands.
+      var tops = {};
+      kids.forEach(function (k) { tops[Math.round(k.getBoundingClientRect().top)] = 1; });
+      var stacked = Object.keys(tops).length >= kids.length * 0.8;
+
+      if (stacked && same >= kids.length * 0.8 && uniform >= kids.length * 0.8) {
         best = Math.max(best, kids.length);
       }
     });

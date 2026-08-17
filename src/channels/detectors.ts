@@ -913,6 +913,116 @@ const CHECKS_LIB = `
     });
   }
 
+  CHECKS['input-zoom-font-size'] = function (p) {
+    // iOS Safari zooms the whole page when a text input under 16px takes
+    // focus, and does not zoom back out. The layout the author tested is not
+    // the layout the user gets, and nothing about the page looks wrong until
+    // someone taps a field.
+    var floor = p.minFontSizePx || 16;
+    var types = /^(text|email|password|search|tel|url|number|date|datetime-local|month|week|time)$/;
+    return all('input, select, textarea').filter(function (el) {
+      if (el.tagName === 'INPUT') {
+        var t = (el.getAttribute('type') || 'text').toLowerCase();
+        if (!types.test(t)) return false;
+      }
+      return parseFloat(getComputedStyle(el).fontSize) < floor;
+    }).map(function (el) {
+      return hit(el, getComputedStyle(el).fontSize + ' on a focusable field — iOS zooms below ' + floor + 'px');
+    });
+  };
+
+  CHECKS['adjacent-tap-targets'] = function (p) {
+    // Size is only half of a tap target. Two 44px buttons touching each other
+    // still produce mis-taps, because the finger contact patch is wider than
+    // the gap between them.
+    var min = p.minGapPx || 8;
+    var controls = all('a, button, input, select, [role="button"], [role="tab"], [role="menuitem"]')
+      .filter(function (el) {
+        var r = el.getBoundingClientRect();
+        return r.width >= 12 && r.height >= 12;
+      });
+    var out = [];
+    for (var i = 0; i < controls.length && out.length < 8; i++) {
+      for (var j = i + 1; j < controls.length; j++) {
+        var a = controls[i].getBoundingClientRect();
+        var b = controls[j].getBoundingClientRect();
+        if (controls[i].contains(controls[j]) || controls[j].contains(controls[i])) continue;
+        // Gap along whichever axis they are separated on. Overlapping on both
+        // means one is stacked over the other, which is a different defect.
+        var gapX = Math.max(a.left - b.right, b.left - a.right);
+        var gapY = Math.max(a.top - b.bottom, b.top - a.bottom);
+        var overlapX = gapX < 0;
+        var overlapY = gapY < 0;
+        if (overlapX && overlapY) continue;
+        var gap = overlapY ? gapX : (overlapX ? gapY : Math.max(gapX, gapY));
+        if (gap >= 0 && gap < min) {
+          out.push(hit(controls[i], Math.round(gap) + 'px from the next control, floor is ' + min + 'px — "' + textOf(controls[i]) + '"'));
+          break;
+        }
+      }
+    }
+    return out;
+  };
+
+  CHECKS['wrapped-control-label'] = function (p) {
+    // A button whose label wraps was sized for a shorter string than the one
+    // it holds. It reads as a layout accident rather than a decision, and it
+    // is the first thing a longer translation breaks.
+    var minWidth = p.desktopOnlyAbovePx || 1000;
+    if (window.innerWidth < minWidth) return [];
+    return all('button, a[class], [role="button"], input[type=submit]').filter(function (el) {
+      var t = textOf(el);
+      if (!t || t.length < 2) return false;
+      var s = getComputedStyle(el);
+      if (s.display === 'inline') return false;
+      if (s.whiteSpace === 'nowrap' || s.whiteSpace === 'pre') return false;
+      // Comparing box height to line height counted an icon beside the label,
+      // or any extra padding, as a wrap — it fired on a correct button in the
+      // clean fixture. Count the text's own line boxes instead: a Range over
+      // the text node yields one client rect per rendered line.
+      var lines = 0;
+      for (var i = 0; i < el.childNodes.length; i++) {
+        var n = el.childNodes[i];
+        if (n.nodeType !== 3 || !n.textContent.trim()) continue;
+        var range = document.createRange();
+        range.selectNodeContents(n);
+        var rects = range.getClientRects();
+        // Rects on the same baseline are one line split by inline markup.
+        var tops = {};
+        for (var k = 0; k < rects.length; k++) {
+          if (rects[k].width > 0) tops[Math.round(rects[k].top)] = 1;
+        }
+        lines += Object.keys(tops).length;
+      }
+      return lines > 1;
+    }).map(function (el) {
+      return hit(el, 'label wraps to more than one line at ' + window.innerWidth + 'px — "' + textOf(el) + '"');
+    });
+  };
+
+  CHECKS['empty-grid-cell'] = function (p) {
+    // A grid whose item count does not fill its final row. The gap reads as a
+    // missing card rather than a choice, and it is what happens when a layout
+    // was written for a number of items the content did not supply.
+    var minItems = p.minItems || 4;
+    return all('*').filter(function (el) {
+      var s = getComputedStyle(el);
+      if (s.display !== 'grid') return false;
+      var cols = (s.gridTemplateColumns || '').split(' ').filter(Boolean).length;
+      if (cols < 2) return false;
+      var items = Array.prototype.slice.call(el.children).filter(visible);
+      if (items.length < minItems) return false;
+      // A single full row, or an exactly-filled grid, is fine.
+      if (items.length <= cols) return false;
+      return items.length % cols !== 0;
+    }).map(function (el) {
+      var s = getComputedStyle(el);
+      var cols = (s.gridTemplateColumns || '').split(' ').filter(Boolean).length;
+      var n = Array.prototype.slice.call(el.children).filter(visible).length;
+      return hit(el, n + ' items in a ' + cols + '-column grid leaves ' + (cols - (n % cols)) + ' empty cell(s) in the last row');
+    });
+  };
+
   CHECKS['horizontal-scroll'] = function () {
     var doc = document.documentElement;
     var rootClips = /clip|hidden/.test(getComputedStyle(doc).overflowX);
