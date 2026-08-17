@@ -2,6 +2,7 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative, extname } from 'node:path';
 import { rulesForChannel } from '../corpus/load.js';
 import type { RawFinding, Evidence, Rule } from '../types.js';
+import { findCancelledFloors } from './cascade.js';
 
 /**
  * The source channel: regex over the repo.
@@ -138,6 +139,7 @@ export function scanSource(opts: SourceScanOptions): {
   filesScanned: number;
 } {
   const compiled = compile(rulesForChannel('source'));
+  const cascadeRules = rulesForChannel('source').filter((r) => r.cascade);
   const files = opts.files ?? walk(opts.root);
 
   // ruleId -> evidence collected across every file
@@ -154,6 +156,22 @@ export function scanSource(opts: SourceScanOptions): {
     const rel = relative(opts.root, file) || file;
     const lines = text.split('\n');
     const ext = extname(file);
+
+    if (ext === '.css') {
+      for (const rule of cascadeRules) {
+        const params = (rule.cascade!.params ?? {}) as { floorPx?: number };
+        for (const conflict of findCancelledFloors(text, params)) {
+          const list = hits.get(rule.id) ?? [];
+          list.push({
+            channel: 'source',
+            location: rel,
+            line: conflict.line,
+            excerpt: conflict.summary,
+          });
+          hits.set(rule.id, list);
+        }
+      }
+    }
 
     for (const c of compiled) {
       if (c.extensions && !c.extensions.has(ext)) continue;
@@ -211,6 +229,19 @@ export function scanSource(opts: SourceScanOptions): {
 
     findings.push({
       ruleId: c.rule.id,
+      channel: 'source',
+      evidence: dedupe(evidence).slice(0, 12),
+    });
+  }
+
+  // Cascade rules have no compiled patterns, so the loop above never sees
+  // them. Their hits are already exact — each one is a named pair of rules,
+  // not an aggregate — so there is no minHits threshold to clear.
+  for (const rule of cascadeRules) {
+    const evidence = hits.get(rule.id);
+    if (!evidence?.length) continue;
+    findings.push({
+      ruleId: rule.id,
       channel: 'source',
       evidence: dedupe(evidence).slice(0, 12),
     });

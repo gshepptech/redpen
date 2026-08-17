@@ -106,6 +106,18 @@ export interface RenderMatcher {
   minHits?: number;
 }
 
+/**
+ * Cascade matcher: a structural question about the stylesheet itself.
+ *
+ * The source channel is otherwise regex over text, which cannot answer
+ * "does this rule cancel a promise another rule made" — that needs
+ * specificity. Rules using this run over .css files only.
+ */
+export interface CascadeMatcher {
+  check: string;
+  params?: Record<string, unknown>;
+}
+
 /** Vision-channel matcher: a question put to a model looking at the screenshot. */
 export interface VisionMatcher {
   /** The yes/no question. "Yes" means the tell is present. */
@@ -165,6 +177,7 @@ export interface Rule {
   source?: SourceMatcher;
   render?: RenderMatcher;
   vision?: VisionMatcher;
+  cascade?: CascadeMatcher;
   /** Why it reads as machine-made. One or two sentences, shown in the report. */
   why: string;
   /** What to do instead. Concrete — a value, a property, a structural move. */

@@ -202,12 +202,17 @@
   fix: >-
     Find the element that exceeds the viewport and fix it at source — wrap the
     flex row, drop the 100vw, or give the wide thing its own `overflow-x: auto`
-    container. Do not reach for `overflow-x: clip` on the root: it hides the
-    symptom while leaving the content off-screen, and because clip also sets
-    scrollWidth equal to clientWidth it defeats every measurement that would
-    have caught it. A project that took that advice put three of five
-    navigation destinations past the right edge at 375px, unreachable, and
-    measured clean by every overflow metric there is.
+    container.
+
+    If a finding here says "unreachable", check first for `overflow-x: clip`
+    or `hidden` on html or body. Earlier versions of this rule recommended that
+    clip as the fix, so if you took redpen's advice at any point, that is where
+    to look — the clip hides the symptom while leaving the content off-screen,
+    and because it also sets scrollWidth equal to clientWidth it defeats every
+    measurement that would otherwise have caught it. One project that adopted
+    it put three of five navigation destinations and a destructive action past
+    the right edge at 375px, unreachable, and measured clean by every overflow
+    metric there is. Remove the clip, then fix what the page then reveals.
 
 - id: text-overflow
   kind: quality

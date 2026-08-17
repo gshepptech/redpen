@@ -104,3 +104,41 @@
   fix: >-
     Route every family through a token. If the face is intentional, declare it;
     if it is a fallback that won, fix the loading rather than the symptom.
+
+- id: cancelled-size-floor
+  kind: quality
+  title: A component rule cancels the size floor the base rule promised
+  category: system
+  severity: high
+  weight: 81
+  evidenceRank: null
+  sources:
+    - { origin: redpen, ref: cascade-cancelled-floor }
+    - { origin: heuristics, ref: "heuristic:13-touch-target-size" }
+  channels: [source]
+  cascade:
+    check: cancelled-size-floor
+    params:
+      floorPx: 44
+  why: >-
+    The base rule promises `min-height: 44px` and a more specific rule pins
+    `height` below it. `height` beats `min-height` when it wins the cascade,
+    so the floor is silently void wherever the component rule applies — and
+    because the two declarations usually sit hundreds of lines apart, the
+    person reading either one sees nothing wrong.
+
+    The render channel can only report the symptom: this control computes to
+    32px. That names a button, not a cause, so the same defect gets fixed once
+    per component. A project reported fixing this three times before the
+    pattern was visible. This rule reports the pair instead, with both
+    selectors and both specificities, because the pair is what you change.
+  fix: >-
+    Decide which rule owns the size. Either drop the `height` and let the
+    floor stand, or if the component genuinely needs to be smaller, say so
+    where the floor is defined rather than overriding it from a distance —
+    a `:where()` wrapper on the base rule drops its specificity to zero and
+    makes the component rule's win explicit rather than accidental.
+  legitimateWhen: >-
+    A control that is never a touch target — a dense data-grid affordance
+    shown only on hover, for instance — can legitimately sit below the floor.
+    Say so at the base rule, so the exception is visible where the promise is.

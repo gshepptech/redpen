@@ -115,7 +115,9 @@ function validate(rule: unknown, file: string, index: number): Rule {
   // A rule that declares a channel but gives it no matcher can never fire on
   // that channel, which silently weakens cross-channel promotion.
   for (const ch of r.channels) {
-    if (ch === 'source' && !r.source) {
+    // A cascade matcher is a source matcher — it reads the stylesheet rather
+    // than running a regex over it, but it observes the same channel.
+    if (ch === 'source' && !r.source && !r.cascade) {
       throw new Error(`redpen: rule "${r.id}" declares the source channel but has no matcher`);
     }
     if (ch === 'render' && !r.render) {

@@ -18,7 +18,11 @@ test('every rule carries provenance', () => {
 
 test('every declared channel has a matcher', () => {
   for (const r of loadCorpus()) {
-    if (r.channels.includes('source')) assert.ok(r.source, `${r.id}: source channel, no matcher`);
+    // A cascade matcher reads the stylesheet rather than regexing it, but it
+    // observes the same channel.
+    if (r.channels.includes('source')) {
+      assert.ok(r.source || r.cascade, `${r.id}: source channel, no matcher`);
+    }
     if (r.channels.includes('render')) assert.ok(r.render, `${r.id}: render channel, no matcher`);
     if (r.channels.includes('vision')) assert.ok(r.vision, `${r.id}: vision channel, no matcher`);
   }

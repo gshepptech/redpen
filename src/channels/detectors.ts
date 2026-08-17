@@ -911,7 +911,7 @@ const CHECKS_LIB = `
       // Clipped is strictly worse than scrollable: the reader cannot even drag
       // to it. Say which, because the two need different fixes.
       var how = rootClips
-        ? over + 'px past the edge at ' + window.innerWidth + 'px and unreachable — the root clips overflow, so it cannot be scrolled to'
+        ? over + 'px past the edge at ' + window.innerWidth + 'px — unreachable, the root sets overflow-x: ' + getComputedStyle(doc).overflowX
         : over + 'px past the edge at ' + window.innerWidth + 'px';
       return hit(el, how + (textOf(el) ? ': "' + textOf(el) + '"' : ''));
     });
