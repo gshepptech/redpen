@@ -20,13 +20,30 @@ severity weighting in rules/*.yaml are original work.
   impeccable
     https://github.com/pbakaus/impeccable
     Apache License 2.0
-    Contributed the taxonomy behind 59 rendered-DOM detector concepts.
+
+    Contributed the taxonomy behind 59 rendered-DOM detector concepts; the
+    slop/quality split that redpen scores on two axes; the advisory tier; and
+    the surface modes (persuade / operate / read) that decide which rules hold
+    on which kind of page.
+
+    The five fix commands — typeset, layout, color, polish, distill — are ported
+    from skill/reference/{typeset,layout,colorize,polish,distill}.md. Their
+    structure and much of their craft guidance is impeccable's, in particular:
+      - "two isolated assessments": look first, scan second, and do not let the
+        findings anchor the looking;
+      - "a clean scan is a floor, not proof";
+      - declaring the system, the spatial thesis or the colour strategy before
+        editing anything;
+      - verifying with rendered or source evidence rather than a bare "yes";
+      - polish's drift classification (missing token / one-off implementation /
+        conceptual mismatch / local defect) and its triage order;
+      - the squint test, which is also a rule in rules/composition.yaml.
 
   hallmark
     https://github.com/nutlope/hallmark
     MIT License
     Contributed the 58-gate slop test and the named anti-pattern catalogue,
-    including the genre exceptions recorded as `exceptSurfaces`.
+    including the genre exceptions recorded as `legitimateWhen`.
 
   vibecoded-design-tells (unslop-ui)
     https://github.com/JCarterJohnson/vibecoded-design-tells

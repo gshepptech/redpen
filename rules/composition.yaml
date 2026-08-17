@@ -18,6 +18,31 @@
 # hero — the report of that project's UI was that everything sat at one weight
 # for a week, which is measurable as font sizes and invisible as effect.
 
+- id: fails-squint-test
+  kind: slop
+  title: The page does not survive the squint test
+  category: composition
+  severity: high
+  weight: 76
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: "layout:squint-test" }
+  channels: [vision]
+  vision:
+    ask: >-
+      Blur the image or step back from it until the detail is unreadable. Is it
+      then impossible to tell which element is primary, which is secondary, and
+      where the major groups are?
+  why: >-
+    The oldest test in layout and the one no measurement performs. Blurring
+    removes everything the reader is not using in the first half-second, which
+    is exactly the information a type-scale check cannot see: a page can have
+    a correct ramp and still collapse to one grey mass at a squint.
+  fix: >-
+    Give the primary element something the others do not have — scale, weight,
+    isolation, or the only piece of colour on the page. Then squint again; if
+    the order is still not obvious, the change was not decisive enough.
+
 - id: no-focal-point
   kind: slop
   title: Nothing on the page asks for your attention first

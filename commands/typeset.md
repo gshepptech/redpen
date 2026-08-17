@@ -16,73 +16,142 @@ If neither resolves, the plugin is not installed and `redpen` is not on PATH —
 say so rather than guessing. **Never `npx redpen`**: that name belongs to an
 unrelated package.
 
-## What this does
+Parse `$ARGUMENTS` for urls and a path. Never interpolate it raw: it is prose,
+and it may carry a path, several urls, and a sentence of context in any order.
 
-A scoped fix pass over **typography** only. Scan, fix, re-scan, report the delta.
+Typography carries information, hierarchy, and voice. Improve it inside the
+established visual world; do not replace the identity unless asked to.
+
+## Two isolated assessments
+
+**Look first. Scan second. Do not let the findings anchor the looking.**
+
+This is the part that is easy to skip and the reason the command exists. A
+detector tells you what is measurably wrong; it cannot tell you whether the
+thing is any good. If you read the findings first, you will spend the pass
+closing them and call that done.
+
+1. **Assess.** Open the page and answer the questions below with a file, a
+   selector, or a computed value — not an impression. Do this before running
+   anything.
+2. **Scan.** Then run the mechanical pass and synthesise both. Note what each
+   caught that the other did not; that difference is the useful output.
+
+**A clean scan is a floor, not proof.** A page can clear all 112 rules and still
+be the wrong page.
+
+### 1. Assess, before scanning
+
+- **Authority and fit.** Which faces, weights and roles are established? Do they
+  fit the product, or are they unexamined defaults? Is every family necessary?
+- **Hierarchy.** Can heading, body, label, metadata and data roles be told apart
+  at a glance? Are adjacent sizes or weights too close to carry different jobs?
+- **Scale.** Is there a deliberate role scale, or a collection of arbitrary
+  values? Do repeated roles stay identical across screens and states?
+- **Reading.** Is the measure comfortable? Are leading, paragraph rhythm and
+  tracking tuned to *this* face at *this* width, or to a universal ratio?
+- **Stress.** What happens with long headings, localisation expansion, zoom,
+  narrow containers, a missing weight, a font that fails to load?
+- **Delivery.** Are only the used weights loaded? Do fallback metrics avoid
+  invisible text and reflow?
+
+### 2. Then scan
 
 ```bash
 run scan <path> --url <url> --only typography,chrome,system
 ```
 
-Parse `$ARGUMENTS` for urls and a path — never interpolate it raw.
+Check the reported surface first. On an operate or read surface a single
+well-tuned family and a fixed role scale are often right; on a persuade surface
+display type may carry the voice.
 
-## The order to fix in
+## Set the system
 
-Work down, not by weight — each step changes what the next one measures.
+Before editing, state: the roles the interface needs, the intended contrast
+between them, the reading measure and density, which faces are authoritative,
+and any performance or localisation constraints.
 
-1. **Faces.** One display, one body, at most one outlier. A single default sans
-   carrying everything is a tell on a landing page and correct on a dashboard;
-   check the reported surface before touching it.
+Use the fewest roles and families that make the hierarchy unmistakable. Combine
+size, weight, space and tone rather than asking size alone to do all the work.
+Name tokens for purpose, never for value.
 
-   Then **route every element through a token**. Declaring `--font-body` and
-   leaving a `<blockquote>`, a `<button>` or a form control on the UA default is
-   the most likely way to finish this step and still fail `font-family-drift` —
-   it happened on the first real run of this command. Grep for `font-family` and
-   check what is *not* listed as much as what is.
-2. **Scale.** Build a real ramp and expose it as tokens named for the role
+## Apply, in this order
+
+Each step changes what the next one measures.
+
+1. **Faces.** One display, one body, at most one outlier. Then **route every
+   element through a token** — declaring `--font-body` and leaving a
+   `<blockquote>`, a `<button>` or the form controls on the UA default finishes
+   the step and still fails `font-family-drift`. It happened on the first real
+   run of this command. Grep for `font-family` and check what is *not* listed.
+2. **Scale.** A real ramp, exposed as tokens named for the role
    (`--font-size-*`, `--text-*`). `font-size-token-drift` only fires once such
-   tokens exist, so this step is what makes the next scan meaningful.
-3. **Leading.** Body 1.5-1.65, headings 1.0-1.3. The relationship inverts with
-   size; a heading at body leading is the most common miss.
-4. **Measure.** Prose at 45-75ch, set once on the prose class. Data and dense UI
-   legitimately run wider.
-5. **Tracking.** Both directions. Negative tracking belongs above about 40px and
-   stops at -0.03em; wide tracking belongs on small caps and stops at 0.15em.
-   The eyebrow at 0.3em is the obvious half — the hero at -0.06em is the half
-   that gets missed, because it looks deliberate.
-6. **The floor.** 14px for anything read as prose, 12px for incidental chrome.
-   The evidence line says which floor it applied and why, so read it before
-   changing a size: a short sentence-less label is chrome and gets the lower
-   floor.
+   tokens exist, so this is the step that makes the next scan mean anything.
+3. **Leading.** 1rem/16px is the ordinary web body floor. Tune leading **to the
+   face, width and contrast, not a universal ratio** — and *inversely with
+   measure*: wider lines need more. Light text on a dark surface needs
+   compensating on all three axes: slightly more leading, a touch more tracking,
+   one step more weight if the face needs it.
 
-## Then the parts nobody draws
+   Fix leading **per role, never globally.** Setting `line-height` on `body`
+   clears every finding on prose and instantly creates one on the hero, because
+   body leading on a 72px heading is as wrong in the other direction.
+4. **Measure.** 45-75ch for prose, set once on the prose class. Data and dense
+   UI legitimately run wider.
+5. **Tracking.** Both directions. Negative belongs above ~40px and stops at
+   -0.03em; wide belongs on small caps and stops at 0.15em. The eyebrow at 0.3em
+   is the obvious half; the hero at -0.06em is the half that gets missed,
+   because it looks deliberate.
+6. **The floor.** 14px for anything read as prose, 12px for incidental chrome.
+   The evidence line says which floor it applied — read it before changing a
+   size.
+7. **Paragraph rhythm.** Spacing *or* first-line indent. Both together
+   double-marks the boundary.
+
+Do not make type decorative at the expense of comprehension, and do not add a
+second family without a role it alone can perform.
+
+## The parts nobody draws
 
 `--only chrome` covers these and they are the cheapest wins in the corpus:
 selection colour, caret colour, underline offset and thickness, tabular figures
 in numeric columns. Nobody themes a caret by accident, which is exactly why an
 unthemed one reads as assembled rather than built.
 
-## Finish
+## Verify
 
-Re-run the same scan, then `why-score` with the same `--only`:
+Answer each of these with rendered or source evidence. **Do not
+substitute a bare "yes" for verification** — an unevidenced pass is the same
+failure mode as an unevidenced finding, which this tool rejects on the way in.
 
-```bash
-run why-score <path> --url <url> --only typography,chrome,system
-```
-
-The plain scan tells you what is wrong; `why-score` tells you what is left and
-what it is worth, ranked by share of the remaining problem. On the first real
-run of this command that ranking was the difference between finishing and
-thinking you had finished — two findings survived a pass that had addressed
-every visible one, and both were things the fixer had done half of.
-
-Report the score before and after and name what moved. If it did not move, you
-changed something else — say so.
+- Primary, secondary, body and metadata roles are recognisable **without
+  reading the copy**.
+- Long text stays comfortable across the widths and languages you support.
+- Zoom, text scaling and user font settings still work.
+- Loading causes no reflow and no invisible text.
+- Re-run the scan, then `run why-score <path> --url <url> --only typography,chrome,system`.
+  The scan says what is wrong; why-score says what is left and what it is worth.
+  On the first real run that was the difference between finishing and believing
+  I had finished.
 
 ## What this looked like the first time it was run
 
 On a deliberately-bad fixture: **31 → 100**, ten findings to zero. Two survived
-the first pass and both were mistakes by the person following these steps rather
+the first pass and both were mistakes by the person following the steps rather
 than gaps in the rules — a font token declared but not applied to every element,
-and negative tracking left at -0.06em after the positive tracking was fixed.
-Both are called out above now.
+and negative tracking left after the positive tracking was fixed. Both are
+called out above now.
+
+## Hand off
+
+When this holds, run `/redpen:polish` — the mechanical pass over everything
+broken regardless of taste. This command's job is one concern done well; polish
+is what makes the whole path consistent.
+
+---
+
+<sub>Structure and much of the craft guidance in this command is ported from
+[impeccable](https://github.com/pbakaus/impeccable) (Apache-2.0) — specifically
+`skill/reference/typeset.md`. The two-isolated-assessments method, the
+declare-intent-before-editing step, and the evidence-not-yes verification bar
+are all its ideas. See NOTICE.</sub>
