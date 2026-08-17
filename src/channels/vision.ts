@@ -1,230 +1,196 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { dirname } from 'node:path';
 import { rulesForChannel } from '../corpus/load.js';
 import type { RawFinding, Evidence } from '../types.js';
 
 /**
- * The vision channel: put the screenshot in front of a model and ask the
- * questions no rule can express.
+ * The vision channel.
  *
- * The source channel reads text and the render channel reads computed styles.
- * Neither can answer "does the hierarchy read in two seconds" or "is the
- * highlight band sitting at the baseline instead of the x-height" — those are
- * judgements about the rendered image, and hallmark's own gate for the second
- * one literally instructs the model to *imagine* the output. This channel looks
- * instead.
+ * Source reads text, render reads computed styles. Neither can answer "does the
+ * hierarchy read in two seconds" or "is the highlight band sitting at the
+ * baseline instead of the x-height" — those are judgements about the rendered
+ * image, and hallmark's own gate for the second one literally instructs the
+ * model to *imagine* the output.
  *
- * Every question is phrased so that "yes" means the tell is present, and each
- * answer carries its own confidence so a hedge doesn't get promoted into a
- * finding. Vision alone never confirms anything: a vision hit corroborates a
- * source or render hit, or it reports as `likely` on its own.
+ * redpen does not call a model to answer them. Whatever is running redpen —
+ * Claude Code, Cursor, a person — can already open a PNG, and it is a better
+ * judge than any model redpen would pick on your behalf. So this channel emits
+ * a brief (screenshots + questions) and consumes answers. No API key, no second
+ * bill, no credential setup, and it works identically in every harness.
+ *
+ * Every question is phrased so "yes" means the tell is present, and every answer
+ * carries a confidence so a hedge doesn't get promoted into a finding. A vision
+ * hit never confirms a finding alone — it corroborates another channel, or
+ * reports as `likely` on its own.
  */
 
-const MODEL = 'claude-opus-5';
+/** Answers below this are discarded rather than reported as low-confidence noise. */
+export const MIN_CONFIDENCE = 0.7;
 
-/** Answers below this are dropped rather than reported as low-confidence noise. */
-const MIN_CONFIDENCE = 0.7;
-
-export interface VisionOptions {
-  /** url -> screenshot path, from the render channel. */
-  screenshots: Map<string, string>;
-  /** Skip rules whose ids are already confirmed — no need to pay for them. */
-  alreadyConfirmed?: Set<string>;
-}
-
-export interface VisionResult {
-  findings: RawFinding[];
-  /** Populated when the channel could not run. Never silently returns clean. */
-  unavailable: string | null;
-  /** Input+output tokens, so `--timing` can report what the pass cost. */
-  tokens: number;
-}
-
-interface AnthropicModule {
-  default: new (opts?: Record<string, unknown>) => AnthropicClient;
-}
-
-interface AnthropicClient {
-  messages: {
-    create(params: Record<string, unknown>): Promise<AnthropicResponse>;
-  };
-}
-
-interface AnthropicResponse {
-  content: Array<{ type: string; text?: string }>;
-  stop_reason: string | null;
-  usage?: { input_tokens?: number; output_tokens?: number };
-}
-
-interface Answer {
+export interface VisionQuestion {
   ruleId: string;
-  present: boolean;
+  /** Yes means the tell is present. */
+  ask: string;
+  /** What to do about it if the answer is yes. Copied from the rule. */
+  fix: string;
+}
+
+export interface VisionBrief {
+  version: 1;
+  /** How to answer, in the file itself — the reader may not have the docs open. */
+  instructions: string;
+  /** url -> screenshot path on disk. */
+  screenshots: Record<string, string>;
+  questions: VisionQuestion[];
+  /** Pre-filled skeleton so answering is editing, not authoring. */
+  answers: VisionAnswer[];
+}
+
+export interface VisionAnswer {
+  page: string;
+  ruleId: string;
+  /** True when the tell described by the question is visible in that screenshot. */
+  present: boolean | null;
+  /** 0-1. Below 0.7 the answer is discarded, so hedge honestly. */
   confidence: number;
+  /** What you actually saw that decided it. Names the element and where it sits. */
   evidence: string;
 }
 
+const INSTRUCTIONS = [
+  'Open each screenshot listed under "screenshots" and answer every question in "questions" about it.',
+  'Fill in the pre-built rows in "answers" — one row per page/question pair.',
+  'Each question is phrased so present=true means the tell IS present. Read the direction carefully.',
+  'Answer only from what is visible. Do not infer from what a page like this usually does.',
+  'Set confidence honestly: a question you cannot decide from the image gets a low number, not a guess.',
+  'Answers below 0.7 confidence are discarded, which is the correct outcome for an unclear case.',
+  'evidence names the specific thing you saw — "the three cards each open with a rounded icon square", not "looks AI-generated".',
+  'Leave present as null for anything you did not judge; null rows are ignored.',
+  'Then run: redpen scan <path> --url <url> --answers <this file>',
+].join(' ');
+
+export interface BriefOptions {
+  /** url -> screenshot path, from the render channel. */
+  screenshots: Map<string, string>;
+  /** Rules two channels already agree on — no point asking about them. */
+  alreadyConfirmed?: Set<string>;
+}
+
 /**
- * The response schema. Constraining the output means no parsing heuristics and
- * no "the model returned prose this time" failure mode.
+ * Build the brief. Returns null when there is nothing to ask, which is a
+ * legitimate outcome and not a failure.
  */
-function answerSchema(ruleIds: string[]): Record<string, unknown> {
-  return {
-    type: 'object',
-    properties: {
-      answers: {
-        type: 'array',
-        items: {
-          type: 'object',
-          properties: {
-            ruleId: { type: 'string', enum: ruleIds },
-            present: {
-              type: 'boolean',
-              description: 'True when the tell described by the question is present in the image.',
-            },
-            confidence: {
-              type: 'number',
-              description: '0 to 1. Below 0.7 the answer is discarded, so hedge honestly.',
-            },
-            evidence: {
-              type: 'string',
-              description:
-                'What you actually see that decides it, in one short phrase. Name the element and where it sits.',
-            },
-          },
-          required: ['ruleId', 'present', 'confidence', 'evidence'],
-          additionalProperties: false,
-        },
-      },
-    },
-    required: ['answers'],
-    additionalProperties: false,
-  };
-}
-
-const SYSTEM = `You judge screenshots of web pages for the visual tells that mark a page as machine-generated.
-
-You are given one screenshot and a numbered list of questions. Answer every question about that image and nothing else.
-
-Rules:
-- Answer only from what is visible. Do not infer from what a page like this usually does.
-- Each question is phrased so "yes" means the tell IS present. Read the direction carefully.
-- Report confidence honestly. A question you cannot decide from this image gets low confidence, not a guess — low-confidence answers are discarded, which is the correct outcome for an unclear case.
-- "evidence" names the specific thing you saw. "the three cards under the headline each open with a rounded icon square" — not "it looks AI-generated".`;
-
-async function loadSdk(): Promise<AnthropicModule | null> {
-  try {
-    // Indirect specifier: the SDK is an optional peer dependency, so a scan
-    // without it must still typecheck and run.
-    const specifier = '@anthropic-ai/sdk';
-    return (await import(specifier)) as unknown as AnthropicModule;
-  } catch {
-    return null;
-  }
-}
-
-export async function scanVision(opts: VisionOptions): Promise<VisionResult> {
-  const empty: VisionResult = { findings: [], unavailable: null, tokens: 0 };
-
-  if (opts.screenshots.size === 0) {
-    return {
-      ...empty,
-      unavailable:
-        'no screenshots captured — the vision channel needs the render channel to run with --screenshots',
-    };
-  }
+export function buildBrief(opts: BriefOptions): VisionBrief | null {
+  if (opts.screenshots.size === 0) return null;
 
   const rules = rulesForChannel('vision').filter(
     (r) => r.vision && !opts.alreadyConfirmed?.has(r.id),
   );
-  if (rules.length === 0) return empty;
+  if (rules.length === 0) return null;
 
-  if (!process.env.ANTHROPIC_API_KEY && !process.env.ANTHROPIC_AUTH_TOKEN) {
-    return {
-      ...empty,
-      unavailable:
-        'no Anthropic credentials found — set ANTHROPIC_API_KEY or run `ant auth login` to enable the vision channel',
-    };
+  const questions: VisionQuestion[] = rules.map((r) => ({
+    ruleId: r.id,
+    ask: r.vision!.ask.replace(/\s+/g, ' ').trim(),
+    fix: r.fix.replace(/\s+/g, ' ').trim(),
+  }));
+
+  const screenshots: Record<string, string> = {};
+  for (const [url, file] of opts.screenshots) screenshots[url] = file;
+
+  const answers: VisionAnswer[] = [];
+  for (const page of opts.screenshots.keys()) {
+    for (const q of questions) {
+      answers.push({ page, ruleId: q.ruleId, present: null, confidence: 0, evidence: '' });
+    }
   }
 
-  const sdk = await loadSdk();
-  if (!sdk) {
-    return {
-      ...empty,
-      unavailable:
-        '@anthropic-ai/sdk is not installed — run `npm i @anthropic-ai/sdk` to enable the vision channel',
-    };
+  return { version: 1, instructions: INSTRUCTIONS, screenshots, questions, answers };
+}
+
+export function writeBrief(path: string, brief: VisionBrief): void {
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, JSON.stringify(brief, null, 2) + '\n', 'utf8');
+}
+
+export interface AnswerResult {
+  findings: RawFinding[];
+  /** Answers that were parsed but discarded, and why. Surfaced as warnings. */
+  discarded: string[];
+  /** Set when the file could not be used at all. Never silently returns clean. */
+  unavailable: string | null;
+  /** Answers actually acted on, for the progress line. */
+  accepted: number;
+}
+
+/**
+ * Read answers back and turn the affirmative, confident ones into findings.
+ *
+ * Deliberately strict: an unparseable file, an unknown rule id, or a malformed
+ * row is reported rather than skipped, because a vision pass that quietly
+ * dropped half its answers is indistinguishable from a page with fewer problems.
+ */
+export function readAnswers(path: string): AnswerResult {
+  const empty: AnswerResult = { findings: [], discarded: [], unavailable: null, accepted: 0 };
+
+  let raw: string;
+  try {
+    raw = readFileSync(path, 'utf8');
+  } catch (err) {
+    return { ...empty, unavailable: `could not read ${path}: ${err instanceof Error ? err.message : err}` };
   }
 
-  const client = new sdk.default();
-  const ruleIds = rules.map((r) => r.id);
-  const schema = answerSchema(ruleIds);
+  let parsed: { answers?: unknown };
+  try {
+    parsed = JSON.parse(raw) as { answers?: unknown };
+  } catch (err) {
+    return { ...empty, unavailable: `${path} is not valid JSON — ${err instanceof Error ? err.message : err}` };
+  }
 
-  const questions = rules
-    .map((r, i) => `${i + 1}. [${r.id}] ${r.vision!.ask.replace(/\s+/g, ' ').trim()}`)
-    .join('\n');
+  if (!Array.isArray(parsed.answers)) {
+    return { ...empty, unavailable: `${path} has no "answers" array` };
+  }
 
+  const known = new Set(rulesForChannel('vision').map((r) => r.id));
   const hits = new Map<string, Evidence[]>();
-  const problems: string[] = [];
-  let tokens = 0;
+  const discarded: string[] = [];
+  let accepted = 0;
 
-  for (const [url, file] of opts.screenshots) {
-    let data: string;
-    try {
-      data = readFileSync(file).toString('base64');
-    } catch (err) {
-      problems.push(`could not read ${file}: ${err instanceof Error ? err.message : err}`);
+  for (const row of parsed.answers) {
+    const a = row as Partial<VisionAnswer>;
+
+    // Unanswered rows are the expected state for anything not judged.
+    if (a.present === null || a.present === undefined) continue;
+
+    if (typeof a.ruleId !== 'string' || !known.has(a.ruleId)) {
+      discarded.push(`unknown rule id "${String(a.ruleId)}"`);
+      continue;
+    }
+    if (typeof a.present !== 'boolean') {
+      discarded.push(`${a.ruleId}: "present" must be true, false, or null`);
+      continue;
+    }
+    if (!a.present) continue;
+
+    const confidence = typeof a.confidence === 'number' ? a.confidence : 0;
+    if (confidence < MIN_CONFIDENCE) {
+      discarded.push(`${a.ruleId}: confidence ${confidence} below the ${MIN_CONFIDENCE} floor`);
       continue;
     }
 
-    let response: AnthropicResponse;
-    try {
-      response = await client.messages.create({
-        model: MODEL,
-        max_tokens: 8000,
-        system: SYSTEM,
-        output_config: { format: { type: 'json_schema', schema } },
-        messages: [
-          {
-            role: 'user',
-            content: [
-              { type: 'image', source: { type: 'base64', media_type: 'image/png', data } },
-              { type: 'text', text: `Answer each question about the screenshot above.\n\n${questions}` },
-            ],
-          },
-        ],
-      });
-    } catch (err) {
-      problems.push(`${url}: ${err instanceof Error ? err.message : String(err)}`);
+    const evidence = typeof a.evidence === 'string' ? a.evidence.trim() : '';
+    if (!evidence) {
+      discarded.push(`${a.ruleId}: answered present with no evidence — an unevidenced yes is a guess`);
       continue;
     }
 
-    tokens += (response.usage?.input_tokens ?? 0) + (response.usage?.output_tokens ?? 0);
-
-    // A refusal or a truncated response is a failed observation, not a clean
-    // page — say so rather than letting it read as "found nothing".
-    if (response.stop_reason === 'refusal') {
-      problems.push(`${url}: the model declined to answer`);
-      continue;
-    }
-    if (response.stop_reason === 'max_tokens') {
-      problems.push(`${url}: response truncated — some questions went unanswered`);
-    }
-
-    const answers = parseAnswers(response, ruleIds);
-    if (!answers) {
-      problems.push(`${url}: could not read a structured answer from the response`);
-      continue;
-    }
-
-    for (const a of answers) {
-      if (!a.present || a.confidence < MIN_CONFIDENCE) continue;
-      const list = hits.get(a.ruleId) ?? [];
-      list.push({
-        channel: 'vision',
-        location: url,
-        excerpt: `${a.evidence.slice(0, 140)} (confidence ${a.confidence.toFixed(2)})`,
-      });
-      hits.set(a.ruleId, list);
-    }
+    accepted++;
+    const list = hits.get(a.ruleId) ?? [];
+    list.push({
+      channel: 'vision',
+      location: typeof a.page === 'string' ? a.page : 'screenshot',
+      excerpt: `${evidence.slice(0, 140)} (confidence ${confidence.toFixed(2)})`,
+    });
+    hits.set(a.ruleId, list);
   }
 
   const findings: RawFinding[] = [];
@@ -232,37 +198,5 @@ export async function scanVision(opts: VisionOptions): Promise<VisionResult> {
     findings.push({ ruleId, channel: 'vision', evidence });
   }
 
-  return {
-    findings,
-    unavailable: problems.length ? problems.join('; ') : null,
-    tokens,
-  };
-}
-
-function parseAnswers(response: AnthropicResponse, validIds: string[]): Answer[] | null {
-  const text = response.content.find((b) => b.type === 'text')?.text;
-  if (!text) return null;
-
-  let parsed: { answers?: unknown };
-  try {
-    parsed = JSON.parse(text) as { answers?: unknown };
-  } catch {
-    return null;
-  }
-  if (!Array.isArray(parsed.answers)) return null;
-
-  const valid = new Set(validIds);
-  const out: Answer[] = [];
-  for (const raw of parsed.answers) {
-    const a = raw as Partial<Answer>;
-    if (typeof a.ruleId !== 'string' || !valid.has(a.ruleId)) continue;
-    if (typeof a.present !== 'boolean') continue;
-    out.push({
-      ruleId: a.ruleId,
-      present: a.present,
-      confidence: typeof a.confidence === 'number' ? a.confidence : 0,
-      evidence: typeof a.evidence === 'string' ? a.evidence : '',
-    });
-  }
-  return out;
+  return { findings, discarded, unavailable: null, accepted };
 }

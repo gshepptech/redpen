@@ -23,8 +23,8 @@
       - '\bbuilt for (the way )?(modern|today''s) \w+\b'
   vision:
     ask: >-
-      Does the headline make a specific, checkable claim, or is it a generic
-      superlative that would fit any product in any category?
+      Is the headline a generic superlative that would fit any product in any
+      category, rather than a specific checkable claim?
   why: >-
     Superlatives that survive a find-and-replace of the product name are not
     saying anything about the product.

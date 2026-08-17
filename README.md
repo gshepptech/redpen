@@ -43,8 +43,8 @@ with provenance intact, then does three things none of them does.
 different things and each is blind to the others. A purple gradient written as a
 Tailwind class is visible to a source scan; the same gradient assembled from
 theme variables, or injected after a fetch, is not. redpen runs a source scan, a
-real browser reading computed styles, and — with `--vision` — a model looking at
-the screenshot, then reports a finding as **confirmed** only when more than one
+real browser reading computed styles, and — with `--vision` — a pass over the
+screenshots, then reports a finding as **confirmed** only when more than one
 channel saw it independently, or when the only channel that *can* see it did.
 A source-only hit that the render pass checked and did not corroborate is
 demoted to `possible`, hidden by default, and costs nothing against your score.
@@ -97,7 +97,8 @@ redpen init [path]        write .redpen/config.json
 | `--viewport <n>` | viewport width, repeatable. Default 375, 768, 1440. |
 | `--json [file]` / `--markdown [file]` | machine-readable and PR-ready output |
 | `--screenshots` | full-page PNGs to `.redpen/screenshots` |
-| `--vision` | ask a model about the screenshots (needs `ANTHROPIC_API_KEY`) |
+| `--vision` | capture screenshots and write `.redpen/vision-brief.json` |
+| `--answers <file>` | fold answered vision questions back into the verdict |
 | `--verbose` | include single-channel findings and rule provenance |
 | `--min <level>` | confidence floor for scoring: `confirmed`, `likely`, `possible` |
 
@@ -150,19 +151,53 @@ anything, so `/* redpen-ignore */` alone does nothing. `redpen scan
 | --- | --- | --- |
 | **source** | text in the repo — literal patterns, class names, imports | anything computed, themed, or rendered at runtime |
 | **render** | computed styles and geometry in a real browser, swept across viewports | routes you didn't list; states you didn't drive |
-| **vision** | a screenshot — hierarchy, rhythm, whether the highlight sits at the x-height | anything not visible in the frame |
+| **vision** | a screenshot, judged by whoever runs redpen — hierarchy, rhythm, whether a headline says anything | anything not visible in the frame |
 | **fingerprint** | this page against every other page on record | a project with only one page |
 
 Each finding names the channels that saw it: `[source+render]`.
 
-The vision channel is opt-in (`--vision`) because it costs money. It runs on
-Claude Opus 5, asks one structured question per applicable rule, skips rules two
-channels already agree on, and discards any answer below 0.7 confidence. It
-never confirms a finding alone — a vision hit corroborates another channel, or
-reports as `likely` on its own.
+### The vision channel takes no API key
 
-**A channel that cannot run says so.** No Playwright, no credentials, an
-unreadable screenshot, a refused request — each is reported as a warning and the
+Some judgements no rule can express: does the hierarchy read in two seconds, is
+the highlight band sitting at the baseline instead of the x-height, would this
+headline fit any company unedited. hallmark's own gate for the second one
+instructs the model to *imagine* the rendered output.
+
+redpen does not call a model to answer these. Whatever is running redpen —
+Claude Code, Cursor, you — can already open a PNG, and is a better judge than
+any model redpen would pick on your behalf. So `--vision` writes a brief and
+`--answers` reads the replies:
+
+```
+redpen scan . --url http://localhost:3000 --vision
+#   → .redpen/screenshots/*.png
+#   → .redpen/vision-brief.json   (questions + pre-built answer rows)
+
+# open the screenshots, fill in the rows, then:
+redpen scan . --url http://localhost:3000 --answers .redpen/vision-brief.json
+```
+
+The brief carries its own instructions, skips any rule two channels already
+agree on, and pre-builds one row per page/question pair so answering is editing
+rather than authoring. An answer is discarded unless it is a `true` above 0.7
+confidence **with evidence** — an unevidenced yes is a guess, and it is rejected
+and reported rather than silently dropped.
+
+A vision hit never confirms a finding alone. It corroborates another channel, or
+reports as `likely` on its own:
+
+```
+confirmed [render+vision]  icon-tile-feature-card
+    each feature card opens with an emoji inside a ~48px rounded violet-tinted square
+likely    [vision]         vague-headline
+    "Supercharge your workflow" names no product and no outcome — fits any SaaS unchanged
+```
+
+`vague-headline` is a rule no other channel can see at all. It exists only
+because someone looked.
+
+**A channel that cannot run says so.** No Playwright, no screenshots, an
+unreadable or malformed answers file — each is reported as a warning and the
 affected findings stay unconfirmed. Nothing degrades into a clean report.
 
 ## Rule categories

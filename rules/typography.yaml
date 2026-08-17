@@ -106,8 +106,8 @@
       minDistinctSizes: 4
   vision:
     ask: >-
-      Reading this page for two seconds, can you tell what is primary,
-      secondary, and tertiary — or does everything sit at roughly one weight?
+      Reading this page for two seconds, does everything sit at roughly one
+      weight, with no clear primary, secondary, and tertiary?
   why: >-
     Generated pages tend to land every heading within a few pixels of each
     other, so the page has no entry point. This is the most common reason a

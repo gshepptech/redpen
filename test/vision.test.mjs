@@ -1,80 +1,144 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { scanVision } from '../dist/channels/vision.js';
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { buildBrief, readAnswers, MIN_CONFIDENCE } from '../dist/channels/vision.js';
 import { rulesForChannel } from '../dist/corpus/load.js';
 
 /**
- * The vision channel's API call needs credentials this test environment does
- * not have, so what is tested here is the property that actually matters for
- * correctness: every path that cannot observe the page must SAY it could not
- * observe the page. A channel that returns `{findings: [], unavailable: null}`
- * when it never ran is indistinguishable from a clean result, and that is the
- * one bug this design exists to prevent.
+ * The vision channel takes no credentials and calls no API — whatever runs
+ * redpen answers the questions itself. So what is tested here is the contract
+ * on both sides of that handoff: the brief has to be answerable without
+ * external docs, and the answer reader has to be strict enough that a
+ * half-filled file cannot pass as a clean page.
  */
 
-function withoutCredentials(fn) {
-  const key = process.env.ANTHROPIC_API_KEY;
-  const token = process.env.ANTHROPIC_AUTH_TOKEN;
-  delete process.env.ANTHROPIC_API_KEY;
-  delete process.env.ANTHROPIC_AUTH_TOKEN;
-  try {
-    return fn();
-  } finally {
-    if (key !== undefined) process.env.ANTHROPIC_API_KEY = key;
-    if (token !== undefined) process.env.ANTHROPIC_AUTH_TOKEN = token;
-  }
+const shots = (n = 1) =>
+  new Map(Array.from({ length: n }, (_, i) => [`http://x/${i}`, `/tmp/shot-${i}.png`]));
+
+function answerFile(answers) {
+  const dir = mkdtempSync(join(tmpdir(), 'redpen-vision-'));
+  const path = join(dir, 'answers.json');
+  writeFileSync(path, JSON.stringify({ version: 1, answers }, null, 2), 'utf8');
+  return path;
 }
 
-test('no screenshots reports unavailable rather than clean', async () => {
-  const result = await scanVision({ screenshots: new Map() });
-  assert.deepEqual(result.findings, []);
-  assert.match(result.unavailable, /screenshot/i);
+const anyVisionRule = () => rulesForChannel('vision')[0].id;
+
+test('the brief carries its own instructions', () => {
+  const brief = buildBrief({ screenshots: shots() });
+  assert.ok(brief.instructions.length > 100, 'a reader without the docs must still know what to do');
+  assert.match(brief.instructions, /present=true means the tell IS present/);
+  assert.match(brief.instructions, /--answers/);
 });
 
-test('no credentials reports unavailable rather than clean', async () => {
-  const result = await withoutCredentials(() =>
-    scanVision({ screenshots: new Map([['http://x', '/nonexistent.png']]) }),
+test('the brief pre-builds one answer row per page and question', () => {
+  const brief = buildBrief({ screenshots: shots(3) });
+  assert.equal(brief.answers.length, 3 * brief.questions.length);
+  assert.ok(brief.answers.every((a) => a.present === null), 'rows start unanswered');
+  assert.ok(brief.questions.every((q) => q.ask && q.fix), 'each question ships its own fix');
+});
+
+test('rules two channels already agree on are not asked about again', () => {
+  const all = rulesForChannel('vision').map((r) => r.id);
+  const full = buildBrief({ screenshots: shots() });
+  const trimmed = buildBrief({ screenshots: shots(), alreadyConfirmed: new Set([all[0]]) });
+  assert.equal(trimmed.questions.length, full.questions.length - 1);
+  assert.equal(buildBrief({ screenshots: shots(), alreadyConfirmed: new Set(all) }), null);
+});
+
+test('no screenshots means no brief', () => {
+  assert.equal(buildBrief({ screenshots: new Map() }), null);
+});
+
+test('a confident yes with evidence becomes a finding', () => {
+  const id = anyVisionRule();
+  const result = readAnswers(
+    answerFile([
+      { page: 'http://x', ruleId: id, present: true, confidence: 0.9, evidence: 'three icon-tile cards under the headline' },
+    ]),
+  );
+  assert.equal(result.unavailable, null);
+  assert.equal(result.accepted, 1);
+  assert.equal(result.findings.length, 1);
+  assert.equal(result.findings[0].ruleId, id);
+  assert.equal(result.findings[0].channel, 'vision');
+  assert.match(result.findings[0].evidence[0].excerpt, /icon-tile/);
+});
+
+test('a no, and an unanswered row, produce nothing and are not complained about', () => {
+  const id = anyVisionRule();
+  const result = readAnswers(
+    answerFile([
+      { page: 'http://x', ruleId: id, present: false, confidence: 0.95, evidence: 'headings are roman' },
+      { page: 'http://x', ruleId: id, present: null, confidence: 0, evidence: '' },
+    ]),
   );
   assert.deepEqual(result.findings, []);
-  assert.match(result.unavailable, /credential/i);
+  assert.deepEqual(result.discarded, []);
 });
 
-test('an unreadable screenshot is reported, not swallowed', async () => {
-  const key = process.env.ANTHROPIC_API_KEY;
-  process.env.ANTHROPIC_API_KEY = 'sk-ant-test-not-a-real-key';
-  try {
-    const result = await scanVision({
-      screenshots: new Map([['http://x', '/definitely/not/a/file.png']]),
-    });
-    assert.deepEqual(result.findings, []);
-    assert.ok(result.unavailable, 'a failed read must surface as unavailable');
-  } finally {
-    if (key === undefined) delete process.env.ANTHROPIC_API_KEY;
-    else process.env.ANTHROPIC_API_KEY = key;
-  }
-});
-
-test('already-confirmed rules are skipped so the pass is not paid for twice', async () => {
-  const all = rulesForChannel('vision').map((r) => r.id);
-  assert.ok(all.length > 0, 'the corpus must declare some vision rules');
-
-  const result = await scanVision({
-    screenshots: new Map([['http://x', '/nonexistent.png']]),
-    alreadyConfirmed: new Set(all),
-  });
-  // Every rule filtered out — the channel returns early with nothing to ask,
-  // and that is a legitimately empty result, not a failure.
+test('a hedged yes is discarded and said out loud', () => {
+  const id = anyVisionRule();
+  const result = readAnswers(
+    answerFile([
+      { page: 'http://x', ruleId: id, present: true, confidence: MIN_CONFIDENCE - 0.01, evidence: 'maybe?' },
+    ]),
+  );
   assert.deepEqual(result.findings, []);
-  assert.equal(result.unavailable, null);
-  assert.equal(result.tokens, 0);
+  assert.equal(result.discarded.length, 1);
+  assert.match(result.discarded[0], /confidence/);
+});
+
+test('a yes with no evidence is a guess and is rejected', () => {
+  const id = anyVisionRule();
+  const result = readAnswers(
+    answerFile([{ page: 'http://x', ruleId: id, present: true, confidence: 1, evidence: '   ' }]),
+  );
+  assert.deepEqual(result.findings, []);
+  assert.match(result.discarded[0], /evidence/);
+});
+
+test('an unknown rule id is reported rather than skipped', () => {
+  const result = readAnswers(
+    answerFile([{ page: 'http://x', ruleId: 'not-a-rule', present: true, confidence: 1, evidence: 'x' }]),
+  );
+  assert.deepEqual(result.findings, []);
+  assert.match(result.discarded[0], /unknown rule id/);
+});
+
+test('an unreadable or malformed file reports unavailable, never clean', () => {
+  assert.match(readAnswers('/definitely/not/a/file.json').unavailable, /could not read/);
+
+  const dir = mkdtempSync(join(tmpdir(), 'redpen-vision-'));
+  const bad = join(dir, 'bad.json');
+  writeFileSync(bad, '{not json', 'utf8');
+  assert.match(readAnswers(bad).unavailable, /not valid JSON/);
+
+  const noArray = join(dir, 'noarray.json');
+  writeFileSync(noArray, JSON.stringify({ version: 1 }), 'utf8');
+  assert.match(readAnswers(noArray).unavailable, /no "answers" array/);
 });
 
 test('every vision rule asks a question whose yes-answer means the tell is present', () => {
-  for (const r of rulesForChannel('vision')) {
+  const rules = rulesForChannel('vision');
+  assert.ok(rules.length > 0, 'the corpus must declare some vision rules');
+  for (const r of rules) {
     assert.ok(r.vision?.ask, `${r.id} declares vision but asks nothing`);
+    const ask = r.vision.ask.trim();
+    assert.ok(ask.endsWith('?'), `${r.id}: the ask must be a question — got "${ask.slice(0, 60)}"`);
+
+    // An either/or question breaks the contract: the reader answers "yes" and
+    // the channel cannot tell which half they meant. The ambiguous shape is a
+    // second *clause* after "or" — "does X, or does Y". A plain list of ways
+    // the same tell can appear ("cut off, running under, or clipped") is fine,
+    // and so is a "rather than" contrast, which names the tell first.
+    const flat = ask.replace(/\s+/g, ' ');
     assert.ok(
-      r.vision.ask.trim().endsWith('?'),
-      `${r.id}: the ask must be phrased as a question — got "${r.vision.ask.slice(0, 60)}"`,
+      !/\bor (does|is|are|do|can|could|would|has|have)\b/i.test(flat) ||
+        /\brather than\b/i.test(flat),
+      `${r.id}: the ask reads as an either/or, so "yes" is ambiguous — "${flat.slice(0, 90)}"`,
     );
   }
 });

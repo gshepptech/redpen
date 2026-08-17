@@ -24,17 +24,42 @@ says so. **Never read a source-only run as a clean page.**
 
 ```bash
 npx redpen scan . --url http://localhost:3000 --url http://localhost:3000/pricing
-npx redpen scan . --url http://localhost:3000 --vision   # adds the screenshot pass; costs tokens
+npx redpen scan . --url http://localhost:3000 --vision   # writes a brief for you to answer
 npx redpen why ai-purple          # what a rule means and who said so
 npx redpen rules color            # the corpus, by category
 npx redpen fingerprints           # every page signature on record
 npx redpen scan . --json report.json --url http://localhost:3000
 ```
 
-`--vision` puts the screenshot in front of a model for the judgements no rule
-can express — whether the hierarchy reads, whether a highlight band sits at the
-x-height. Use it when a page passes every check and still looks wrong. It costs
-tokens, so it is off by default.
+### The vision channel is you
+
+`--vision` does not call an API. It captures the screenshots and writes
+`.redpen/vision-brief.json` — the questions no rule can answer, with a pre-built
+row for each. **You** open the PNGs and fill them in, then re-run with
+`--answers`:
+
+```bash
+npx redpen scan . --url http://localhost:3000 --vision
+# Read every file under .redpen/screenshots/ with your image-reading tool.
+# Fill in each row of .redpen/vision-brief.json: present, confidence, evidence.
+npx redpen scan . --url http://localhost:3000 --answers .redpen/vision-brief.json
+```
+
+Rules for answering — the channel enforces all of them:
+
+1. Every question is phrased so **present: true means the tell IS present**.
+   Read the direction before answering.
+2. Answer only from what is visible. Do not infer from what a page like this
+   usually does.
+3. `confidence` below 0.7 is discarded. A question you cannot decide from the
+   image gets a low number, not a guess — discarding is the right outcome.
+4. `evidence` names the specific thing you saw. "the three cards each open with
+   a rounded icon square" — not "it looks AI-generated". A `true` with no
+   evidence is rejected as a guess.
+5. Leave `present: null` for anything you did not judge. Null rows are ignored
+   and are not an error.
+
+Use this when a page passes every mechanical check and still looks wrong.
 
 ## How to read the report
 

@@ -27,19 +27,14 @@
     "yaml": "^2.6.1"
   },
   "peerDependencies": {
-    "@anthropic-ai/sdk": ">=0.68.0",
     "playwright": ">=1.48.0"
   },
   "peerDependenciesMeta": {
-    "@anthropic-ai/sdk": {
-      "optional": true
-    },
     "playwright": {
       "optional": true
     }
   },
   "devDependencies": {
-    "@anthropic-ai/sdk": "^0.117.1",
     "@types/node": "^22.10.0",
     "playwright": "^1.62.1",
     "typescript": "^5.7.2"

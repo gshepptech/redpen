@@ -35,7 +35,8 @@ ${pc.dim('Options')}
   --json [file]      machine-readable output
   --markdown [file]  markdown report
   --screenshots      capture full-page PNGs to .redpen/screenshots
-  --vision           ask a model about the screenshots (needs ANTHROPIC_API_KEY)
+  --vision           capture screenshots and write .redpen/vision-brief.json
+  --answers <file>   fold answered vision questions back into the verdict
   --min <level>      confidence floor for scoring: confirmed | likely | possible
   --verbose          include single-channel findings and rule provenance
   --show-ignored     list findings suppressed by redpen-ignore
@@ -56,6 +57,7 @@ interface Args {
   markdown: string | boolean;
   screenshots: boolean;
   vision: boolean;
+  answers: string | null;
   min: Confidence | null;
   verbose: boolean;
   showIgnored: boolean;
@@ -72,6 +74,7 @@ function parseArgs(argv: string[]): Args {
     markdown: false,
     screenshots: false,
     vision: false,
+    answers: null,
     min: null,
     verbose: false,
     showIgnored: false,
@@ -99,6 +102,7 @@ function parseArgs(argv: string[]): Args {
     }
     if (a === '--screenshots') { args.screenshots = true; continue; }
     if (a === '--vision') { args.vision = true; continue; }
+    if (a === '--answers') { args.answers = argv[++i] ?? null; continue; }
     if (a === '--min') { args.min = argv[++i] as Confidence; continue; }
     if (a === '--verbose' || a === '-v') { args.verbose = true; continue; }
     if (a === '--show-ignored') { args.showIgnored = true; continue; }
@@ -163,6 +167,7 @@ async function cmdScan(root: string, args: Args, gating: boolean): Promise<void>
     viewports: args.viewports,
     screenshots: args.screenshots,
     vision: args.vision,
+    answers: args.answers,
     ephemeral: gating,
     onProgress,
   });
@@ -214,6 +219,16 @@ async function cmdScan(root: string, args: Args, gating: boolean): Promise<void>
         showIgnored: args.showIgnored,
         maxEvidence: args.verbose ? 12 : 3,
       }),
+    );
+  }
+
+  if (result.briefPath) {
+    process.stderr.write(
+      '\n' +
+        pc.bold('  vision brief ready\n') +
+        pc.dim(`  ${result.briefPath}\n`) +
+        pc.dim('  Open each screenshot it lists, fill in the pre-built answer rows, then re-run with\n') +
+        pc.dim(`  --answers ${result.briefPath}\n`),
     );
   }
 
