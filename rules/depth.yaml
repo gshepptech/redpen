@@ -4,6 +4,8 @@
 # execution-level: shadows, borders, and glass that got applied by reflex.
 
 - id: over-rounding
+  kind: slop
+  surfaces: [persuade, read]
   title: Maximum rounding on everything
   category: depth
   severity: high
@@ -34,6 +36,7 @@
     for avatars and true pills.
 
 - id: generic-drop-shadow
+  kind: slop
   title: The default drop shadow
   category: depth
   severity: medium
@@ -62,6 +65,7 @@
     both blur and y-offset with elevation.
 
 - id: thin-border-wide-shadow
+  kind: slop
   title: Hairline border plus a wide soft shadow
   category: depth
   severity: medium
@@ -80,6 +84,8 @@
     above the page, like menus and dialogs.
 
 - id: glassmorphism
+  kind: slop
+  advisory: true
   title: Backdrop blur without a reason
   category: depth
   severity: low
@@ -103,6 +109,8 @@
     scrolling page, a sheet over a document. Remove it elsewhere.
 
 - id: ghost-cards
+  kind: slop
+  surfaces: [persuade, read]
   title: Cards with no content differentiation
   category: depth
   severity: medium
@@ -129,6 +137,8 @@
     it — a featured tier, a primary path.
 
 - id: status-chip-soup
+  kind: slop
+  surfaces: [persuade, read]
   title: Too many status chips
   category: depth
   severity: low
@@ -150,6 +160,8 @@
     needs attention. Everything else becomes plain text.
 
 - id: z-index-9999
+  kind: quality
+  advisory: true
   title: z-index escalation
   category: depth
   severity: low

@@ -6,6 +6,7 @@
 # strongly any catalogue author feels about it.
 
 - id: ai-purple
+  kind: slop
   title: AI purple as the primary colour
   category: color
   severity: critical
@@ -40,6 +41,7 @@
     Tailwind stops (500/600) so it stops matching the default on sight.
 
 - id: gradient-text
+  kind: slop
   title: Gradient-filled heading text
   category: color
   severity: critical
@@ -71,6 +73,7 @@
     scale, weight, or a drawn rule under the line — not from the fill.
 
 - id: purple-blue-gradient
+  kind: slop
   title: Purple-to-blue or purple-to-pink gradient
   category: color
   severity: high
@@ -98,6 +101,8 @@
     inside a 20-degree hue span so it reads as one colour with depth.
 
 - id: cream-serif-default
+  kind: slop
+  surfaces: [persuade, read]
   title: The cream-plus-serif "tasteful default"
   category: color
   severity: high
@@ -131,6 +136,7 @@
     combination is the tell, not either half alone.
 
 - id: pure-black-white
+  kind: slop
   title: "Pure #000 or #fff as a base surface"
   category: color
   severity: medium
@@ -147,7 +153,8 @@
     check: unmixed-extremes
     params:
       minAreaShare: 0.25
-  exceptSurfaces: [modern-minimal]
+  legitimateWhen: >-
+    A pure-white paper is correct in the monochrome modern-minimal school (Stripe, ElevenLabs).
   why: >-
     Untinted black and white are what you get when nobody picked a palette. Real
     paper and real ink both carry a trace of hue.
@@ -156,6 +163,7 @@
     OKLCH. The shift is invisible in isolation and obvious in aggregate.
 
 - id: zero-chroma-neutrals
+  kind: slop
   title: Flat zero-chroma greys
   category: color
   severity: low
@@ -169,7 +177,8 @@
     params:
       minChroma: 0.005
       minDistinctNeutrals: 3
-  exceptSurfaces: [modern-minimal]
+  legitimateWhen: >-
+    Zero-chroma greys are correct in the monochrome modern-minimal school.
   why: >-
     A grey ramp with no chroma reads as dead next to type and imagery that both
     carry colour. It is the palette equivalent of unstyled text.
@@ -178,6 +187,7 @@
     locked to the anchor.
 
 - id: low-contrast
+  kind: quality
   title: Text below its contrast threshold
   category: color
   severity: critical
@@ -205,6 +215,7 @@
     clear 3:1 against the control but not the page.
 
 - id: gray-on-color
+  kind: quality
   title: Grey text on a coloured surface
   category: color
   severity: medium
@@ -226,6 +237,7 @@
     stepped far enough to clear 4.5:1.
 
 - id: dark-glow
+  kind: slop
   title: Unprompted neon glow in dark mode
   category: color
   severity: high
@@ -256,6 +268,8 @@
     through lightness steps and hairline borders, not bloom.
 
 - id: radial-halo
+  kind: slop
+  advisory: true
   title: Radial halo or aurora blob behind the hero
   category: color
   severity: medium
@@ -279,7 +293,8 @@
     params:
       minBlurPx: 40
       minAreaShare: 0.08
-  exceptSurfaces: [atmospheric]
+  legitimateWhen: >-
+    An atmospheric world can carry one or two warm radial blooms as the design itself.
   why: >-
     Blurred colour blobs are decoration standing in for a design decision. Note
     that this tell scored far lower in real complaint data than in design
@@ -289,6 +304,7 @@
     animation, and let it carry the composition instead of hiding in the corner.
 
 - id: design-system-color
+  kind: quality
   title: Colour outside the declared token set
   category: color
   severity: medium

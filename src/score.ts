@@ -1,4 +1,4 @@
-import type { Finding, Confidence, Category } from './types.js';
+import type { Finding, Confidence, Category, Kind } from './types.js';
 
 /**
  * The score.
@@ -29,10 +29,11 @@ function evidenceMultiplier(count: number): number {
 }
 
 export function score(findings: Finding[]): number {
-  if (!findings.length) return 100;
+  const scored = findings.filter((f) => !f.advisory);
+  if (!scored.length) return 100;
 
   let penalty = 0;
-  for (const f of findings) {
+  for (const f of scored) {
     const instances = new Set(
       f.evidence.map((e) => `${e.location}:${e.line ?? e.selector ?? ''}`),
     ).size;
@@ -43,6 +44,18 @@ export function score(findings: Finding[]): number {
   // cannot fall below 0 no matter how long the list gets.
   const result = 100 * Math.exp(-penalty / 6);
   return Math.round(Math.max(0, Math.min(100, result)));
+}
+
+/**
+ * Score one kind on its own.
+ *
+ * "Does it look machine-made" and "is it broken" are different questions, and a
+ * single number answers neither — a page can be immaculate taste over a broken
+ * form, or flawless mechanics wearing every default in the corpus. Advisory
+ * findings are excluded from every score by definition.
+ */
+export function scoreKind(findings: Finding[], kind: Kind): number {
+  return score(findings.filter((f) => f.kind === kind && !f.advisory));
 }
 
 export function scoreByCategory(findings: Finding[]): Record<string, number> {

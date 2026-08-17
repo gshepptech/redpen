@@ -56,6 +56,8 @@ function confidenceFor(rule: Rule, observed: Set<Channel>, renderRan: boolean): 
 export interface PromoteOptions {
   /** False when playwright was unavailable, so absence is not disagreement. */
   renderRan: boolean;
+  /** Rule ids that do not apply on this surface. Dropped before promotion. */
+  offSurface?: Set<string>;
   /** Rule ids suppressed by a project-level ignore, with their reasons. */
   ignored?: Map<string, { reason: string; location: string }>;
 }
@@ -69,6 +71,9 @@ export function promote(raw: RawFinding[], opts: PromoteOptions): {
   const unknownRules: string[] = [];
 
   for (const f of raw) {
+    // A rule that does not hold on this surface never becomes a finding — it is
+    // not a low-confidence finding, it is not a finding at all.
+    if (opts.offSurface?.has(f.ruleId)) continue;
     if (!ruleById(f.ruleId)) {
       if (!unknownRules.includes(f.ruleId)) unknownRules.push(f.ruleId);
       continue;
@@ -90,6 +95,8 @@ export function promote(raw: RawFinding[], opts: PromoteOptions): {
       ruleId,
       title: rule.title,
       category: rule.category,
+      kind: rule.kind,
+      advisory: rule.advisory ?? false,
       severity: rule.severity,
       weight: rule.weight,
       confidence: confidenceFor(rule, channels, opts.renderRan),

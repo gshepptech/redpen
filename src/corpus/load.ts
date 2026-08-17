@@ -2,7 +2,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parse } from 'yaml';
-import type { Rule, Category, Channel } from '../types.js';
+import type { Rule, Category, Channel, Kind, Surface } from '../types.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
@@ -45,6 +45,10 @@ const VALID_CHANNELS: ReadonlySet<string> = new Set<Channel>([
   'fingerprint',
 ]);
 
+const VALID_KINDS: ReadonlySet<string> = new Set<Kind>(['slop', 'quality']);
+
+const VALID_SURFACES: ReadonlySet<string> = new Set<Surface>(['persuade', 'operate', 'read']);
+
 /**
  * Validate on load rather than trusting the YAML. The corpus is the one thing
  * every channel reads, so a malformed rule should fail loudly at startup
@@ -58,6 +62,24 @@ function validate(rule: unknown, file: string, index: number): Rule {
   if (!r.title) throw new Error(`redpen: rule "${r.id}" has no title`);
   if (!r.category || !VALID_CATEGORIES.has(r.category)) {
     throw new Error(`redpen: rule "${r.id}" has invalid category "${r.category}"`);
+  }
+  if (!r.kind || !VALID_KINDS.has(r.kind)) {
+    throw new Error(
+      `redpen: rule "${r.id}" must declare kind: slop | quality — "does it look machine-made" and "is it broken" are scored separately`,
+    );
+  }
+  if (r.surfaces !== undefined) {
+    if (!Array.isArray(r.surfaces) || r.surfaces.length === 0) {
+      throw new Error(`redpen: rule "${r.id}" has an empty surfaces list — omit the field to mean all`);
+    }
+    for (const s of r.surfaces) {
+      if (!VALID_SURFACES.has(s)) {
+        throw new Error(`redpen: rule "${r.id}" names unknown surface "${s}"`);
+      }
+    }
+    if (r.surfaces.length === 3) {
+      throw new Error(`redpen: rule "${r.id}" lists every surface — omit the field instead`);
+    }
   }
   if (!Array.isArray(r.sources) || r.sources.length === 0) {
     throw new Error(`redpen: rule "${r.id}" has no sources — provenance is mandatory`);
@@ -105,7 +127,11 @@ function validate(rule: unknown, file: string, index: number): Rule {
   const complete = r as Rule;
   // `evidenceRank: null` is meaningful — it says the tell was never measured
   // against human complaint data — so default it rather than leaving undefined.
-  return { ...complete, evidenceRank: complete.evidenceRank ?? null };
+  return {
+    ...complete,
+    evidenceRank: complete.evidenceRank ?? null,
+    advisory: complete.advisory ?? false,
+  };
 }
 
 let cached: Rule[] | null = null;
@@ -143,6 +169,24 @@ export function loadCorpus(): Rule[] {
 
 export function rulesForChannel(channel: Channel): Rule[] {
   return loadCorpus().filter((r) => r.channels.includes(channel));
+}
+
+/**
+ * Does this rule apply on this surface?
+ *
+ * A rule with no `surfaces` holds everywhere. One that names surfaces holds
+ * only there — which is how "a single type family" stops being a finding on a
+ * dashboard, where it is the correct choice.
+ */
+export function appliesTo(rule: Rule, surface: Surface | null): boolean {
+  if (!rule.surfaces) return true;
+  // With no surface established, keep the rule rather than silently dropping it.
+  if (!surface) return true;
+  return rule.surfaces.includes(surface);
+}
+
+export function rulesForSurface(surface: Surface | null): Rule[] {
+  return loadCorpus().filter((r) => appliesTo(r, surface));
 }
 
 export function ruleById(id: string): Rule | undefined {

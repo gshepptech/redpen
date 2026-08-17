@@ -6,6 +6,7 @@
 # What remains is here.
 
 - id: missing-lang
+  kind: quality
   title: Document with no lang attribute
   category: a11y
   severity: medium
@@ -26,6 +27,7 @@
     `<html lang="en">`, or the correct tag for the content's language.
 
 - id: unlabelled-input
+  kind: quality
   title: Form control with no associated label
   category: a11y
   severity: critical
@@ -48,6 +50,7 @@
     hints only, or drop it.
 
 - id: color-only-indicator
+  kind: quality
   title: State signalled by colour alone
   category: a11y
   severity: high
@@ -69,6 +72,7 @@
     weight change, or a shape.
 
 - id: no-live-region
+  kind: quality
   title: Dynamic content with no live region
   category: a11y
   severity: medium
@@ -90,6 +94,7 @@
     `role="alert"` for failures.
 
 - id: disabled-by-opacity
+  kind: quality
   title: Disabled state signalled by opacity alone
   category: a11y
   severity: medium
@@ -114,6 +119,7 @@
     `cursor: not-allowed`, plus the visual treatment. Three channels.
 
 - id: script-error
+  kind: quality
   title: JavaScript error on load
   category: a11y
   severity: critical

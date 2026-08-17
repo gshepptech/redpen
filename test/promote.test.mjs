@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { promote, meetsThreshold } from '../dist/promote.js';
-import { score, grade } from '../dist/score.js';
+import { score, grade, scoreKind } from '../dist/score.js';
 
 const ev = (channel, location, extra = {}) => ({ channel, location, ...extra });
 
@@ -119,4 +119,48 @@ test('grade labels track the score', () => {
   assert.equal(grade(80), 'minor tells');
   assert.equal(grade(60), 'reads as generated');
   assert.equal(grade(10), 'slop');
+});
+
+/* ---- surface gating and split scoring -------------------------------- */
+
+test('an off-surface rule produces no finding at all, not a weak one', () => {
+  const raw = [
+    { ruleId: 'default-sans', channel: 'render', evidence: [ev('render', 'http://x')] },
+    { ruleId: 'low-contrast', channel: 'render', evidence: [ev('render', 'http://x')] },
+  ];
+  const on = promote(raw, { renderRan: true });
+  assert.equal(on.findings.length, 2);
+
+  const off = promote(raw, { renderRan: true, offSurface: new Set(['default-sans']) });
+  assert.deepEqual(off.findings.map((f) => f.ruleId), ['low-contrast']);
+});
+
+test('findings carry their kind through promotion', () => {
+  const { findings } = promote(
+    [
+      { ruleId: 'ai-purple', channel: 'render', evidence: [ev('render', 'http://x')] },
+      { ruleId: 'low-contrast', channel: 'render', evidence: [ev('render', 'http://x')] },
+    ],
+    { renderRan: true },
+  );
+  const byId = Object.fromEntries(findings.map((f) => [f.ruleId, f.kind]));
+  assert.equal(byId['ai-purple'], 'slop');
+  assert.equal(byId['low-contrast'], 'quality');
+});
+
+test('advisory findings never move a score', () => {
+  const base = { weight: 90, confidence: 'confirmed', evidence: [ev('source', 'a', { line: 1 })] };
+  assert.equal(score([{ ...base, advisory: true }]), 100);
+  assert.ok(score([{ ...base, advisory: false }]) < 100);
+});
+
+test('scoreKind isolates one axis from the other', () => {
+  const findings = [
+    { ruleId: 'a', kind: 'slop', advisory: false, weight: 95, confidence: 'confirmed', evidence: [ev('render', 'x')] },
+    { ruleId: 'b', kind: 'quality', advisory: false, weight: 10, confidence: 'confirmed', evidence: [ev('render', 'x')] },
+  ];
+  const slop = scoreKind(findings, 'slop');
+  const quality = scoreKind(findings, 'quality');
+  assert.ok(slop < quality, 'a heavy slop finding must not drag the quality score down with it');
+  assert.equal(scoreKind([], 'slop'), 100);
 });

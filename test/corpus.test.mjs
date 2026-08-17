@@ -77,3 +77,75 @@ test('rulesForChannel and ruleById agree with the corpus', () => {
   assert.equal(ruleById('ai-purple')?.category, 'color');
   assert.equal(ruleById('does-not-exist'), undefined);
 });
+
+/* ---- ported from impeccable: kind, surfaces, advisory ---------------- */
+
+test('every rule declares whether it is slop or quality', () => {
+  for (const r of loadCorpus()) {
+    assert.ok(['slop', 'quality'].includes(r.kind), `${r.id} has kind "${r.kind}"`);
+  }
+});
+
+test('the corpus carries a real split, not a token one', () => {
+  const rules = loadCorpus();
+  const slop = rules.filter((r) => r.kind === 'slop').length;
+  const quality = rules.filter((r) => r.kind === 'quality').length;
+  assert.ok(slop > 25 && quality > 25, `expected both kinds well represented, got ${slop}/${quality}`);
+});
+
+test('a11y and usability rules are quality — broken is broken whatever your taste', () => {
+  for (const r of loadCorpus()) {
+    if (r.category === 'a11y' || r.category === 'usability') {
+      assert.equal(r.kind, 'quality', `${r.id} (${r.category}) should be quality`);
+    }
+  }
+});
+
+test('sameness rules are slop — nothing is broken, it just looks generated', () => {
+  for (const r of loadCorpus().filter((r) => r.category === 'sameness')) {
+    assert.equal(r.kind, 'slop', `${r.id} should be slop`);
+  }
+});
+
+test('a rule that names surfaces never names all three', () => {
+  for (const r of loadCorpus()) {
+    if (!r.surfaces) continue;
+    assert.ok(r.surfaces.length > 0 && r.surfaces.length < 3, `${r.id}: ${r.surfaces}`);
+    for (const s of r.surfaces) {
+      assert.ok(['persuade', 'operate', 'read'].includes(s), `${r.id} names surface "${s}"`);
+    }
+  }
+});
+
+test('the rules that punish familiarity are off on an operate surface', () => {
+  // impeccable's operate.md: on a task surface familiarity is a feature, one
+  // type family is often right, and consistent repeating components are the
+  // point. These rules must not fire there.
+  const rules = new Map(loadCorpus().map((r) => [r.id, r]));
+  for (const id of ['default-sans', 'monotonous-spacing', 'ghost-cards', 'over-rounding']) {
+    const r = rules.get(id);
+    assert.ok(r, `${id} missing from the corpus`);
+    assert.ok(r.surfaces, `${id} must be surface-gated`);
+    assert.ok(!r.surfaces.includes('operate'), `${id} must not apply on an operate surface`);
+  }
+});
+
+test('quality rules apply on every surface — broken is broken everywhere', () => {
+  const gatedQuality = loadCorpus().filter((r) => r.kind === 'quality' && r.surfaces);
+  // line-length is the one deliberate exception: dense data tables legitimately
+  // run past the prose measure, so it is scoped away from operate.
+  const unexpected = gatedQuality.filter((r) => r.id !== 'line-length');
+  assert.deepEqual(
+    unexpected.map((r) => r.id),
+    [],
+    'a quality rule was surface-gated without justification',
+  );
+});
+
+test('advisory rules exist and are never the loudest thing in the corpus', () => {
+  const advisory = loadCorpus().filter((r) => r.advisory);
+  assert.ok(advisory.length > 0, 'the corpus should mark some tells advisory');
+  for (const r of advisory) {
+    assert.ok(r.weight < 70, `${r.id} is advisory but weighted ${r.weight}`);
+  }
+});

@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import type { Category, Confidence } from './types.js';
+import type { Category, Confidence, Surface } from './types.js';
 
 /**
  * Project configuration and the score baseline.
@@ -12,6 +12,17 @@ import type { Category, Confidence } from './types.js';
 
 export interface RedpenConfig {
   urls: string[];
+  /**
+   * What the visitor is doing here: persuade | operate | read. A declared
+   * surface always beats detection, and detection is a heuristic — so on a
+   * project whose pages are all one kind, declaring it once is the single
+   * highest-value line in this file.
+   *
+   * Per-url overrides go in `surfaceByUrl`.
+   */
+  surface: Surface | null;
+  /** url -> surface, for projects that mix marketing and app routes. */
+  surfaceByUrl: Record<string, Surface>;
   viewports: number[];
   minConfidence: Confidence;
   skipCategories: Category[];
@@ -23,6 +34,8 @@ export interface RedpenConfig {
 
 export const DEFAULT_CONFIG: RedpenConfig = {
   urls: [],
+  surface: null,
+  surfaceByUrl: {},
   viewports: [375, 768, 1440],
   minConfidence: 'likely',
   skipCategories: [],

@@ -4,6 +4,7 @@
 # that a plain regex catches with near-zero false positives.
 
 - id: emoji-as-icon
+  kind: slop
   title: Emoji used as interface icons
   category: iconography
   severity: high
@@ -32,6 +33,7 @@
     with the words.
 
 - id: mixed-icon-sets
+  kind: slop
   title: Two or more icon libraries on one page
   category: iconography
   severity: medium
@@ -62,6 +64,7 @@
     rather than importing a second library for it.
 
 - id: icon-tile-feature-card
+  kind: slop
   title: Icon-in-a-tinted-square above a feature heading
   category: iconography
   severity: medium
@@ -87,6 +90,7 @@
     all — the heading is doing the work anyway.
 
 - id: broken-image
+  kind: quality
   title: Broken or missing image
   category: iconography
   severity: critical
@@ -104,6 +108,7 @@
     Supply the asset or remove the element. Never ship an img whose src 404s.
 
 - id: shape-assembled-illustration
+  kind: slop
   title: Illustration assembled from primitive shapes
   category: iconography
   severity: low
@@ -130,6 +135,7 @@
     nothing.
 
 - id: undecorated-svg
+  kind: quality
   title: Decorative SVG with no accessible treatment
   category: iconography
   severity: medium
@@ -152,6 +158,7 @@
     anything that carries meaning.
 
 - id: missing-alt
+  kind: quality
   title: Image without alt text
   category: iconography
   severity: high

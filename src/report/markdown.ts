@@ -12,6 +12,19 @@ export function renderMarkdown(result: ScanResult): string {
 
   out.push(`# redpen — ${score}/100 (${grade(score)})`);
   out.push('');
+  out.push(`| | Score | |`);
+  out.push(`| --- | --- | --- |`);
+  out.push(`| **slop** | ${result.slopScore} | reads as machine-made |`);
+  out.push(`| **quality** | ${result.qualityScore} | broken regardless of taste |`);
+  out.push('');
+  const surfaceEntries = Object.entries(result.surfaces);
+  if (surfaceEntries.length) {
+    const how = surfaceEntries.every(([, v]) => v.declared) ? 'declared' : 'detected';
+    out.push(
+      `Surface: ${surfaceEntries.map(([u, v]) => `\`${u}\` → **${v.surface}**`).join(', ')} (${how}). Rules that only hold on other surfaces did not run.`,
+    );
+    out.push('');
+  }
   out.push(`Channels run: ${result.channelsRun.join(', ')}.`);
   const missing = (['source', 'render', 'vision'] as const).filter(
     (c) => !result.channelsRun.includes(c),
@@ -58,6 +71,15 @@ export function renderMarkdown(result: ScanResult): string {
       out.push(`- \`${c.page}\` ≈ \`${c.against}\` (distance ${c.distance})`);
       for (const d of c.sharedDimensions) out.push(`  - shares ${d}`);
     }
+    out.push('');
+  }
+
+  if (result.advisory.length) {
+    out.push('## Advisory');
+    out.push('');
+    out.push('Reported but never scored — tells humans use legitimately often enough that counting them would be noise.');
+    out.push('');
+    for (const f of result.advisory) out.push(`- \`${f.ruleId}\` — ${f.title}`);
     out.push('');
   }
 

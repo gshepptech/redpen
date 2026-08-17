@@ -218,6 +218,64 @@ because someone looked.
 unreadable or malformed answers file — each is reported as a warning and the
 affected findings stay unconfirmed. Nothing degrades into a clean report.
 
+## Two scores, not one
+
+"Does this look machine-made" and "is this broken" are different questions, and
+one number answers neither. Every rule declares which it is — a split taken
+directly from impeccable, where it is the most useful distinction in the corpus.
+
+```
+  redpen   62  ███████████████░░░░░░░░░  reads as generated
+
+  slop      41  14 findings — reads as machine-made
+  quality   88   2 findings — broken regardless of taste
+```
+
+51 slop rules, 45 quality. A page can be immaculate taste over a broken form, or
+flawless mechanics wearing every default in the catalogue, and you should be
+able to see which.
+
+**Advisory rules** are reported and never scored. Some tells — em dashes being
+the canonical case — humans use legitimately often enough that counting them is
+noise rather than signal. 8 rules are marked this way.
+
+## Surfaces
+
+The rule that most needed to exist: **what the visitor is doing on the page
+decides which rules are true there.**
+
+| | The visitor | Examples |
+| --- | --- | --- |
+| `persuade` | decides and acts | landing, marketing, pricing |
+| `operate` | completes a task | app UI, dashboards, settings |
+| `read` | understands something | docs, articles, changelogs |
+
+On an operate surface familiarity is a *feature*. A single type family is the
+right answer there and a tell on a landing page; uniform spacing is consistency
+in a settings panel and monotony on a marketing site; identical repeating
+components are the point of a data table. 20 rules are scoped accordingly, and
+firing them on the wrong surface is a false positive by construction.
+
+redpen detects the surface from the rendered DOM — controls and data rows versus
+a hero and a pitch versus sustained prose — and reports what it decided and why:
+
+```
+surface  persuade (detected) — rules that only hold elsewhere are off
+```
+
+Detection is a heuristic and behaves like one: below 0.6 confidence it declines
+to classify and every rule stays on, because a false positive you can dismiss
+beats a silently skipped check. Declare it once to skip the guessing:
+
+```json
+{ "surface": "operate", "surfaceByUrl": { "http://localhost:3000/": "persuade" } }
+```
+
+Same fixture page, judged both ways, drops ten findings that are wrong on a
+dashboard: `default-sans`, `monotonous-spacing`, `ghost-cards`, `over-rounding`,
+`line-length`, `hero-three-cards`, `centered-everything-hero`, `generic-cta`,
+`marketing-buzzword`, `numbered-section-labels`.
+
 ## Rule categories
 
 `color` · `typography` · `layout` · `depth` · `motion` · `iconography` · `copy`

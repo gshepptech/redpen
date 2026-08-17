@@ -1,6 +1,8 @@
 import { rulesForChannel } from '../corpus/load.js';
 import { detectorSource, type DetectorSpec, type DetectorHit } from './detectors.js';
 import { fingerprintSource, type RawFingerprint } from '../fingerprint/extract.js';
+import { surfaceSource, classify, type SurfaceSignals } from './surface.js';
+import type { SurfaceVerdict } from './surface.js';
 import type { RawFinding, Evidence, Fingerprint } from '../types.js';
 
 /**
@@ -25,6 +27,8 @@ export interface RenderResult {
   findings: RawFinding[];
   fingerprints: Fingerprint[];
   screenshots: Map<string, string>;
+  /** url -> detected surface. Empty when nothing could be classified. */
+  detectedSurfaces: Map<string, SurfaceVerdict>;
   /** Populated when the browser could not be started. */
   unavailable: string | null;
 }
@@ -98,6 +102,7 @@ export async function scanRender(opts: RenderOptions): Promise<RenderResult> {
     findings: [],
     fingerprints: [],
     screenshots: new Map(),
+    detectedSurfaces: new Map(),
     unavailable: null,
   };
 
@@ -126,6 +131,7 @@ export async function scanRender(opts: RenderOptions): Promise<RenderResult> {
   const install = [
     `window.__redpenDetect = ${detectorSource()};`,
     `window.__redpenFingerprint = ${fingerprintSource()};`,
+    `window.__redpenSurface = ${surfaceSource()};`,
   ].join('\n');
 
   let browser: BrowserLike;
@@ -142,6 +148,7 @@ export async function scanRender(opts: RenderOptions): Promise<RenderResult> {
   const hits = new Map<string, Evidence[]>();
   const fingerprints: Fingerprint[] = [];
   const screenshots = new Map<string, string>();
+  const detectedSurfaces = new Map<string, SurfaceVerdict>();
   const detectorErrors: string[] = [];
 
   try {
@@ -193,6 +200,9 @@ export async function scanRender(opts: RenderOptions): Promise<RenderResult> {
         // Fingerprint once per url, at the widest viewport, because the
         // structural signature is a desktop-layout property.
         if (width === Math.max(...opts.viewports)) {
+          const signals = await page.evaluate<SurfaceSignals>('window.__redpenSurface()');
+          if (signals) detectedSurfaces.set(url, classify(signals));
+
           const raw = await page.evaluate<RawFingerprint>('window.__redpenFingerprint()');
           fingerprints.push({
             page: url,
@@ -224,6 +234,7 @@ export async function scanRender(opts: RenderOptions): Promise<RenderResult> {
     findings,
     fingerprints,
     screenshots,
+    detectedSurfaces,
     unavailable: detectorErrors.length ? detectorErrors.join('; ') : null,
   };
 }

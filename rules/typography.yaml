@@ -6,6 +6,8 @@
 # never being named by a Reddit commenter.
 
 - id: default-sans
+  kind: slop
+  surfaces: [persuade, read]
   title: Inter, Geist, or Roboto as the only face
   category: typography
   severity: high
@@ -36,6 +38,8 @@
     keeping it for the hero is not.
 
 - id: too-many-families
+  kind: slop
+  surfaces: [persuade, read]
   title: More than three type families on one page
   category: typography
   severity: medium
@@ -58,6 +62,7 @@
     the distinctions a fourth family was trying to make.
 
 - id: italic-display
+  kind: slop
   title: Italic headings or display type
   category: typography
   severity: high
@@ -88,6 +93,8 @@
     underline instead.
 
 - id: flat-type-hierarchy
+  kind: slop
+  surfaces: [persuade, read]
   title: No real size hierarchy
   category: typography
   severity: high
@@ -117,6 +124,8 @@
     adjacent steps should differ enough to read as different roles.
 
 - id: line-length
+  kind: quality
+  surfaces: [persuade, read]
   title: Measure outside the readable range
   category: typography
   severity: medium
@@ -139,6 +148,7 @@
     section.
 
 - id: tight-leading
+  kind: quality
   title: Leading too tight for the size
   category: typography
   severity: medium
@@ -161,6 +171,7 @@
     Body at 1.5-1.65, headings at 1.0-1.3. The relationship inverts with size.
 
 - id: tiny-text
+  kind: quality
   title: Text below the legible floor
   category: typography
   severity: high
@@ -184,6 +195,7 @@
     nothing below that.
 
 - id: extreme-tracking
+  kind: quality
   title: Extreme letter-spacing
   category: typography
   severity: low
@@ -206,6 +218,7 @@
     tracking belongs on small caps and stops at 0.15em.
 
 - id: all-caps-body
+  kind: quality
   title: All-caps used for running text
   category: typography
   severity: medium
@@ -225,6 +238,7 @@
     Reserve caps for labels and eyebrows under about 40 characters.
 
 - id: justified-text
+  kind: quality
   title: Justified text on the web
   category: typography
   severity: low
@@ -242,6 +256,8 @@
     with `hyphens: auto` and a narrow measure.
 
 - id: oversized-h1
+  kind: slop
+  surfaces: [persuade, read]
   title: Hero heading larger than the viewport can carry
   category: typography
   severity: medium
@@ -262,6 +278,7 @@
     at your own window size.
 
 - id: skipped-heading
+  kind: quality
   title: Heading levels skipped
   category: typography
   severity: medium
@@ -283,6 +300,8 @@
     Pick the level by rank and restyle it. Never skip a level to get a size.
 
 - id: numbered-section-labels
+  kind: slop
+  surfaces: [persuade, read]
   title: Numbered section labels on every section
   category: typography
   severity: low

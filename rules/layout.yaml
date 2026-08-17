@@ -6,6 +6,8 @@
 # cross-page version of the same problem.
 
 - id: hero-three-cards
+  kind: slop
+  surfaces: [persuade]
   title: Centred hero plus a three-card feature grid
   category: layout
   severity: critical
@@ -40,6 +42,8 @@
     content without announcing their origin.
 
 - id: centered-everything-hero
+  kind: slop
+  surfaces: [persuade]
   title: Full-viewport hero with everything on one centred axis
   category: layout
   severity: high
@@ -63,7 +67,8 @@
     ask: >-
       In the hero, are the eyebrow, headline, subheading, and button all centred
       on the same vertical axis, filling most of the first screen?
-  exceptSurfaces: [atmospheric, playful]
+  legitimateWhen: >-
+    Atmospheric and playful worlds can centre the hero when the canvas is the design.
   why: >-
     Four elements stacked on one centre line with nothing to break the rhythm.
     It is the safest possible composition, which is why it is everywhere.
@@ -72,6 +77,7 @@
     the CTA, or anchor a numeral off-axis so the block has a structure.
 
 - id: nested-cards
+  kind: slop
   title: A card inside another card
   category: layout
   severity: high
@@ -95,6 +101,7 @@
     outer one loses its border and shadow.
 
 - id: side-tab-border
+  kind: slop
   title: Thick coloured stripe down one edge of a card
   category: layout
   severity: medium
@@ -122,6 +129,8 @@
     card corners on that edge go square.
 
 - id: monotonous-spacing
+  kind: slop
+  surfaces: [persuade, read]
   title: Every section padded identically
   category: layout
   severity: medium
@@ -144,6 +153,8 @@
     rule, a colour shift, or a full-bleed band instead of more whitespace.
 
 - id: off-scale-spacing
+  kind: slop
+  advisory: true
   title: Spacing values off the scale
   category: layout
   severity: low
@@ -167,6 +178,7 @@
     Snap everything to a 4px scale exposed as named tokens.
 
 - id: horizontal-overflow
+  kind: quality
   title: Page scrolls sideways at some viewport
   category: layout
   severity: critical
@@ -190,6 +202,7 @@
     viewport and fix it at source.
 
 - id: text-overflow
+  kind: quality
   title: Text clipped or overflowing its container
   category: layout
   severity: high
@@ -217,6 +230,7 @@
     Remove the fixed height and let content size the box, or shorten the label.
 
 - id: body-text-viewport-edge
+  kind: quality
   title: Body text flush against the viewport edge
   category: layout
   severity: medium
@@ -239,6 +253,7 @@
     Put the gutter on the page shell so every section inherits it.
 
 - id: cramped-padding
+  kind: quality
   title: Interactive elements with no breathing room
   category: layout
   severity: medium
@@ -261,6 +276,7 @@
     the same form.
 
 - id: input-height-mismatch
+  kind: quality
   title: Input and button heights differ in the same row
   category: layout
   severity: medium
@@ -282,6 +298,7 @@
     alike.
 
 - id: unaligned-flex-row
+  kind: quality
   title: Flex row not vertically centred
   category: layout
   severity: low
@@ -302,6 +319,7 @@
     intrinsic height, and set line-height: 1 on the tall ones.
 
 - id: repeated-container-text
+  kind: quality
   title: The same string repeated across containers
   category: layout
   severity: low
@@ -322,6 +340,7 @@
     Write the real copy, or cut the cards down to the ones you have content for.
 
 - id: codex-grid-background
+  kind: slop
   title: Decorative grid or stripe background
   category: layout
   severity: low

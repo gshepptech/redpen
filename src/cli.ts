@@ -182,9 +182,13 @@ async function cmdScan(root: string, args: Args, gating: boolean): Promise<void>
     const payload = JSON.stringify(
       {
         score: result.score,
+        slopScore: result.slopScore,
+        qualityScore: result.qualityScore,
         grade: grade(result.score),
+        surfaces: result.surfaces,
         channelsRun: result.channelsRun,
         findings: result.findings,
+        advisory: result.advisory,
         ignored: result.ignored,
         clashes: result.clashes,
         fingerprints: result.fingerprints,
@@ -339,6 +343,12 @@ function cmdWhy(args: Args): void {
 
   process.stdout.write(`\n  ${pc.bold(rule.title)}  ${pc.dim(rule.id)}\n\n`);
   process.stdout.write(`  ${pc.dim('category')}   ${rule.category}\n`);
+  process.stdout.write(
+    `  ${pc.dim('kind')}       ${rule.kind === 'slop' ? 'slop — reads as machine-made' : 'quality — broken regardless of taste'}${rule.advisory ? pc.yellow('  (advisory: reported, never scored)') : ''}\n`,
+  );
+  process.stdout.write(
+    `  ${pc.dim('surfaces')}   ${rule.surfaces ? rule.surfaces.join(', ') + pc.dim(' only') : 'all (persuade, operate, read)'}\n`,
+  );
   process.stdout.write(`  ${pc.dim('weight')}     ${rule.weight}/100\n`);
   process.stdout.write(
     `  ${pc.dim('evidence')}   ${
@@ -353,8 +363,8 @@ function cmdWhy(args: Args): void {
   process.stdout.write(`  ${pc.dim('from')}       ${rule.sources.map((s) => `${s.catalogue}:${s.ref}`).join('\n             ')}\n\n`);
   process.stdout.write(`  ${rule.why}\n\n`);
   process.stdout.write(`  ${pc.green('fix')}  ${rule.fix}\n\n`);
-  if (rule.exceptSurfaces?.length) {
-    process.stdout.write(pc.dim(`  legitimate on: ${rule.exceptSurfaces.join(', ')}\n\n`));
+  if (rule.legitimateWhen) {
+    process.stdout.write(pc.dim(`  legitimate when: ${rule.legitimateWhen}\n\n`));
   }
 }
 

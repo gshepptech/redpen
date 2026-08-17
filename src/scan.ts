@@ -4,11 +4,13 @@ import { scanSource } from './channels/source.js';
 import { scanRender } from './channels/render.js';
 import { buildBrief, writeBrief, readAnswers } from './channels/vision.js';
 import { promote, meetsThreshold } from './promote.js';
+import { MIN_SURFACE_CONFIDENCE } from './channels/surface.js';
+import { loadCorpus, appliesTo } from './corpus/load.js';
 import { findClashes, fingerprintFindings } from './fingerprint/distance.js';
 import * as store from './fingerprint/store.js';
-import { score } from './score.js';
+import { score, scoreKind } from './score.js';
 import { loadConfig, configIgnores, type RedpenConfig } from './config.js';
-import type { ScanResult, RawFinding, Channel, Finding } from './types.js';
+import type { ScanResult, RawFinding, Channel, Finding, Surface } from './types.js';
 
 /**
  * The orchestrator. Runs every available channel, promotes, scores.
@@ -61,6 +63,7 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
   let renderRan = false;
   let fingerprints = [] as ScanResult['fingerprints'];
   let screenshots = new Map<string, string>();
+  const surfaces: ScanResult['surfaces'] = {};
   if (urls.length) {
     opts.onProgress?.(`rendering ${urls.length} url(s) at ${viewports.join(', ')}px`);
     const t1 = Date.now();
@@ -81,6 +84,27 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
       screenshots = render.screenshots;
       if (render.unavailable) warnings.push(render.unavailable);
       opts.onProgress?.(`render: ${render.findings.length} rule(s) hit`);
+
+      // Surface: declared beats detected, and a low-confidence detection is
+      // treated as unknown rather than acted on.
+      for (const url of urls) {
+        const declared = config.surfaceByUrl[url] ?? config.surface ?? null;
+        if (declared) {
+          surfaces[url] = { surface: declared, declared: true };
+          continue;
+        }
+        const detected = render.detectedSurfaces.get(url);
+        if (detected && detected.confidence >= MIN_SURFACE_CONFIDENCE) {
+          surfaces[url] = { surface: detected.surface, declared: false };
+          opts.onProgress?.(
+            `surface: ${url} looks like "${detected.surface}" (${detected.confidence}) — ${detected.signals.join(', ')}`,
+          );
+        } else if (detected) {
+          warnings.push(
+            `could not confidently classify ${url} (best guess "${detected.surface}" at ${detected.confidence}). Every rule stayed on. Declare "surface" in .redpen/config.json to gate the rules that only hold on one kind of page.`,
+          );
+        }
+      }
     }
   } else {
     warnings.push(
@@ -143,8 +167,25 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
   }
 
   // ---- promote ----
+  // Rules that do not hold on this surface never become findings. A single type
+  // family is a tell on a landing page and the right answer on a dashboard, so
+  // firing it there would be a false positive by construction.
+  const activeSurfaces = [...new Set(Object.values(surfaces).map((s) => s.surface))];
+  const offSurface = new Set<string>();
+  if (activeSurfaces.length === 1) {
+    const only = activeSurfaces[0] as Surface;
+    for (const rule of loadCorpus()) {
+      if (!appliesTo(rule, only)) offSurface.add(rule.id);
+    }
+    if (offSurface.size) {
+      opts.onProgress?.(
+        `surface: ${offSurface.size} rule(s) do not apply on a "${only}" surface`,
+      );
+    }
+  }
+
   const ignores = configIgnores(config);
-  const promoted = promote(raw, { renderRan, ignored: ignores });
+  const promoted = promote(raw, { renderRan, ignored: ignores, offSurface });
   if (promoted.unknownRules.length) {
     warnings.push(`unknown rule ids reported by a channel: ${promoted.unknownRules.join(', ')}`);
   }
@@ -156,9 +197,17 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
   // score. A source-only guess should never cost a project points.
   const scored = inScope.filter((f) => meetsThreshold(f, config.minConfidence));
 
+  // Advisory findings are reported and never scored — for tells humans use
+  // legitimately often enough that counting them would be noise, not signal.
+  const advisory = inScope.filter((f) => f.advisory);
+
   return {
     score: score(scored),
-    findings: inScope,
+    slopScore: scoreKind(scored, 'slop'),
+    qualityScore: scoreKind(scored, 'quality'),
+    surfaces,
+    advisory,
+    findings: inScope.filter((f) => !f.advisory),
     ignored: promoted.ignored,
     fingerprints,
     clashes,

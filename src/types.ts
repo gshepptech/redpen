@@ -22,6 +22,28 @@ export type Category =
 
 export type Channel = 'source' | 'render' | 'vision' | 'fingerprint';
 
+/**
+ * What kind of failure a rule describes. Borrowed from impeccable, and the most
+ * useful single distinction in the corpus: "this looks machine-made" and "this
+ * is broken" are different questions with different urgency, and collapsing
+ * them into one score answers neither.
+ */
+export type Kind = 'slop' | 'quality';
+
+/**
+ * What the visitor is doing on this surface. impeccable's insight, and the one
+ * redpen most needed: familiarity is a *feature* on a dashboard and a tell on a
+ * landing page, so a rule set that fires identically on both is wrong half the
+ * time.
+ *
+ *   persuade — the visitor decides and acts. Landing, marketing, pricing.
+ *   operate  — the visitor completes a task. App UI, dashboards, settings.
+ *   read     — the visitor understands something. Docs, articles, changelogs.
+ */
+export type Surface = 'persuade' | 'operate' | 'read';
+
+export const SURFACES: readonly Surface[] = ['persuade', 'operate', 'read'];
+
 /** Author-declared importance, before evidence weighting. */
 export type Severity = 'critical' | 'high' | 'medium' | 'low';
 
@@ -80,7 +102,28 @@ export interface Rule {
   id: string;
   title: string;
   category: Category;
+  /**
+   * `slop` = reads as machine-made. `quality` = broken regardless of taste.
+   * A page can be flawless on one axis and failing on the other, so they are
+   * scored and reported separately.
+   */
+  kind: Kind;
   severity: Severity;
+  /**
+   * Surfaces where this rule applies. Omitted means all three.
+   *
+   * This is the difference between a rule set and a rule set that is right. A
+   * single type family is a tell on a landing page and correct on a dashboard;
+   * uniform spacing is monotony on a marketing site and consistency in a
+   * settings panel. Rules that only hold on some surfaces say so here.
+   */
+  surfaces?: Surface[];
+  /**
+   * Advisory rules are reported but never scored and never fail a gate.
+   * For tells humans use legitimately often enough that firing on them is
+   * noise rather than a finding — em dashes being the canonical case.
+   */
+  advisory?: boolean;
   /** Upstream catalogues this rule was merged from. Never empty. */
   sources: Provenance[];
   /**
@@ -105,10 +148,10 @@ export interface Rule {
   /** What to do instead. Concrete — a value, a property, a structural move. */
   fix: string;
   /**
-   * Contexts where the pattern is a legitimate choice and the rule should not
-   * fire. Populated from hallmark's genre notes.
+   * Free-text note on when the pattern is a legitimate choice, shown by
+   * `redpen why`. Genre-level nuance that `surfaces` is too coarse to encode.
    */
-  exceptSurfaces?: string[];
+  legitimateWhen?: string;
 }
 
 /** Where a channel saw something. */
@@ -138,6 +181,8 @@ export interface Finding {
   ruleId: string;
   title: string;
   category: Category;
+  kind: Kind;
+  advisory: boolean;
   severity: Severity;
   weight: number;
   confidence: Confidence;
@@ -187,6 +232,8 @@ export interface FingerprintClash {
 export interface ScanConfig {
   /** Directory to scan for source-channel hits. */
   root: string;
+  /** Declared surface, if any. Detected per-page when not set. */
+  surface?: Surface;
   /** URLs to drive for the render channel. Empty disables that channel. */
   urls: string[];
   /** Viewport widths to sweep. */
@@ -202,7 +249,16 @@ export interface ScanConfig {
 }
 
 export interface ScanResult {
+  /** Combined score. Kept for the gate and the headline number. */
   score: number;
+  /** Does it read as machine-made? 100 = nothing. */
+  slopScore: number;
+  /** Is it broken? 100 = nothing. */
+  qualityScore: number;
+  /** url -> surface actually used, and whether it was declared or detected. */
+  surfaces: Record<string, { surface: Surface; declared: boolean }>;
+  /** Reported but never scored. */
+  advisory: Finding[];
   findings: Finding[];
   ignored: Finding[];
   fingerprints: Fingerprint[];

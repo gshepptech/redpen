@@ -7,6 +7,7 @@
 # by how often the tell is named.
 
 - id: no-loading-state
+  kind: quality
   title: Async action with no loading state
   category: usability
   severity: high
@@ -30,6 +31,7 @@
     Restore on both success and failure.
 
 - id: no-empty-state
+  kind: quality
   title: List with no empty state
   category: usability
   severity: medium
@@ -53,6 +55,7 @@
     Say what would be here, and give the action that puts something here.
 
 - id: destructive-without-confirm
+  kind: quality
   title: Destructive action with no confirmation or undo
   category: usability
   severity: critical
@@ -77,6 +80,7 @@
     Reserve the modal for genuinely permanent actions and name the object in it.
 
 - id: confirm-for-reversible
+  kind: quality
   title: Confirmation dialog for a reversible action
   category: usability
   severity: low
@@ -95,6 +99,7 @@
     Do the thing, show an undo.
 
 - id: no-inline-validation
+  kind: quality
   title: Form validation only on submit
   category: usability
   severity: medium
@@ -120,6 +125,7 @@
     with aria-describedby.
 
 - id: generic-error-message
+  kind: quality
   title: Error message that says nothing
   category: usability
   severity: medium
@@ -140,6 +146,7 @@
     sign in instead?"
 
 - id: form-data-loss
+  kind: quality
   title: Form clears on error
   category: usability
   severity: high
@@ -161,6 +168,7 @@
     to fill.
 
 - id: no-unsaved-warning
+  kind: quality
   title: No warning when leaving unsaved work
   category: usability
   severity: medium
@@ -180,6 +188,7 @@
     beforeunload when dirty, or autosave to local storage on a debounce.
 
 - id: hover-only-affordance
+  kind: quality
   title: Action revealed only on hover
   category: usability
   severity: high
@@ -204,6 +213,7 @@
     persistent trigger.
 
 - id: no-focus-visible
+  kind: quality
   title: Interactive element missing focus, active, or disabled styling
   category: usability
   severity: critical
@@ -230,6 +240,7 @@
     need 3:1 against the adjacent surface.
 
 - id: div-as-button
+  kind: quality
   title: Clickable element that is not a button or link
   category: usability
   severity: high
@@ -252,6 +263,7 @@
     stay a div, add role, tabindex, and a keydown handler.
 
 - id: no-skip-link
+  kind: quality
   title: No skip-to-content link
   category: usability
   severity: low
@@ -273,6 +285,7 @@
     One visually-hidden anchor to #main that becomes visible on focus.
 
 - id: no-active-nav-state
+  kind: quality
   title: Navigation with no current-page indicator
   category: usability
   severity: medium
@@ -296,6 +309,7 @@
     not colour alone.
 
 - id: modal-no-escape
+  kind: quality
   title: Modal with no escape route
   category: usability
   severity: high
@@ -322,6 +336,7 @@
     trigger on close.
 
 - id: no-autosave-long-form
+  kind: quality
   title: Long form with no autosave
   category: usability
   severity: low

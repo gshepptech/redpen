@@ -35,6 +35,13 @@ export function renderTerminal(result: ScanResult, opts: TerminalOptions): strin
   out.push('');
   out.push(scoreLine(value));
   out.push('');
+  out.push(kindLine(result));
+  out.push('');
+  const surfaceNote = surfaceLine(result);
+  if (surfaceNote) {
+    out.push(surfaceNote);
+    out.push('');
+  }
 
   if (result.channelsRun.length < 3) {
     out.push(pc.dim(`  channels: ${result.channelsRun.join(', ')}`));
@@ -103,6 +110,16 @@ export function renderTerminal(result: ScanResult, opts: TerminalOptions): strin
   out.push(`  ${catLine}`);
   out.push('');
 
+  if (result.advisory.length) {
+    out.push(pc.dim(`  ADVISORY (${result.advisory.length}) — reported, never scored`));
+    for (const f of result.advisory) {
+      out.push(
+        pc.dim(`    ${f.ruleId.padEnd(26)} ${f.title}`),
+      );
+    }
+    out.push('');
+  }
+
   if (opts.showIgnored && result.ignored.length) {
     out.push(pc.dim(`  ${result.ignored.length} finding(s) suppressed by redpen-ignore:`));
     for (const f of result.ignored) {
@@ -160,6 +177,32 @@ function describeConfidence(c: Confidence): string {
     case 'possible':
       return 'Source-only. The render pass checked the same thing and did not confirm it.';
   }
+}
+
+/**
+ * The two scores side by side. One number cannot answer both "does this look
+ * machine-made" and "is this broken", and a page is routinely strong on one
+ * and failing on the other.
+ */
+function kindLine(result: ScanResult): string {
+  const slop = result.findings.filter((f) => f.kind === 'slop').length;
+  const qual = result.findings.filter((f) => f.kind === 'quality').length;
+  return (
+    `  ${pc.dim('slop')}     ${colorScore(result.slopScore)}  ${pc.dim(`${slop} finding${slop === 1 ? '' : 's'} — reads as machine-made`)}\n` +
+    `  ${pc.dim('quality')}  ${colorScore(result.qualityScore)}  ${pc.dim(`${qual} finding${qual === 1 ? '' : 's'} — broken regardless of taste`)}`
+  );
+}
+
+function surfaceLine(result: ScanResult): string | null {
+  const entries = Object.entries(result.surfaces);
+  if (!entries.length) return null;
+  const kinds = new Set(entries.map(([, v]) => v.surface));
+  const declared = entries.every(([, v]) => v.declared);
+  const how = declared ? 'declared' : entries.some(([, v]) => v.declared) ? 'mixed' : 'detected';
+  if (kinds.size === 1) {
+    return pc.dim(`  surface  ${[...kinds][0]} (${how}) — rules that only hold elsewhere are off`);
+  }
+  return pc.dim(`  surface  ${entries.map(([u, v]) => `${short(u)}=${v.surface}`).join(', ')} (${how})`);
 }
 
 function scoreLine(value: number): string {

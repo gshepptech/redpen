@@ -5,6 +5,8 @@
 # are the same in the file and on the screen.
 
 - id: marketing-buzzword
+  kind: slop
+  surfaces: [persuade, read]
   title: Generated marketing cliche
   category: copy
   severity: medium
@@ -33,6 +35,8 @@
     number.
 
 - id: vague-headline
+  kind: slop
+  surfaces: [persuade]
   title: Headline that names no subject
   category: copy
   severity: medium
@@ -54,6 +58,8 @@
     subheading.
 
 - id: em-dash-overuse
+  kind: slop
+  advisory: true
   title: Em dashes throughout the copy
   category: copy
   severity: low
@@ -75,6 +81,8 @@
     real work.
 
 - id: aphoristic-cadence
+  kind: slop
+  advisory: true
   title: The "not just X, but Y" cadence
   category: copy
   severity: low
@@ -97,6 +105,8 @@
     State the second half as a plain sentence and delete the first.
 
 - id: generic-cta
+  kind: slop
+  surfaces: [persuade]
   title: Generic call to action
   category: copy
   severity: medium
@@ -121,6 +131,7 @@
     Name the destination. "Read the docs", "Create a project", "Book a call".
 
 - id: placeholder-name
+  kind: slop
   title: Placeholder names and startup cliches
   category: copy
   severity: medium
@@ -142,6 +153,8 @@
     Real names and real quotes, or cut the section.
 
 - id: invented-metrics
+  kind: slop
+  surfaces: [persuade]
   title: Statistics with no source
   category: copy
   severity: high
@@ -167,6 +180,8 @@
     comes from and when it was measured.
 
 - id: straight-quotes
+  kind: slop
+  advisory: true
   title: Straight quotes and hyphen dashes
   category: copy
   severity: low
