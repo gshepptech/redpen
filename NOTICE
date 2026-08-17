@@ -1,0 +1,59 @@
+redpen
+Copyright 2026 the redpen authors
+Licensed under the MIT License. See LICENSE.
+
+------------------------------------------------------------------------------
+Upstream catalogues
+------------------------------------------------------------------------------
+
+redpen's rule corpus (rules/*.yaml) is a merge of four prior catalogues. Every
+rule in the corpus carries a `sources:` list naming which of them described it
+and under what identifier; run `redpen sources` for the rollup and `redpen why
+<rule-id>` for a single rule's provenance.
+
+The corpus is an independent reimplementation. Rule *concepts* — "violet reads
+as a default", "gradient-filled headings are a tell" — were taken from these
+catalogues with attribution. No rule text, detector code, or reference material
+was copied from any of them; the detectors in src/channels/detectors.ts and the
+severity weighting in rules/*.yaml are original work.
+
+  impeccable
+    https://github.com/pbakaus/impeccable
+    Apache License 2.0
+    Contributed the taxonomy behind 59 rendered-DOM detector concepts.
+
+  hallmark
+    https://github.com/nutlope/hallmark
+    MIT License
+    Contributed the 58-gate slop test and the named anti-pattern catalogue,
+    including the genre exceptions recorded as `exceptSurfaces`.
+
+  vibecoded-design-tells (unslop-ui)
+    https://github.com/JCarterJohnson/vibecoded-design-tells
+    MIT License (code); harvested Reddit text belongs to its original authors
+    Contributed the only empirical ranking in the corpus. The `evidenceRank`
+    and `weight` fields derive from that study's comment-level tabulation of
+    3,033 comments drawn from 3.2M posts across 47 subreddits. Where a rule
+    carries an evidenceRank, that number is the study's; where it does not, the
+    weight is redpen's own judgement of consequence and is documented as such.
+
+  frontend-design-audit
+    https://github.com/mistyhx/frontend-design-audit
+    MIT License
+    Contributed the 15 usability heuristics and the fix-pattern library that
+    the `usability` and `a11y` categories are built from.
+
+------------------------------------------------------------------------------
+What redpen added
+------------------------------------------------------------------------------
+
+  - The unified schema and the merge itself: 96 rules collapsed from 202
+    upstream references, each with provenance retained.
+  - Cross-channel promotion (src/promote.ts). No upstream catalogue reconciles
+    a source-level hit against a rendered-DOM hit, so none of them can tell a
+    confirmed defect from a regex guess.
+  - Reddit-derived weighting applied across the whole corpus, so rules that
+    humans actually name outrank rules a catalogue author felt strongly about.
+  - Fingerprint memory (src/fingerprint/). Structural signatures compared
+    across a project and across time, which is the only way to see the
+    top-ranked complaint in the source data — that the pages all look the same.

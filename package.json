@@ -1,0 +1,55 @@
+{
+  "name": "redpen",
+  "version": "0.1.0",
+  "description": "One verdict on your UI. Source, rendered DOM, and vision — cross-confirmed, weighted by what humans actually notice.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.11"
+  },
+  "bin": {
+    "redpen": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "rules",
+    "skill",
+    "NOTICE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch",
+    "test": "npm run build && node --test test/*.test.mjs",
+    "scan": "node --experimental-strip-types src/cli.ts"
+  },
+  "dependencies": {
+    "picocolors": "^1.1.1",
+    "yaml": "^2.6.1"
+  },
+  "peerDependencies": {
+    "@anthropic-ai/sdk": ">=0.68.0",
+    "playwright": ">=1.48.0"
+  },
+  "peerDependenciesMeta": {
+    "@anthropic-ai/sdk": {
+      "optional": true
+    },
+    "playwright": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@anthropic-ai/sdk": "^0.117.1",
+    "@types/node": "^22.10.0",
+    "playwright": "^1.62.1",
+    "typescript": "^5.7.2"
+  },
+  "keywords": [
+    "ai-slop",
+    "design",
+    "lint",
+    "ui",
+    "accessibility",
+    "design-review"
+  ]
+}

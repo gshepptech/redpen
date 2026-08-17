@@ -1,0 +1,310 @@
+# Typography tells.
+#
+# Font choice ranks 8th in the complaint data, but typographic *execution*
+# (leading, measure, hierarchy) is where generated pages lose to hand-built ones
+# even when the face is fine — so execution rules carry real weight here despite
+# never being named by a Reddit commenter.
+
+- id: default-sans
+  title: Inter, Geist, or Roboto as the only face
+  category: typography
+  severity: high
+  weight: 74
+  evidenceRank: 8
+  sources:
+    - { catalogue: unslop-ui, ref: generic-font }
+    - { catalogue: impeccable, ref: overused-font }
+    - { catalogue: hallmark, ref: "slop-gate:1" }
+  channels: [source, render]
+  source:
+    patterns:
+      - 'font-family\s*:\s*[''"]?(Inter|Geist|Roboto|Open Sans|Poppins|Lato)\b'
+      - '\b(Inter|Geist|Geist_Mono|Roboto|Poppins)\s*\('
+      - 'fontFamily\s*:\s*\{[^}]*[''"](Inter|Geist|Roboto)'
+      - 'fonts\.googleapis\.com/css2\?family=(Inter|Roboto|Poppins|Lato|Open\+Sans)'
+  render:
+    check: single-family-default
+    params:
+      defaults: [inter, geist, roboto, poppins, lato, "open sans", "helvetica neue", arial]
+      # Only a tell when the default is doing *all* the work.
+      maxDistinctFamilies: 1
+  why: >-
+    These are the starter fonts every scaffold ships with. Used alone they read
+    as "no typographic decision was made" — which is exactly what commenters say.
+  fix: >-
+    Pair a display face with a body face. Keeping Inter for body is defensible;
+    keeping it for the hero is not.
+
+- id: too-many-families
+  title: More than three type families on one page
+  category: typography
+  severity: medium
+  weight: 57
+  evidenceRank: null
+  sources:
+    - { catalogue: hallmark, ref: "slop-gate:37" }
+    - { catalogue: impeccable, ref: design-system-font }
+  channels: [render]
+  render:
+    check: family-count
+    params:
+      max: 3
+  why: >-
+    Display, body, and at most one outlier is the ceiling. A fourth family is
+    what happens when components were generated independently and never
+    reconciled.
+  fix: >-
+    Collapse the extras back to the body or display face. Weight and size carry
+    the distinctions a fourth family was trying to make.
+
+- id: italic-display
+  title: Italic headings or display type
+  category: typography
+  severity: high
+  weight: 76
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: italic-serif-display }
+    - { catalogue: hallmark, ref: "slop-gate:38a" }
+    - { catalogue: hallmark, ref: "antipattern:italic-headers" }
+  channels: [source, render, vision]
+  source:
+    patterns:
+      - '(h[1-6]|\.hero__title|\.[a-z-]*__title|\.display)[^{]*\{[^}]*font-style\s*:\s*italic'
+      - '<(h[1-6])[^>]*>[^<]*<(em|i)\b'
+      - 'class="[^"]*\bitalic\b[^"]*"[^>]*>\s*<(h[1-6])'
+  render:
+    check: italic-heading
+  vision:
+    ask: >-
+      Is any heading, hero title, or large display line set in italic — including
+      a single italicised word inside an otherwise upright headline?
+  why: >-
+    The one italicised emphasis word inside an upright headline is a top-tier
+    tell across two independent catalogues. Headers are roman; italic is a
+    body-copy register.
+  fix: >-
+    Set headings roman. Get emphasis from weight, accent colour, or a drawn
+    underline instead.
+
+- id: flat-type-hierarchy
+  title: No real size hierarchy
+  category: typography
+  severity: high
+  weight: 68
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: flat-type-hierarchy }
+    - { catalogue: impeccable, ref: heading-rhythm }
+    - { catalogue: frontend-design-audit, ref: "pattern:typography-hierarchy" }
+    - { catalogue: hallmark, ref: "critique-axis:B-hierarchy" }
+  channels: [render, vision]
+  render:
+    check: type-scale-spread
+    params:
+      minRatioTopToBody: 2.2
+      minDistinctSizes: 4
+  vision:
+    ask: >-
+      Reading this page for two seconds, can you tell what is primary,
+      secondary, and tertiary — or does everything sit at roughly one weight?
+  why: >-
+    Generated pages tend to land every heading within a few pixels of each
+    other, so the page has no entry point. This is the most common reason a
+    technically clean page still feels amateur.
+  fix: >-
+    Build a real scale. The largest display should be at least 2.2x body, and
+    adjacent steps should differ enough to read as different roles.
+
+- id: line-length
+  title: Measure outside the readable range
+  category: typography
+  severity: medium
+  weight: 60
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: line-length }
+    - { catalogue: hallmark, ref: "slop-gate:25" }
+  channels: [render]
+  render:
+    check: measure-range
+    params:
+      minCh: 45
+      maxCh: 78
+  why: >-
+    Full-bleed paragraphs are the default when nobody set a max-width. Past
+    about 78 characters the eye loses the line return.
+  fix: >-
+    Cap prose containers at 45-75ch. Set it once on the prose class, not per
+    section.
+
+- id: tight-leading
+  title: Leading too tight for the size
+  category: typography
+  severity: medium
+  weight: 52
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: tight-leading }
+  channels: [render]
+  render:
+    check: leading-ratio
+    params:
+      minBodyRatio: 1.4
+      # Headings are display type at any size. 1.2-1.3 on a 19px h3 is correct
+      # typography, so the ceiling has to sit above the range good work uses.
+      maxDisplayRatio: 1.35
+  why: >-
+    Body copy set at 1.2 leading is a Tailwind default carried over from a
+    heading class. It makes long text physically harder to track.
+  fix: >-
+    Body at 1.5-1.65, headings at 1.0-1.3. The relationship inverts with size.
+
+- id: tiny-text
+  title: Text below the legible floor
+  category: typography
+  severity: high
+  weight: 66
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: tiny-text }
+    - { catalogue: impeccable, ref: undersized-ui-text }
+    - { catalogue: frontend-design-audit, ref: "heuristic:14-perceptibility" }
+  channels: [render]
+  render:
+    check: font-size-floor
+    params:
+      bodyFloorPx: 14
+      uiFloorPx: 12
+  why: >-
+    11px labels and 12px body copy show up when a model is fitting content into
+    a layout rather than designing to the content.
+  fix: >-
+    14px floor for anything read as prose, 12px for incidental UI chrome, and
+    nothing below that.
+
+- id: extreme-tracking
+  title: Extreme letter-spacing
+  category: typography
+  severity: low
+  weight: 41
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: extreme-negative-tracking }
+    - { catalogue: impeccable, ref: wide-tracking }
+  channels: [render]
+  render:
+    check: tracking-bounds
+    params:
+      minEm: -0.05
+      maxEm: 0.2
+  why: >-
+    Aggressive negative tracking on a hero, or 0.3em on an eyebrow, are both
+    borrowed gestures applied without measuring the result.
+  fix: >-
+    Negative tracking belongs above about 40px and stops at -0.03em. Wide
+    tracking belongs on small caps and stops at 0.15em.
+
+- id: all-caps-body
+  title: All-caps used for running text
+  category: typography
+  severity: medium
+  weight: 47
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: all-caps-body }
+  channels: [render]
+  render:
+    check: uppercase-run-length
+    params:
+      maxChars: 60
+  why: >-
+    Uppercase removes the word shapes readers use to scan, so it costs real
+    speed past a few words.
+  fix: >-
+    Reserve caps for labels and eyebrows under about 40 characters.
+
+- id: justified-text
+  title: Justified text on the web
+  category: typography
+  severity: low
+  weight: 38
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: justified-text }
+  channels: [render]
+  render:
+    check: text-align-justify
+  why: >-
+    Without hyphenation the browser opens rivers of whitespace between words.
+  fix: >-
+    Left-align. If justification is a genuine editorial requirement, pair it
+    with `hyphens: auto` and a narrow measure.
+
+- id: oversized-h1
+  title: Hero heading larger than the viewport can carry
+  category: typography
+  severity: medium
+  weight: 50
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: oversized-h1 }
+  channels: [render]
+  render:
+    check: display-size-vs-viewport
+    params:
+      maxShareOfViewportWidth: 0.14
+  why: >-
+    A clamp() with no upper bound produces a headline that eats the fold on a
+    large monitor and wraps to five lines on a laptop.
+  fix: >-
+    Clamp with a real maximum, and check the wrap at 1280px and 1920px, not only
+    at your own window size.
+
+- id: skipped-heading
+  title: Heading levels skipped
+  category: typography
+  severity: medium
+  weight: 56
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: skipped-heading }
+    - { catalogue: frontend-design-audit, ref: "heuristic:12-structure" }
+  channels: [source, render]
+  source:
+    patterns:
+      - '<h1[^>]*>[\s\S]{0,4000}?<h(?:3|4|5|6)\b'
+  render:
+    check: heading-order
+  why: >-
+    Levels chosen for their default size rather than their place in the
+    document. Screen-reader users navigate by this structure.
+  fix: >-
+    Pick the level by rank and restyle it. Never skip a level to get a size.
+
+- id: numbered-section-labels
+  title: Numbered section labels on every section
+  category: typography
+  severity: low
+  weight: 43
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: numbered-section-labels }
+    - { catalogue: hallmark, ref: "slop-gate:21" }
+    - { catalogue: hallmark, ref: "antipattern:eyebrow-on-every-section" }
+  channels: [source, render]
+  source:
+    patterns:
+      - '>\s*0[1-9]\s*(?:—|–|-|/)\s*[A-Z]'
+      - 'class="[^"]*(eyebrow|kicker|section-label)[^"]*"'
+    minHits: 3
+  render:
+    check: repeated-eyebrow
+    params:
+      minSections: 3
+  why: >-
+    "01 — INTRODUCTION" above every section is the editorial-specimen look
+    applied by reflex. When every section has one, none of them mean anything.
+  fix: >-
+    Keep the device for two or three sections that genuinely form a sequence, or
+    drop it entirely.

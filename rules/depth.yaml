@@ -1,0 +1,169 @@
+# Shape, depth, and surface tells.
+#
+# Rounded corners rank 5th in the complaint data. The rest of this file is
+# execution-level: shadows, borders, and glass that got applied by reflex.
+
+- id: over-rounding
+  title: Maximum rounding on everything
+  category: depth
+  severity: high
+  weight: 72
+  evidenceRank: 5
+  sources:
+    - { catalogue: unslop-ui, ref: rounded-everything }
+    - { catalogue: impeccable, ref: border-accent-on-rounded }
+  channels: [source, render]
+  source:
+    patterns:
+      - '\brounded-(2xl|3xl|full)\b'
+      - 'border-radius\s*:\s*(999\d*px|9999px|50rem)'
+    # rounded-full on a small box is an avatar or a status dot, not a pill button.
+    suppress: '\b[hw]-(\d|10|11|12|14|16)(\.5)?\b'
+    minHits: 5
+  render:
+    check: radius-uniformity
+    params:
+      minDistinctRadii: 2
+      maxShareAtMaxRadius: 0.6
+  why: >-
+    One radius applied to cards, buttons, inputs, images, and avatars alike.
+    A radius scale is information — when every corner is the same, it carries
+    none.
+  fix: >-
+    Three steps by role: small for inputs and chips, medium for cards, full only
+    for avatars and true pills.
+
+- id: generic-drop-shadow
+  title: The default drop shadow
+  category: depth
+  severity: medium
+  weight: 61
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: gpt-thin-border-wide-shadow }
+    - { catalogue: hallmark, ref: "antipattern:icon-tile-feature-card" }
+  channels: [source, render]
+  source:
+    patterns:
+      - '\bshadow-(sm|md|lg|xl)\b'
+      - 'box-shadow\s*:\s*0\s+\d+px\s+\d+px\s+(-?\d+px\s+)?rgba?\(0,\s*0,\s*0,\s*0?\.\d+\)'
+    minHits: 6
+  render:
+    check: shadow-uniformity
+    params:
+      maxDistinctShadows: 2
+      requiresNeutralShadow: true
+  why: >-
+    A neutral black shadow at one blur on every surface. Real depth comes from a
+    consistent light source, which means the shadow changes with elevation and
+    picks up the ground's hue.
+  fix: >-
+    Two elevations maximum. Tint the shadow toward the anchor hue and increase
+    both blur and y-offset with elevation.
+
+- id: thin-border-wide-shadow
+  title: Hairline border plus a wide soft shadow
+  category: depth
+  severity: medium
+  weight: 56
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: gpt-thin-border-wide-shadow }
+  channels: [render]
+  render:
+    check: border-and-shadow-double-edge
+  why: >-
+    Two separate devices doing the same job on the same edge. The border says
+    "this is a boundary" and the shadow says "this is floating" — pick one.
+  fix: >-
+    Border for flat, in-flow surfaces. Shadow for things that genuinely sit
+    above the page, like menus and dialogs.
+
+- id: glassmorphism
+  title: Backdrop blur without a reason
+  category: depth
+  severity: low
+  weight: 43
+  evidenceRank: null
+  sources:
+    - { catalogue: hallmark, ref: "antipattern:glassmorphism-without-purpose" }
+    - { catalogue: unslop-ui, ref: lower-signal-tells }
+  channels: [source, render]
+  source:
+    patterns:
+      - '\bbackdrop-blur-(md|lg|xl|2xl|3xl)\b'
+      - 'backdrop-filter\s*:\s*blur\(\s*(1[2-9]|[2-9]\d)px'
+  render:
+    check: backdrop-blur-over-flat
+  why: >-
+    Frosted glass only means anything when there is something behind it worth
+    obscuring. Over a flat colour it is just a lighter panel with extra cost.
+  fix: >-
+    Keep it on overlays that sit above real content — sticky nav over a
+    scrolling page, a sheet over a document. Remove it elsewhere.
+
+- id: ghost-cards
+  title: Cards with no content differentiation
+  category: depth
+  severity: medium
+  weight: 52
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: content-hidden-at-rest }
+    - { catalogue: frontend-design-audit, ref: "pattern:card-content-differentiation" }
+  channels: [render, vision]
+  render:
+    check: card-content-uniformity
+    params:
+      minCards: 3
+      maxTextLengthVariance: 0.15
+  vision:
+    ask: >-
+      Do the cards in this grid all carry the same amount and shape of content,
+      so no one of them reads as more important than the others?
+  why: >-
+    Every card the same height with the same three lines. Real content is
+    uneven; uniformity means the content was written to fill the component.
+  fix: >-
+    Let the content set the size, and give one card more weight if it deserves
+    it — a featured tier, a primary path.
+
+- id: status-chip-soup
+  title: Too many status chips
+  category: depth
+  severity: low
+  weight: 47
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: side-tab }
+    - { catalogue: impeccable, ref: hero-eyebrow-chip }
+  channels: [render]
+  render:
+    check: chip-density
+    params:
+      maxChipsPerSection: 6
+  why: >-
+    Small rounded pills in five colours across one view. Each one was added to
+    surface a state; together they cancel out.
+  fix: >-
+    Two chip colours maximum — one neutral, one for the state that actually
+    needs attention. Everything else becomes plain text.
+
+- id: z-index-9999
+  title: z-index escalation
+  category: depth
+  severity: low
+  weight: 36
+  evidenceRank: null
+  sources:
+    - { catalogue: hallmark, ref: "antipattern:z-index-9999" }
+  channels: [source]
+  source:
+    patterns:
+      - 'z-index\s*:\s*(9{4,}|\d{5,})'
+      - '\bz-\[9{4,}\]'
+  why: >-
+    A stacking context nobody understood, fixed by outbidding it.
+  fix: >-
+    Define a small named scale — base, dropdown, sticky, overlay, toast — and
+    reference it.

@@ -1,0 +1,340 @@
+# Usability rules, merged from the frontend-design-audit heuristic set.
+#
+# These never appear in the Reddit complaint data — nobody on Reddit says "this
+# site lacks an undo affordance". They are here because a page can pass every
+# slop check and still be unusable, and because these are the findings that
+# survive contact with an actual user. Weights are assigned by consequence, not
+# by how often the tell is named.
+
+- id: no-loading-state
+  title: Async action with no loading state
+  category: usability
+  severity: high
+  weight: 69
+  evidenceRank: null
+  sources:
+    - { catalogue: frontend-design-audit, ref: "heuristic:1-visibility-of-system-status" }
+    - { catalogue: frontend-design-audit, ref: "pattern:button-loading-state" }
+  channels: [source]
+  source:
+    patterns:
+      - 'onClick=\{[^}]*await\s'
+      - 'onSubmit=\{[^}]*(fetch|axios|api)\.'
+    suppress: '(isLoading|isPending|loading|pending|isSubmitting|disabled)'
+    minHits: 1
+  why: >-
+    The user clicks, nothing changes, they click again. Duplicate submissions
+    and abandoned flows both start here.
+  fix: >-
+    Disable the control and swap the label while the request is in flight.
+    Restore on both success and failure.
+
+- id: no-empty-state
+  title: List with no empty state
+  category: usability
+  severity: medium
+  weight: 57
+  evidenceRank: null
+  sources:
+    - { catalogue: frontend-design-audit, ref: "pattern:empty-states-with-guidance" }
+    - { catalogue: frontend-design-audit, ref: "heuristic:10-help-and-documentation" }
+  channels: [source, render]
+  source:
+    patterns:
+      - '\.map\((\w+|\([^)]*\))\s*=>'
+    suppress: '(length\s*===?\s*0|length\s*\?|isEmpty|\.length\s*>\s*0|EmptyState)'
+    minHits: 3
+  render:
+    check: empty-container
+  why: >-
+    A blank panel where the list should be. The user cannot tell whether it is
+    loading, broken, or genuinely empty.
+  fix: >-
+    Say what would be here, and give the action that puts something here.
+
+- id: destructive-without-confirm
+  title: Destructive action with no confirmation or undo
+  category: usability
+  severity: critical
+  weight: 81
+  evidenceRank: null
+  sources:
+    - { catalogue: frontend-design-audit, ref: "heuristic:5-error-prevention" }
+    - { catalogue: frontend-design-audit, ref: "pattern:confirmation-dialog" }
+    - { catalogue: frontend-design-audit, ref: "pattern:undo-with-toast" }
+  channels: [source]
+  source:
+    patterns:
+      - 'onClick=\{[^}]*\b(delete|remove|destroy|clear|reset|wipe)[A-Z]\w*\('
+      - '>\s*(Delete|Remove|Clear all|Reset|Discard)\s*<'
+    suppress: '(confirm|Confirm|AlertDialog|undo|Undo|areYouSure)'
+    minHits: 1
+  why: >-
+    Irreversible work destroyed by one misclick. This is the single highest-cost
+    usability failure in the catalogue.
+  fix: >-
+    Undo-on-toast is better than a confirm dialog for anything recoverable.
+    Reserve the modal for genuinely permanent actions and name the object in it.
+
+- id: confirm-for-reversible
+  title: Confirmation dialog for a reversible action
+  category: usability
+  severity: low
+  weight: 38
+  evidenceRank: null
+  sources:
+    - { catalogue: hallmark, ref: "antipattern:confirmation-dialogs-for-reversible-actions" }
+  channels: [source]
+  source:
+    patterns:
+      - '(confirm\(|AlertDialog)[^)]{0,120}\b(archive|hide|unpublish|mark|move|rename)\b'
+  why: >-
+    Interrupting the user to confirm something they can undo in one click.
+    It trains people to dismiss dialogs without reading them.
+  fix: >-
+    Do the thing, show an undo.
+
+- id: no-inline-validation
+  title: Form validation only on submit
+  category: usability
+  severity: medium
+  weight: 62
+  evidenceRank: null
+  sources:
+    - { catalogue: frontend-design-audit, ref: "heuristic:9-error-recovery" }
+    - { catalogue: frontend-design-audit, ref: "pattern:inline-validation" }
+  channels: [source]
+  source:
+    # Three or more text inputs before the form closes. A single-field
+    # newsletter box with `type="email" required` is fully covered by native
+    # constraint validation and needs nothing added.
+    patterns:
+      - '<form\b(?:(?!</form>)[\s\S]){0,4000}?(?:<(?:input|textarea)\b(?:(?!</form>)[\s\S]){0,2000}?){3,}'
+    suppress: '(onBlur|validate|useForm|zodResolver|aria-invalid|onChange=\{)'
+    minHits: 1
+  why: >-
+    The user fills eight fields, submits, and gets one error at the top. Every
+    round trip loses people.
+  fix: >-
+    Validate on blur, clear the error on input, and tie the message to the field
+    with aria-describedby.
+
+- id: generic-error-message
+  title: Error message that says nothing
+  category: usability
+  severity: medium
+  weight: 59
+  evidenceRank: null
+  sources:
+    - { catalogue: frontend-design-audit, ref: "pattern:specific-actionable-error-messages" }
+    - { catalogue: frontend-design-audit, ref: "heuristic:9-error-recovery" }
+  channels: [source]
+  source:
+    patterns:
+      - '[''"`](Something went wrong|An error occurred|Invalid input|Error|Failed|Please try again)[.!]?[''"`]'
+  why: >-
+    The user learns that it broke, not what broke or what to do. These strings
+    are the default because the real message requires knowing the failure mode.
+  fix: >-
+    Name what failed and the next action. "That email is already registered —
+    sign in instead?"
+
+- id: form-data-loss
+  title: Form clears on error
+  category: usability
+  severity: high
+  weight: 71
+  evidenceRank: null
+  sources:
+    - { catalogue: frontend-design-audit, ref: "heuristic:15-tolerance-and-forgiveness" }
+    - { catalogue: frontend-design-audit, ref: "pattern:preserve-form-data-on-error" }
+  channels: [source]
+  source:
+    patterns:
+      - 'catch\s*\([^)]*\)\s*\{[^}]*\b(reset|setForm|clearForm)\('
+      - '\.reset\(\)[^;]*;?\s*\}\s*catch'
+  why: >-
+    Twelve fields wiped by a network blip. Losing someone's typing is the
+    fastest way to lose the person.
+  fix: >-
+    Preserve state on failure. Autosave anything that takes more than a minute
+    to fill.
+
+- id: no-unsaved-warning
+  title: No warning when leaving unsaved work
+  category: usability
+  severity: medium
+  weight: 58
+  evidenceRank: null
+  sources:
+    - { catalogue: frontend-design-audit, ref: "pattern:unsaved-changes-warning" }
+  channels: [source]
+  source:
+    patterns:
+      - '<textarea\b'
+    suppress: '(beforeunload|isDirty|useBlocker|autosave|autoSave)'
+    minHits: 1
+  why: >-
+    A long-form editor that loses everything on a stray back button.
+  fix: >-
+    beforeunload when dirty, or autosave to local storage on a debounce.
+
+- id: hover-only-affordance
+  title: Action revealed only on hover
+  category: usability
+  severity: high
+  weight: 68
+  evidenceRank: null
+  sources:
+    - { catalogue: hallmark, ref: "antipattern:hover-only-affordances" }
+    - { catalogue: impeccable, ref: content-hidden-at-rest }
+    - { catalogue: frontend-design-audit, ref: "heuristic:11-affordances-and-signifiers" }
+  channels: [source, render]
+  source:
+    patterns:
+      - 'opacity-0\s+[^"''`]*group-hover:opacity-100'
+      - 'invisible\s+[^"''`]*group-hover:visible'
+  render:
+    check: hover-revealed-control
+  why: >-
+    There is no hover on touch. Any control that only appears on hover does not
+    exist for half the audience.
+  fix: >-
+    Show it always at reduced emphasis, or move it into a menu that has a
+    persistent trigger.
+
+- id: no-focus-visible
+  title: Interactive element missing focus, active, or disabled styling
+  category: usability
+  severity: critical
+  weight: 79
+  evidenceRank: null
+  sources:
+    - { catalogue: hallmark, ref: "slop-gate:26" }
+    - { catalogue: frontend-design-audit, ref: "pattern:focus-visible-styles" }
+    - { catalogue: frontend-design-audit, ref: "heuristic:13-accessibility" }
+  channels: [source, render]
+  source:
+    patterns:
+      - 'outline\s*:\s*(none|0)\b'
+    suppress: 'focus-visible|:focus\s*\{[^}]*outline'
+  render:
+    check: interactive-state-coverage
+    params:
+      required: [hover, focus-visible, active, disabled]
+  why: >-
+    `outline: none` with nothing replacing it strands every keyboard user. It is
+    the most common single line that breaks accessibility.
+  fix: >-
+    Default, hover, focus-visible, active, and disabled all styled. Focus rings
+    need 3:1 against the adjacent surface.
+
+- id: div-as-button
+  title: Clickable element that is not a button or link
+  category: usability
+  severity: high
+  weight: 73
+  evidenceRank: null
+  sources:
+    - { catalogue: frontend-design-audit, ref: "pattern:link-vs-button-semantics" }
+    - { catalogue: frontend-design-audit, ref: "pattern:keyboard-accessible-custom-elements" }
+  channels: [source, render]
+  source:
+    patterns:
+      - '<(div|span)[^>]*onClick=(?![^>]*role=)'
+  render:
+    check: nonsemantic-interactive
+  why: >-
+    A div with a click handler is invisible to keyboard and screen reader users
+    and gets no focus, no Enter key, and no role.
+  fix: >-
+    Use a button for actions and an anchor for navigation. If the element must
+    stay a div, add role, tabindex, and a keydown handler.
+
+- id: no-skip-link
+  title: No skip-to-content link
+  category: usability
+  severity: low
+  weight: 44
+  evidenceRank: null
+  sources:
+    - { catalogue: frontend-design-audit, ref: "pattern:skip-navigation-link" }
+  channels: [source, render]
+  source:
+    patterns:
+      - '<nav\b'
+    suppress: '(skip-to|skip-link|Skip to (main|content))'
+    minHits: 1
+  render:
+    check: skip-link-present
+  why: >-
+    Keyboard users tab through the entire navigation on every page load.
+  fix: >-
+    One visually-hidden anchor to #main that becomes visible on focus.
+
+- id: no-active-nav-state
+  title: Navigation with no current-page indicator
+  category: usability
+  severity: medium
+  weight: 55
+  evidenceRank: null
+  sources:
+    - { catalogue: frontend-design-audit, ref: "pattern:active-navigation-state" }
+    - { catalogue: frontend-design-audit, ref: "heuristic:1-visibility-of-system-status" }
+  channels: [source, render]
+  source:
+    patterns:
+      - '<nav\b'
+    suppress: '(aria-current|isActive|activeClassName|data-active)'
+    minHits: 1
+  render:
+    check: nav-current-marker
+  why: >-
+    Nothing in the navigation says where you are.
+  fix: >-
+    `aria-current="page"` on the active item, plus a visible treatment that is
+    not colour alone.
+
+- id: modal-no-escape
+  title: Modal with no escape route
+  category: usability
+  severity: high
+  weight: 70
+  evidenceRank: null
+  sources:
+    - { catalogue: frontend-design-audit, ref: "pattern:modal-escape-mechanisms" }
+    - { catalogue: frontend-design-audit, ref: "heuristic:3-user-control-and-freedom" }
+  channels: [source, render]
+  source:
+    patterns:
+      - '(Modal|Dialog|Overlay)\b[^>]*>'
+    suppress: '(onEscape|Escape|onOpenChange|onDismiss|closeOnOverlay|DialogClose)'
+    minHits: 1
+  render:
+    check: dialog-dismissal
+    params:
+      required: [escape-key, overlay-click, close-button]
+  why: >-
+    A dialog you can only leave by completing it. Escape, the overlay, and a
+    visible close control should all work.
+  fix: >-
+    Wire all three, trap focus inside while open, and return focus to the
+    trigger on close.
+
+- id: no-autosave-long-form
+  title: Long form with no autosave
+  category: usability
+  severity: low
+  weight: 42
+  evidenceRank: null
+  sources:
+    - { catalogue: frontend-design-audit, ref: "pattern:auto-save-for-long-forms" }
+  channels: [source]
+  source:
+    patterns:
+      - '<form\b[\s\S]{0,6000}?(<input[\s\S]{0,6000}?){7,}'
+    suppress: '(autosave|autoSave|localStorage|useDebounce)'
+  why: >-
+    Seven or more fields with no recovery path if the tab closes.
+  fix: >-
+    Debounced write to local storage, restored on mount, cleared on submit.

@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ledger — payroll for shift work</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="masthead">
+    <span class="wordmark">Ledger</span>
+    <nav aria-label="Primary">
+      <a href="/pricing">Pricing</a>
+      <a href="/docs">Docs</a>
+      <a href="/login" aria-current="page">Sign in</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="opener">
+      <div class="opener__figure">
+        <p class="stat"><span class="stat__num">6&nbsp;min</span><span class="stat__label">to run a 400-person payroll</span></p>
+      </div>
+      <div class="opener__text">
+        <h1>Payroll that closes before the shift does.</h1>
+        <p class="lede">Ledger reconciles clock-ins, breaks and overtime against the award rate,
+          then files the run. Built for restaurants, warehouses and care homes paying
+          hourly staff weekly.</p>
+        <p class="opener__actions">
+          <a class="button" href="/signup">Create an account</a>
+          <a class="link" href="/docs/quickstart">Read the quickstart</a>
+        </p>
+      </div>
+    </section>
+
+    <section class="sequence">
+      <h2>How a run works</h2>
+      <ol>
+        <li>
+          <h3>Import the roster</h3>
+          <p>Ledger reads the shifts already recorded in Deputy, Tanda or a CSV. Nothing is
+            re-keyed, so nothing drifts between the roster and the run.</p>
+        </li>
+        <li>
+          <h3>Reconcile the exceptions</h3>
+          <p>Missed break, unapproved overtime, a shift that ran past midnight. Ledger
+            surfaces only the shifts that need a person, usually between four and nine of them.</p>
+        </li>
+        <li>
+          <h3>File and pay</h3>
+          <p>The run files to the ATO and the payments leave the same afternoon. Every
+            calculation keeps a line back to the shift it came from.</p>
+        </li>
+      </ol>
+    </section>
+
+    <section class="detail">
+      <h2>What it costs</h2>
+      <table>
+        <caption>Per employee, per month. No platform fee.</caption>
+        <thead>
+          <tr><th scope="col">Employees</th><th scope="col">Rate</th><th scope="col">Support</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Up to 50</td><td>$4.00</td><td>Email, next business day</td></tr>
+          <tr><td>51&ndash;250</td><td>$3.20</td><td>Email, four hours</td></tr>
+          <tr><td>251 and above</td><td>$2.40</td><td>Named contact</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="note">
+      <h2>Who it is not for</h2>
+      <p>Ledger only handles hourly and award-based pay in Australia. If your staff are
+        salaried, or you pay in more than one country, it will make your life worse rather
+        than better. We would rather say so here than three weeks into an implementation.</p>
+    </section>
+  </main>
+
+  <footer>
+    <form class="subscribe" action="/subscribe" method="post">
+      <label for="email">Get the monthly changelog</label>
+      <div class="subscribe__row">
+        <input id="email" name="email" type="email" autocomplete="email" required>
+        <button type="submit">Subscribe</button>
+      </div>
+      <p class="subscribe__help" id="email-help">One email a month. Unsubscribe in one click.</p>
+    </form>
+    <p class="colophon">Ledger Payroll Pty Ltd &middot; Melbourne &middot; ABN 12 345 678 901</p>
+  </footer>
+</body>
+</html>

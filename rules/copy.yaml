@@ -1,0 +1,191 @@
+# Copy tells.
+#
+# Copy ranks low individually (11th band) but it is the cheapest category to
+# fix and the one non-designers notice first. Source channel only — the words
+# are the same in the file and on the screen.
+
+- id: marketing-buzzword
+  title: Generated marketing cliche
+  category: copy
+  severity: medium
+  weight: 51
+  evidenceRank: 11
+  sources:
+    - { catalogue: unslop-ui, ref: hype-copy }
+    - { catalogue: impeccable, ref: marketing-buzzword }
+    - { catalogue: impeccable, ref: theater-slop-phrase }
+  channels: [source, vision]
+  source:
+    patterns:
+      - '\b(supercharge|unleash|revolutionize|revolutionise|seamlessly|effortlessly|game-changer|cutting-edge|next-level|10x your|unlock the power|take .{1,20} to the next level)\b'
+      - '\bthe future of \w+ is here\b'
+      - '\b(blazing|lightning)[- ]fast\b'
+      - '\bbuilt for (the way )?(modern|today''s) \w+\b'
+  vision:
+    ask: >-
+      Does the headline make a specific, checkable claim, or is it a generic
+      superlative that would fit any product in any category?
+  why: >-
+    Superlatives that survive a find-and-replace of the product name are not
+    saying anything about the product.
+  fix: >-
+    Replace with the specific claim. What does it do, for whom, and what is the
+    number.
+
+- id: vague-headline
+  title: Headline that names no subject
+  category: copy
+  severity: medium
+  weight: 54
+  evidenceRank: 11
+  sources:
+    - { catalogue: impeccable, ref: marketing-buzzword }
+    - { catalogue: hallmark, ref: "critique-axis:D-specificity" }
+  channels: [vision]
+  vision:
+    ask: >-
+      Could this hero headline be moved onto a completely different company's
+      site without editing it?
+  why: >-
+    "Build better, faster" describes nothing. The reader leaves without learning
+    what the product is.
+  fix: >-
+    Name the thing and the outcome in the headline. Save the mood for the
+    subheading.
+
+- id: em-dash-overuse
+  title: Em dashes throughout the copy
+  category: copy
+  severity: low
+  weight: 46
+  evidenceRank: 11
+  sources:
+    - { catalogue: impeccable, ref: em-dash-overuse }
+    - { catalogue: unslop-ui, ref: copy-tells }
+  channels: [source]
+  source:
+    patterns:
+      - '—'
+    minHits: 6
+  why: >-
+    The single most-named tell in AI *prose*, and it carries onto interface
+    copy. Six or more on one page is a pattern, not a style.
+  fix: >-
+    Most become commas or full stops. Keep one where the interruption is doing
+    real work.
+
+- id: aphoristic-cadence
+  title: The "not just X, but Y" cadence
+  category: copy
+  severity: low
+  weight: 45
+  evidenceRank: 11
+  sources:
+    - { catalogue: impeccable, ref: aphoristic-cadence }
+    - { catalogue: unslop-ui, ref: copy-tells }
+  channels: [source]
+  source:
+    patterns:
+      - '\bnot just \w+[^.]{0,40}\bbut\b'
+      - '\bit''?s not (about|just) [^.]{0,40}\bit''?s\b'
+      - '\bmore than (just )?(a|an) \w+'
+    minHits: 2
+  why: >-
+    The rhetorical shape models fall into when a sentence needs to sound
+    important. Once you see it you cannot unsee it.
+  fix: >-
+    State the second half as a plain sentence and delete the first.
+
+- id: generic-cta
+  title: Generic call to action
+  category: copy
+  severity: medium
+  weight: 49
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: marketing-buzzword }
+    - { catalogue: frontend-design-audit, ref: "heuristic:2-match-real-world" }
+  channels: [source, render]
+  source:
+    patterns:
+      - '>\s*(Get Started|Learn More|Sign Up Free|Try It Now|Get Started Free|Start Free Trial)\s*<'
+    minHits: 3
+  render:
+    check: duplicate-cta-label
+    params:
+      minRepeats: 3
+  why: >-
+    "Get Started" three times on one page, each going somewhere different. The
+    label should say what happens next.
+  fix: >-
+    Name the destination. "Read the docs", "Create a project", "Book a call".
+
+- id: placeholder-name
+  title: Placeholder names and startup cliches
+  category: copy
+  severity: medium
+  weight: 50
+  evidenceRank: null
+  sources:
+    - { catalogue: hallmark, ref: "slop-gate:19" }
+    - { catalogue: hallmark, ref: "antipattern:placeholder-names" }
+  channels: [source]
+  source:
+    patterns:
+      - '\b(Jane|John) (Doe|Smith)\b'
+      - '\b(Acme|Acme Corp|Lorem ipsum|Example Corp|Widget Co)\b'
+      - '\b(Nexus|Zenith|Apex|Vertex|Quantum|Synergy|Catalyst)\s+(AI|Labs|Systems|Solutions|Dynamics)\b'
+  why: >-
+    Testimonials from Jane Doe at Acme. Fake social proof is worse than none,
+    and it is the clearest sign the page was never reviewed.
+  fix: >-
+    Real names and real quotes, or cut the section.
+
+- id: invented-metrics
+  title: Statistics with no source
+  category: copy
+  severity: high
+  weight: 67
+  evidenceRank: null
+  sources:
+    - { catalogue: hallmark, ref: "antipattern:invented-metrics" }
+    - { catalogue: hallmark, ref: "slop-gate:honest-copy" }
+  channels: [source, vision]
+  source:
+    patterns:
+      - '\b(99\.9{1,2}%|10x|50%|2x|3x|5x)\s+(faster|uptime|more|fewer|better|productivity)\b'
+      - '\b(10,000|50,000|100,000|1M|10M)\+?\s+(users|developers|teams|companies|customers)\b'
+  vision:
+    ask: >-
+      Does the page state numbers — user counts, percentage gains, uptime —
+      without attributing them to anything?
+  why: >-
+    "10,000+ developers" on a site with no users. Fabricated numbers are a
+    liability, not just a tell.
+  fix: >-
+    Use real numbers or remove the claim. If the number is real, say where it
+    comes from and when it was measured.
+
+- id: straight-quotes
+  title: Straight quotes and hyphen dashes
+  category: copy
+  severity: low
+  weight: 32
+  evidenceRank: null
+  sources:
+    - { catalogue: hallmark, ref: "antipattern:straight-quotes" }
+    - { catalogue: hallmark, ref: "antipattern:double-hyphen-dashes" }
+    - { catalogue: hallmark, ref: "antipattern:three-periods-instead-of-ellipsis" }
+  channels: [source]
+  source:
+    patterns:
+      - '>[^<]*\b\w+''\w+[^<]*<'
+      - '\w\s--\s\w'
+      - '\w\.\.\.(?!\.)'
+    minHits: 3
+  why: >-
+    Typographic detail is where care shows. Straight apostrophes in rendered
+    prose say nobody read the page as a reader.
+  fix: >-
+    Curly quotes and apostrophes, a real en or em dash, a real ellipsis
+    character.

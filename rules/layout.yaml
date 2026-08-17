@@ -1,0 +1,347 @@
+# Layout and structure tells.
+#
+# The centred-hero-plus-three-cards skeleton is ranked 9th individually, but it
+# is the main *carrier* of the top-ranked complaint ("they all look the same"),
+# so it is weighted above its individual rank. See rules/sameness.yaml for the
+# cross-page version of the same problem.
+
+- id: hero-three-cards
+  title: Centred hero plus a three-card feature grid
+  category: layout
+  severity: critical
+  weight: 89
+  evidenceRank: 9
+  sources:
+    - { catalogue: unslop-ui, ref: hero-three-cards }
+    - { catalogue: hallmark, ref: "slop-gate:3" }
+    - { catalogue: hallmark, ref: "antipattern:the-3-column-feature-grid" }
+    - { catalogue: impeccable, ref: icon-tile-stack }
+  channels: [source, render, vision]
+  source:
+    patterns:
+      - 'grid-cols-1\s+(sm:grid-cols-2\s+)?(md|lg):grid-cols-3'
+      - 'grid-template-columns\s*:\s*repeat\(\s*3\s*,\s*(1fr|minmax\([^)]*\))\s*\)'
+  render:
+    check: icon-above-heading-triptych
+    params:
+      exactColumns: 3
+      requiresIconAboveHeading: true
+  vision:
+    ask: >-
+      Does this page open with a centred hero followed by a row of three
+      equal-width cards, each with a small icon above a short heading?
+  why: >-
+    The default skeleton. Three equal columns with an icon over a heading over
+    two lines of copy is the shape a model produces when the brief did not
+    specify one.
+  fix: >-
+    Break the symmetry. Two unequal columns, a stacked sequence with real
+    numbers, a table, or a single annotated screenshot all carry the same
+    content without announcing their origin.
+
+- id: centered-everything-hero
+  title: Full-viewport hero with everything on one centred axis
+  category: layout
+  severity: high
+  weight: 79
+  evidenceRank: 9
+  sources:
+    - { catalogue: hallmark, ref: "slop-gate:6" }
+    - { catalogue: hallmark, ref: "antipattern:full-viewport-centred-hero" }
+    - { catalogue: impeccable, ref: hero-eyebrow-chip }
+  channels: [source, render, vision]
+  source:
+    patterns:
+      - 'min-h-screen[^"''`]*(items-center|justify-center)[^"''`]*text-center'
+      - 'class="[^"]*\btext-center\b[^"]*"[^>]*>\s*<(?:p|span)[^>]*>[^<]{2,40}</(?:p|span)>\s*<h1'
+  render:
+    check: centered-axis-stack
+    params:
+      minStackedCentered: 4
+      minHeroVh: 0.85
+  vision:
+    ask: >-
+      In the hero, are the eyebrow, headline, subheading, and button all centred
+      on the same vertical axis, filling most of the first screen?
+  exceptSurfaces: [atmospheric, playful]
+  why: >-
+    Four elements stacked on one centre line with nothing to break the rhythm.
+    It is the safest possible composition, which is why it is everywhere.
+  fix: >-
+    Centre at most two of the four. Push the eyebrow to a margin, right-flush
+    the CTA, or anchor a numeral off-axis so the block has a structure.
+
+- id: nested-cards
+  title: A card inside another card
+  category: layout
+  severity: high
+  weight: 73
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: nested-cards }
+    - { catalogue: hallmark, ref: "slop-gate:4" }
+    - { catalogue: hallmark, ref: "antipattern:card-in-card" }
+  channels: [render]
+  render:
+    check: nested-surface
+    params:
+      signals: [borderRadius, boxShadow, borderWidth, backgroundContrast]
+      minSignals: 2
+  why: >-
+    Two levels of border, radius, and shadow around the same content. It happens
+    when a card component gets dropped inside a section that was already a card.
+  fix: >-
+    One container per level of meaning. The inner one keeps the padding; the
+    outer one loses its border and shadow.
+
+- id: side-tab-border
+  title: Thick coloured stripe down one edge of a card
+  category: layout
+  severity: medium
+  weight: 61
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: side-tab }
+    - { catalogue: impeccable, ref: border-accent-on-rounded }
+    - { catalogue: hallmark, ref: "antipattern:the-side-stripe-card" }
+  channels: [source, render]
+  source:
+    patterns:
+      - 'border-l-[48]\s+border-(?!transparent)[a-z]+-\d+'
+      - 'border-left\s*:\s*[468]px\s+solid'
+  render:
+    check: asymmetric-accent-border
+    params:
+      minWidthPx: 3
+      requiresSingleSide: true
+  why: >-
+    The alert-callout stripe applied to ordinary cards. On a rounded card the
+    stripe also fights the corner radius and looks like a rendering bug.
+  fix: >-
+    Carry the status in a label or the heading colour. If the stripe stays, the
+    card corners on that edge go square.
+
+- id: monotonous-spacing
+  title: Every section padded identically
+  category: layout
+  severity: medium
+  weight: 64
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: monotonous-spacing }
+    - { catalogue: hallmark, ref: "slop-gate:9" }
+    - { catalogue: hallmark, ref: "antipattern:every-section-padded-the-same" }
+  channels: [render]
+  render:
+    check: section-rhythm-variance
+    params:
+      minCoefficientOfVariation: 0.18
+  why: >-
+    py-24 on every section, separated by nothing but air. The page has no
+    rhythm, so nothing signals where one idea ends and the next begins.
+  fix: >-
+    Vary the vertical rhythm by role, and separate at least one boundary with a
+    rule, a colour shift, or a full-bleed band instead of more whitespace.
+
+- id: off-scale-spacing
+  title: Spacing values off the scale
+  category: layout
+  severity: low
+  weight: 46
+  evidenceRank: null
+  sources:
+    - { catalogue: hallmark, ref: "slop-gate:24" }
+    - { catalogue: frontend-design-audit, ref: "pattern:spacing-hierarchy" }
+  channels: [source]
+  source:
+    patterns:
+      - '(?:padding|margin|gap|row-gap|column-gap)\s*:\s*(?!0)(?:\d*[13579]|\d*\d[13579])px'
+    # \b1px\b, not 1px — an unanchored "1px" also matches inside 11px and 21px,
+    # which silently excused most of the odd values the rule exists to find.
+    suppress: 'var\(--|calc\(|\b1px\b|redpen-ignore'
+    minHits: 5
+  why: >-
+    padding: 17px is a value nobody chose. Odd, non-scale numbers accumulate
+    when components are generated one at a time.
+  fix: >-
+    Snap everything to a 4px scale exposed as named tokens.
+
+- id: horizontal-overflow
+  title: Page scrolls sideways at some viewport
+  category: layout
+  severity: critical
+  weight: 83
+  evidenceRank: 10
+  sources:
+    - { catalogue: unslop-ui, ref: layout-quality }
+    - { catalogue: hallmark, ref: "slop-gate:34" }
+    - { catalogue: impeccable, ref: first-viewport-column-overflow }
+  channels: [render]
+  render:
+    check: horizontal-scroll
+    params:
+      sweep: [320, 375, 414, 768, 1024, 1280, 1536, 1920]
+  why: >-
+    Nobody dragged the window. A single 100vw element or an un-wrapped flex row
+    breaks the whole page, and it is invisible at the width the author used.
+  fix: >-
+    Set `overflow-x: clip` on both html and body — clip, not hidden, so sticky
+    and fixed descendants survive — then find the element that exceeds the
+    viewport and fix it at source.
+
+- id: text-overflow
+  title: Text clipped or overflowing its container
+  category: layout
+  severity: high
+  weight: 77
+  evidenceRank: 10
+  sources:
+    - { catalogue: impeccable, ref: text-overflow }
+    - { catalogue: impeccable, ref: clipped-overflow-container }
+    - { catalogue: impeccable, ref: text-occlusion }
+    - { catalogue: unslop-ui, ref: layout-quality }
+  channels: [render, vision]
+  render:
+    check: clipped-text
+    params:
+      minOverflowPx: 2
+  vision:
+    ask: >-
+      Is any text visibly cut off, running under another element, or clipped by
+      the edge of its container?
+  why: >-
+    A label with a descender clipped by a fixed-height chip, or a button whose
+    text runs past its own border. These are the errors that read as "broken"
+    rather than "generated".
+  fix: >-
+    Remove the fixed height and let content size the box, or shorten the label.
+
+- id: body-text-viewport-edge
+  title: Body text flush against the viewport edge
+  category: layout
+  severity: medium
+  weight: 59
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: body-text-viewport-edge }
+    - { catalogue: impeccable, ref: edge-flush-cards }
+  channels: [render]
+  render:
+    check: edge-gutter
+    params:
+      minGutterPx: 16
+      atViewports: [320, 375, 768]
+  why: >-
+    A container with horizontal padding at desktop and none at mobile. Text
+    touching the screen edge is the clearest signal nobody opened this on a
+    phone.
+  fix: >-
+    Put the gutter on the page shell so every section inherits it.
+
+- id: cramped-padding
+  title: Interactive elements with no breathing room
+  category: layout
+  severity: medium
+  weight: 54
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: cramped-padding }
+    - { catalogue: frontend-design-audit, ref: "pattern:minimum-touch-targets" }
+  channels: [render]
+  render:
+    check: control-padding-floor
+    params:
+      minHeightPx: 44
+      minPaddingX: 12
+  why: >-
+    Buttons and inputs sized to their text. Below 44px they are hard to hit on
+    touch and read as unfinished on desktop.
+  fix: >-
+    44px minimum height on every control, shared across inputs and buttons on
+    the same form.
+
+- id: input-height-mismatch
+  title: Input and button heights differ in the same row
+  category: layout
+  severity: medium
+  weight: 57
+  evidenceRank: null
+  sources:
+    - { catalogue: hallmark, ref: "slop-gate:39" }
+    - { catalogue: frontend-design-audit, ref: "heuristic:4-consistency" }
+  channels: [render]
+  render:
+    check: sibling-control-height
+    params:
+      maxDeltaPx: 2
+  why: >-
+    A 38px input beside a 44px button is the single most common form-tuning
+    miss, and it is instantly visible once you know to look.
+  fix: >-
+    One base control height token, applied to inputs, selects, and buttons
+    alike.
+
+- id: unaligned-flex-row
+  title: Flex row not vertically centred
+  category: layout
+  severity: low
+  weight: 45
+  evidenceRank: null
+  sources:
+    - { catalogue: hallmark, ref: "slop-gate:36" }
+  channels: [render]
+  render:
+    check: flex-baseline-drift
+    params:
+      maxDeltaPx: 3
+  why: >-
+    Flex defaults to align-items: stretch, so a button next to a text link ends
+    up taller and the row loses its baseline.
+  fix: >-
+    Declare `align-items: center` on any row mixing elements of different
+    intrinsic height, and set line-height: 1 on the tall ones.
+
+- id: repeated-container-text
+  title: The same string repeated across containers
+  category: layout
+  severity: low
+  weight: 42
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: repeated-container-text }
+  channels: [render]
+  render:
+    check: duplicate-block-text
+    params:
+      minRepeats: 3
+      minLength: 24
+  why: >-
+    Placeholder copy that never got replaced, repeated across every card in a
+    grid.
+  fix: >-
+    Write the real copy, or cut the cards down to the ones you have content for.
+
+- id: codex-grid-background
+  title: Decorative grid or stripe background
+  category: layout
+  severity: low
+  weight: 40
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: codex-grid-background }
+    - { catalogue: impeccable, ref: repeating-stripes-gradient }
+  channels: [source, render]
+  source:
+    patterns:
+      - 'repeating-linear-gradient\([^)]*\b1px\b[^)]*\)'
+      - 'bg-\[url\([^)]*grid[^)]*\)\]'
+  render:
+    check: repeating-background-pattern
+    params:
+      minAreaShare: 0.3
+  why: >-
+    The faint blueprint grid behind a hero. It is texture applied because the
+    surface felt empty, and it appears on an enormous number of generated pages.
+  fix: >-
+    Remove it and let the composition carry the space, or replace it with
+    something that means something — a real diagram, a real image.

@@ -1,0 +1,132 @@
+# Accessibility rules that don't belong to another category.
+#
+# Contrast lives in color.yaml, heading order in typography.yaml, alt text and
+# SVG naming in iconography.yaml, focus and semantics in usability.yaml — each
+# next to the visual rule it interacts with, because that is how they get fixed.
+# What remains is here.
+
+- id: missing-lang
+  title: Document with no lang attribute
+  category: a11y
+  severity: medium
+  weight: 53
+  evidenceRank: null
+  sources:
+    - { catalogue: frontend-design-audit, ref: "pattern:html-language-attribute" }
+  channels: [source, render]
+  source:
+    patterns:
+      - '<html(?![^>]*\blang=)[^>]*>'
+  render:
+    check: html-lang-present
+  why: >-
+    Screen readers pick a pronunciation model from this attribute. Without it
+    they guess, and English content gets read with the wrong phonemes.
+  fix: >-
+    `<html lang="en">`, or the correct tag for the content's language.
+
+- id: unlabelled-input
+  title: Form control with no associated label
+  category: a11y
+  severity: critical
+  weight: 78
+  evidenceRank: null
+  sources:
+    - { catalogue: frontend-design-audit, ref: "pattern:form-labels" }
+    - { catalogue: frontend-design-audit, ref: "heuristic:13-accessibility" }
+  channels: [source, render]
+  source:
+    patterns:
+      - '<(input|select|textarea)(?![^>]*(aria-label|aria-labelledby|id=))[^>]*>'
+  render:
+    check: control-accessible-name
+  why: >-
+    A placeholder is not a label — it disappears on focus and is not announced
+    as a name. Unlabelled fields make a form unusable non-visually.
+  fix: >-
+    A `<label for>` bound to the control's id. Keep the placeholder for format
+    hints only, or drop it.
+
+- id: color-only-indicator
+  title: State signalled by colour alone
+  category: a11y
+  severity: high
+  weight: 66
+  evidenceRank: null
+  sources:
+    - { catalogue: frontend-design-audit, ref: "pattern:color-contrast-and-non-color-indicators" }
+    - { catalogue: frontend-design-audit, ref: "heuristic:14-perceptibility" }
+  channels: [render]
+  render:
+    check: color-only-state
+    params:
+      states: [error, success, warning, selected, required]
+  why: >-
+    Red border, green border, and nothing else. Around 8% of men cannot
+    distinguish them.
+  fix: >-
+    Pair every colour signal with a second channel — an icon, a text label, a
+    weight change, or a shape.
+
+- id: no-live-region
+  title: Dynamic content with no live region
+  category: a11y
+  severity: medium
+  weight: 56
+  evidenceRank: null
+  sources:
+    - { catalogue: frontend-design-audit, ref: "heuristic:1-visibility-of-system-status" }
+  channels: [source]
+  source:
+    patterns:
+      - '(toast|Toast|notification|Notification|snackbar)\b[^>]*>'
+    suppress: '(aria-live|role="(status|alert)")'
+    minHits: 1
+  why: >-
+    A toast that appears visually and silently for anyone not looking at that
+    corner of the screen.
+  fix: >-
+    `role="status"` with `aria-live="polite"` for confirmations,
+    `role="alert"` for failures.
+
+- id: disabled-by-opacity
+  title: Disabled state signalled by opacity alone
+  category: a11y
+  severity: medium
+  weight: 51
+  evidenceRank: null
+  sources:
+    - { catalogue: hallmark, ref: "slop-gate:39" }
+  channels: [source, render]
+  source:
+    patterns:
+      - 'disabled:opacity-\d+'
+    suppress: '(disabled:cursor|aria-disabled|\bdisabled\b\s*[}>])'
+  render:
+    check: disabled-signal-channels
+    params:
+      minChannels: 3
+  why: >-
+    Faded text that is still focusable and still clickable. Opacity alone also
+    tends to push the control under its contrast threshold.
+  fix: >-
+    The native `disabled` attribute (or aria-disabled), plus
+    `cursor: not-allowed`, plus the visual treatment. Three channels.
+
+- id: script-error
+  title: JavaScript error on load
+  category: a11y
+  severity: critical
+  weight: 87
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: script-error }
+  channels: [render]
+  render:
+    check: console-errors
+  why: >-
+    An uncaught exception during load means some part of the page never
+    initialised. Everything downstream of it is unverified.
+  fix: >-
+    Read the stack, fix the error. A page that throws is not ready to be
+    reviewed for taste.

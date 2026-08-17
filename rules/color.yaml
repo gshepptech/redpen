@@ -1,0 +1,317 @@
+# Colour tells.
+#
+# Two of the three highest-ranked tells in the Reddit study are colour choices,
+# which is why this file leads the corpus. The ordering principle throughout:
+# `weight` comes from how often humans actually name the tell, not from how
+# strongly any catalogue author feels about it.
+
+- id: ai-purple
+  title: AI purple as the primary colour
+  category: color
+  severity: critical
+  weight: 94
+  evidenceRank: 2
+  sources:
+    - { catalogue: unslop-ui, ref: ai-purple }
+    - { catalogue: impeccable, ref: ai-color-palette }
+    - { catalogue: hallmark, ref: "antipattern:the-purple-gradient-hero" }
+  channels: [source, render]
+  source:
+    patterns:
+      - '\b(bg|text|from|via|to|border|ring|fill|stroke|decoration|outline|accent|caret|shadow)-(indigo|violet|purple|fuchsia)-(400|500|600|700|800)\b'
+      - '#(6366f1|4f46e5|818cf8|7c3aed|6d28d9|8b5cf6|a855f7|9333ea|7e22ce|c026d3|d946ef)\b'
+      - '--(?:color-)?(?:primary|brand|accent)\s*:\s*(?:#(?:6366f1|7c3aed|8b5cf6|a855f7)|oklch\(\s*0?\.[3-6]\d*\s+0\.[12]\d*\s+2(?:7[0-9]|8[0-9]|9[0-9]))'
+    minHits: 2
+  render:
+    check: hue-band-share
+    params:
+      hueRange: [265, 305]
+      minChroma: 0.11
+      roles: [background, color, borderColor]
+      # A single violet pill is a decision. Violet carrying the page is a default.
+      minAreaShare: 0.04
+  why: >-
+    Violet/indigo is Tailwind's out-of-the-box accent and the colour every model
+    reaches for unprompted, so it reads as "nobody chose this". It ranks second
+    among all named tells in a 3,033-comment sample.
+  fix: >-
+    Pick an anchor hue outside the 265-305 band and derive the ramp from it. If
+    the brand genuinely is violet, shift chroma and lightness away from the
+    Tailwind stops (500/600) so it stops matching the default on sight.
+
+- id: gradient-text
+  title: Gradient-filled heading text
+  category: color
+  severity: critical
+  weight: 91
+  evidenceRank: 3
+  sources:
+    - { catalogue: unslop-ui, ref: gradient-text }
+    - { catalogue: impeccable, ref: gradient-text }
+    - { catalogue: hallmark, ref: "slop-gate:2" }
+  channels: [source, render, vision]
+  source:
+    patterns:
+      - 'bg-clip-text\s+[^"''`]*text-transparent'
+      - 'text-transparent\s+[^"''`]*bg-clip-text'
+      - '-webkit-background-clip\s*:\s*text'
+      - '(?<!-)\bbackground-clip\s*:\s*text'
+  render:
+    check: clipped-gradient-text
+  vision:
+    ask: >-
+      Does any heading on this page have a multi-colour gradient filling the
+      letterforms themselves (as opposed to a solid colour)?
+  why: >-
+    Gradient-filled type is the single most-cited visual giveaway after colour
+    choice. It also degrades legibility, because the contrast ratio varies
+    across the word.
+  fix: >-
+    Solid colour on every heading. If the hero needs more presence, get it from
+    scale, weight, or a drawn rule under the line — not from the fill.
+
+- id: purple-blue-gradient
+  title: Purple-to-blue or purple-to-pink gradient
+  category: color
+  severity: high
+  weight: 88
+  evidenceRank: 3
+  sources:
+    - { catalogue: unslop-ui, ref: purple-blue-gradient }
+    - { catalogue: hallmark, ref: "slop-gate:2" }
+    - { catalogue: impeccable, ref: ai-color-palette }
+  channels: [source, render]
+  source:
+    patterns:
+      - 'from-(purple|violet|indigo|fuchsia)-\d+\s+(via-[a-z]+-\d+\s+)?to-(blue|indigo|pink|cyan|sky)-\d+'
+      - 'linear-gradient\([^)]*#(6366f1|7c3aed|8b5cf6|a855f7)[^)]*\)'
+  render:
+    check: gradient-hue-span
+    params:
+      minHueSpan: 40
+      involvingHueRange: [255, 320]
+  why: >-
+    The rainbow sweep from violet through blue or pink is the decorative move
+    models default to when a surface looks empty. It signals filler, not brand.
+  fix: >-
+    Default to a solid fill. When a gradient earns its place, keep both stops
+    inside a 20-degree hue span so it reads as one colour with depth.
+
+- id: cream-serif-default
+  title: The cream-plus-serif "tasteful default"
+  category: color
+  severity: high
+  weight: 82
+  evidenceRank: 1
+  sources:
+    - { catalogue: unslop-ui, ref: claude-default-look }
+    - { catalogue: impeccable, ref: cream-palette }
+    - { catalogue: impeccable, ref: italic-serif-display }
+  channels: [source, render]
+  source:
+    patterns:
+      - '#(faf8f5|f5f1e8|f3eee3|fdfbf7|f7f3ec|faf6ef|f6f1e7|fbf7f0|f4efe4)\b'
+      - '\bbg-(stone|amber|orange)-(50|100)\b'
+      - '\b(Instrument\s*Serif|Fraunces|Playfair\s*Display|Cormorant|Spectral|DM\s*Serif)\b'
+    minHits: 2
+  render:
+    check: warm-neutral-ground
+    params:
+      lightnessMin: 0.93
+      chromaRange: [0.008, 0.035]
+      hueRange: [60, 110]
+      requiresSerifDisplay: true
+  why: >-
+    The second-generation default. Warm cream ground plus a high-contrast serif
+    display face was the escape route from AI purple, which made it the new
+    tell — recognisable precisely because it is now everywhere.
+  fix: >-
+    Keep it only if the brand already lived there. Otherwise move the ground off
+    the 60-110 hue band or pair the serif with a ground that isn't cream — the
+    combination is the tell, not either half alone.
+
+- id: pure-black-white
+  title: "Pure #000 or #fff as a base surface"
+  category: color
+  severity: medium
+  weight: 58
+  evidenceRank: null
+  sources:
+    - { catalogue: hallmark, ref: "slop-gate:7" }
+    - { catalogue: hallmark, ref: "antipattern:pure-black-pure-white" }
+  channels: [source, render]
+  source:
+    patterns:
+      - '(background(-color)?|--(?:color-)?(?:bg|background|surface|paper|ink|fg|foreground))\s*:\s*(#000{1,3}\b|#fff{1,3}\b|black\b|white\b|rgb\(\s*0\s*,\s*0\s*,\s*0\s*\)|rgb\(\s*255\s*,\s*255\s*,\s*255\s*\))'
+  render:
+    check: unmixed-extremes
+    params:
+      minAreaShare: 0.25
+  exceptSurfaces: [modern-minimal]
+  why: >-
+    Untinted black and white are what you get when nobody picked a palette. Real
+    paper and real ink both carry a trace of hue.
+  fix: >-
+    Tint every neutral toward the anchor hue with at least 0.005 chroma in
+    OKLCH. The shift is invisible in isolation and obvious in aggregate.
+
+- id: zero-chroma-neutrals
+  title: Flat zero-chroma greys
+  category: color
+  severity: low
+  weight: 44
+  evidenceRank: null
+  sources:
+    - { catalogue: hallmark, ref: "slop-gate:22" }
+  channels: [render]
+  render:
+    check: neutral-chroma-floor
+    params:
+      minChroma: 0.005
+      minDistinctNeutrals: 3
+  exceptSurfaces: [modern-minimal]
+  why: >-
+    A grey ramp with no chroma reads as dead next to type and imagery that both
+    carry colour. It is the palette equivalent of unstyled text.
+  fix: >-
+    Rebuild the neutral ramp in OKLCH with chroma between 0.005 and 0.02, hue
+    locked to the anchor.
+
+- id: low-contrast
+  title: Text below its contrast threshold
+  category: color
+  severity: critical
+  weight: 86
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: low-contrast }
+    - { catalogue: hallmark, ref: "slop-gate:40" }
+    - { catalogue: frontend-design-audit, ref: "heuristic:13-accessibility" }
+  channels: [render]
+  render:
+    check: contrast-threshold
+    params:
+      bodyRatio: 4.5
+      largeRatio: 3.0
+      largePx: 24
+      largeBoldPx: 18
+  why: >-
+    The most common real failure in generated UI: the surface colour got flipped
+    and the text colour did not follow, so muted text lands on a tinted card and
+    drops under 4.5:1.
+  fix: >-
+    Pair every colour declaration with its computed background and verify. The
+    usual culprits are muted text on a secondary paper tone and focus rings that
+    clear 3:1 against the control but not the page.
+
+- id: gray-on-color
+  title: Grey text on a coloured surface
+  category: color
+  severity: medium
+  weight: 55
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: gray-on-color }
+  channels: [render]
+  render:
+    check: neutral-text-on-chromatic-ground
+    params:
+      minGroundChroma: 0.04
+      maxTextChroma: 0.01
+  why: >-
+    Muted grey copied onto a coloured panel reads as dirty rather than quiet,
+    because the grey carries none of the ground's hue.
+  fix: >-
+    Derive the muted tone from the ground: same hue, lower chroma, lightness
+    stepped far enough to clear 4.5:1.
+
+- id: dark-glow
+  title: Unprompted neon glow in dark mode
+  category: color
+  severity: high
+  weight: 71
+  evidenceRank: 6
+  sources:
+    - { catalogue: unslop-ui, ref: neon-glow }
+    - { catalogue: impeccable, ref: dark-glow }
+    - { catalogue: hallmark, ref: "antipattern:shadow-glow-on-dark" }
+  channels: [source, render]
+  source:
+    patterns:
+      - 'shadow-\[0_0_'
+      - 'drop-shadow-\[0_0_'
+      - 'text-shadow\s*:[^;]*\d+px[^;]*(rgba|#|hsl)'
+      - 'box-shadow\s*:[^;]*\b0\s+0\s+\d{2,}px'
+  render:
+    check: chromatic-glow-shadow
+    params:
+      minBlur: 16
+      requiresZeroOffset: true
+      minShadowChroma: 0.05
+  why: >-
+    Glow appears in generated dark modes because the model is compensating for a
+    palette that has no real contrast structure. Nobody asked for it.
+  fix: >-
+    Delete the glow and fix the underlying contrast. Dark surfaces separate
+    through lightness steps and hairline borders, not bloom.
+
+- id: radial-halo
+  title: Radial halo or aurora blob behind the hero
+  category: color
+  severity: medium
+  weight: 48
+  # Deliberately down-weighted: the Reddit study tested this and rejected it as a
+  # keyword artifact. It stays in the corpus because two catalogues name it, but
+  # it must never outrank a measured tell.
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: radial-halo }
+    - { catalogue: impeccable, ref: radial-spotlight-glow }
+    - { catalogue: hallmark, ref: "antipattern:aurora-blob-background" }
+  channels: [source, render]
+  source:
+    patterns:
+      - 'radial-gradient\([^)]*(circle|ellipse)[^)]*\)[^;]*(blur|opacity)'
+      - 'blur-3xl[^"''`]*rounded-full'
+      - 'rounded-full[^"''`]*blur-(2xl|3xl)'
+  render:
+    check: blurred-decorative-blob
+    params:
+      minBlurPx: 40
+      minAreaShare: 0.08
+  exceptSurfaces: [atmospheric]
+  why: >-
+    Blurred colour blobs are decoration standing in for a design decision. Note
+    that this tell scored far lower in real complaint data than in design
+    Twitter, so treat it as polish, not as a blocker.
+  fix: >-
+    Remove it, or commit to it — one bloom, one hue, fixed attachment, no
+    animation, and let it carry the composition instead of hiding in the corner.
+
+- id: design-system-color
+  title: Colour outside the declared token set
+  category: color
+  severity: medium
+  weight: 62
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: design-system-color }
+    - { catalogue: hallmark, ref: "antipattern:mid-render-token-improvisation" }
+    - { catalogue: frontend-design-audit, ref: "pattern:coherence-pass" }
+  channels: [source, render]
+  source:
+    patterns:
+      - '(?:color|background(?:-color)?|border-color|fill|stroke)\s*:\s*(#[0-9a-f]{3,8}|rgba?\([^)]*\)|hsla?\([^)]*\))\s*;'
+    suppress: 'var\(--|@apply|:root|redpen-ignore'
+    minHits: 6
+  render:
+    check: off-token-color
+    params:
+      maxDistinctColors: 14
+  why: >-
+    Improvised hex values mid-file are how a generated page ends up with
+    nineteen near-identical greys. The tokens exist; the later components
+    stopped using them.
+  fix: >-
+    Move every literal to a semantic token and reference it. Name by role
+    (--color-ink, --color-paper-2), never by value.

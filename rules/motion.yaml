@@ -1,0 +1,248 @@
+# Motion tells.
+#
+# Ranked 4th in the complaint data. The pattern in the quotes is not "there is
+# animation" but "everything animates the same way on scroll" — so the rules
+# here mostly fire on uniformity, not on presence.
+
+- id: scroll-fade-everything
+  title: Fade-up on scroll applied to every section
+  category: motion
+  severity: high
+  weight: 78
+  evidenceRank: 4
+  sources:
+    - { catalogue: unslop-ui, ref: fade-in-animations }
+    - { catalogue: hallmark, ref: "antipattern:animate-on-scroll-on-everything" }
+    - { catalogue: hallmark, ref: "antipattern:universal-scroll-triggered-fade-up" }
+  channels: [source, render]
+  source:
+    patterns:
+      - 'initial=\{\{\s*opacity:\s*0'
+      - 'whileInView'
+      - 'data-aos\s*='
+      - 'class="[^"]*\banimate-(fade|slide)-(in|up)\b'
+    minHits: 4
+  render:
+    check: uniform-entrance-animation
+    params:
+      minAnimatedSections: 4
+  why: >-
+    Every section entering with the same 20px rise and 500ms fade. It delays the
+    content, breaks find-in-page, and is the motion equivalent of a template.
+  fix: >-
+    Animate at most one thing per screen, and only when the motion carries
+    meaning — a value changing, a panel opening, a state committing.
+
+- id: transition-all
+  title: transition-all
+  category: motion
+  severity: medium
+  weight: 63
+  evidenceRank: null
+  sources:
+    - { catalogue: hallmark, ref: "slop-gate:10" }
+    - { catalogue: hallmark, ref: "antipattern:transition-all" }
+  channels: [source, render]
+  source:
+    patterns:
+      - '\btransition-all\b'
+      - 'transition\s*:\s*all\b'
+  render:
+    check: transition-property-all
+  why: >-
+    Animating every property means animating layout properties too, so a hover
+    that should repaint ends up reflowing. It is also a declaration that nobody
+    decided what should move.
+  fix: >-
+    Name the properties. `transition: color 120ms, background-color 120ms`.
+
+- id: uniform-hover-scale
+  title: The same hover-scale on everything
+  category: motion
+  severity: medium
+  weight: 65
+  evidenceRank: 4
+  sources:
+    - { catalogue: unslop-ui, ref: fade-in-animations }
+    - { catalogue: hallmark, ref: "slop-gate:11" }
+    - { catalogue: impeccable, ref: image-hover-transform }
+  channels: [source, render]
+  source:
+    patterns:
+      - '\bhover:scale-1\d{2}\b'
+      - 'whileHover=\{\{\s*scale'
+      - ':hover[^{]*\{[^}]*transform\s*:\s*scale\('
+    minHits: 3
+  render:
+    check: uniform-hover-transform
+    params:
+      minElements: 4
+  why: >-
+    scale(1.05) on cards, buttons, images, and logos alike. Applying one gesture
+    to unrelated elements says the gesture was not chosen for any of them.
+  fix: >-
+    Pick a different affordance per element class — background shift for
+    buttons, border for cards, nothing at all for logos.
+
+- id: bounce-easing
+  title: Bouncy or overshoot easing on UI
+  category: motion
+  severity: medium
+  weight: 55
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: bounce-easing }
+    - { catalogue: hallmark, ref: "slop-gate:12" }
+  channels: [source, render]
+  source:
+    patterns:
+      - 'cubic-bezier\(\s*0?\.\d+\s*,\s*1\.[3-9]'
+      - '\bease-\[cubic-bezier\([^)]*1\.[3-9]'
+      - 'type:\s*[''"]spring[''"][^}]*bounce'
+  render:
+    check: overshoot-timing-function
+  why: >-
+    Overshoot reads as physical, so it belongs on things the user dragged.
+    On a modal or a tooltip it reads as a toy.
+  fix: >-
+    Standard ease-out for entrances, 120-200ms. Reserve springs for direct
+    manipulation.
+
+- id: animated-layout-property
+  title: Animating layout properties
+  category: motion
+  severity: medium
+  weight: 58
+  evidenceRank: null
+  sources:
+    - { catalogue: hallmark, ref: "slop-gate:14" }
+    - { catalogue: impeccable, ref: layout-transition }
+  channels: [source, render]
+  source:
+    patterns:
+      - 'transition[^;]*:\s*[^;]*\b(width|height|top|left|right|bottom|margin|padding)\b[^;]*\d+m?s'
+  render:
+    check: layout-affecting-transition
+  why: >-
+    Animating width or top forces layout on every frame, so it stutters on
+    anything but a fast machine.
+  fix: >-
+    Animate transform and opacity. For size changes, scale a wrapper or use
+    grid-template-rows with a 0fr-to-1fr transition.
+
+- id: no-reduced-motion
+  title: Motion with no prefers-reduced-motion fallback
+  category: motion
+  severity: high
+  weight: 70
+  evidenceRank: null
+  sources:
+    - { catalogue: hallmark, ref: "slop-gate:27" }
+    - { catalogue: frontend-design-audit, ref: "heuristic:13-accessibility" }
+  channels: [source, render]
+  source:
+    patterns:
+      - '@keyframes\b'
+      - 'animation\s*:\s*[a-z-]+\s+\d'
+    suppress: 'prefers-reduced-motion'
+    minHits: 1
+  render:
+    check: reduced-motion-coverage
+  why: >-
+    Vestibular disorders make unrequested motion genuinely painful. The media
+    query costs three lines and is skipped almost every time.
+  fix: >-
+    Wrap a global `@media (prefers-reduced-motion: reduce)` block that sets
+    animation-duration and transition-duration to 0.01ms.
+
+- id: pulsing-dot
+  title: Pulsing status dot
+  category: motion
+  severity: low
+  weight: 44
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: pulsing-dot }
+    - { catalogue: impeccable, ref: blinking-cursor }
+  channels: [source, render]
+  source:
+    patterns:
+      - 'animate-ping\b'
+      - 'class="[^"]*animate-pulse[^"]*"[^>]*>\s*</(span|div)>'
+  render:
+    check: infinite-small-pulse
+    params:
+      maxElementPx: 16
+  why: >-
+    The "live" dot next to a status label, animating forever. It is decoration
+    claiming to be information.
+  fix: >-
+    Static dot plus a text label. If it must animate, animate it once when the
+    status actually changes.
+
+- id: marquee
+  title: Auto-scrolling marquee
+  category: motion
+  severity: low
+  weight: 39
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: marquee }
+    - { catalogue: hallmark, ref: "slop-gate:18" }
+  channels: [source, render]
+  source:
+    patterns:
+      - '<marquee\b'
+      - 'animate-marquee\b'
+      - '@keyframes\s+(marquee|scroll-x|infinite-scroll)\b'
+  render:
+    check: continuous-translate-loop
+  why: >-
+    The logo wall that slides forever. It cannot be read at speed and it never
+    stops, which fails WCAG 2.2.2 if it runs past five seconds.
+  fix: >-
+    Static grid of logos. If it scrolls, give it pause on hover and focus.
+
+- id: celebratory-toast
+  title: Success toast for a visible action
+  category: motion
+  severity: low
+  weight: 41
+  evidenceRank: null
+  sources:
+    - { catalogue: hallmark, ref: "slop-gate:16" }
+    - { catalogue: hallmark, ref: "antipattern:celebratory-success-toasts" }
+  channels: [source]
+  source:
+    patterns:
+      - 'toast\.success\('
+      - 'showToast\([^)]*success'
+    minHits: 2
+  why: >-
+    Confirming something the user can already see on screen. Silent success is
+    the taste move; toasts are for failures and for effects that happen
+    somewhere else.
+  fix: >-
+    Remove it where the result is visible. Keep it for background jobs and
+    errors.
+
+- id: animated-focus-ring
+  title: Focus ring that fades in
+  category: motion
+  severity: medium
+  weight: 53
+  evidenceRank: null
+  sources:
+    - { catalogue: hallmark, ref: "slop-gate:15" }
+  channels: [source, render]
+  source:
+    patterns:
+      - 'transition[^;]*:\s*[^;]*\boutline\b'
+      - ':focus-visible[^{]*\{[^}]*transition'
+  render:
+    check: focus-ring-transition
+  why: >-
+    Keyboard users need the indicator immediately. A 200ms fade means the ring
+    lags behind the tab key.
+  fix: >-
+    Exclude outline and box-shadow on :focus-visible from any transition.

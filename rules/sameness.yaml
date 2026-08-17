@@ -1,0 +1,100 @@
+# Sameness.
+#
+# This is the category no upstream catalogue has, and the reason redpen exists.
+#
+# The Reddit study's headline finding was not any single feature. "They all look
+# the same" and "screams AI" each appeared in roughly 13% of on-topic posts —
+# higher than any individual tell. Every other catalogue attacks tells one page
+# at a time, which cannot see the thing people are actually complaining about.
+#
+# These rules are evaluated by the fingerprint channel, which compares a page
+# against every other page in the same project (.redpen/fingerprints.json) and
+# against the archetype library. They need at least two recorded pages to fire.
+
+- id: repeated-macrostructure
+  title: Two pages share the same skeleton
+  category: sameness
+  severity: critical
+  weight: 96
+  evidenceRank: 0
+  sources:
+    - { catalogue: redpen, ref: fingerprint-macrostructure }
+    - { catalogue: hallmark, ref: "slop-gate:8" }
+  channels: [fingerprint]
+  why: >-
+    Same macrostructure, same section rhythm, same hero treatment as another
+    page in this project. Colour and copy differences do not register as
+    variety — readers register structure.
+  fix: >-
+    Change the skeleton, not the palette. Pick a different macrostructure for
+    this page: a long document, a stat-led opener, a catalogue index, a split
+    studio, a workbench.
+
+- id: template-archetype
+  title: The generic template skeleton
+  category: sameness
+  severity: critical
+  weight: 93
+  evidenceRank: 0
+  sources:
+    - { catalogue: redpen, ref: fingerprint-archetype }
+    - { catalogue: hallmark, ref: "slop-gate:8" }
+    - { catalogue: unslop-ui, ref: hero-three-cards }
+  channels: [fingerprint]
+  why: >-
+    Hero, three features, testimonial, CTA, footer — in that order. This exact
+    sequence is what people mean when they say every AI site looks the same.
+  fix: >-
+    Reorder or replace at least two sections. Lead with the product itself, or
+    with a single number, or with the document.
+
+- id: uniform-type-scale-across-pages
+  title: Every page uses an identical type scale and family set
+  category: sameness
+  severity: medium
+  weight: 61
+  evidenceRank: null
+  sources:
+    - { catalogue: redpen, ref: fingerprint-typography }
+  channels: [fingerprint]
+  why: >-
+    Shared type tokens across a site are correct. Identical *usage* — same
+    display size, same steps, same face in the same slots on every page — means
+    no page was designed for its own content.
+  fix: >-
+    Keep the tokens, vary the application. A docs page and a landing page should
+    not open at the same display size.
+
+- id: single-section-vocabulary
+  title: The project only ever uses three section types
+  category: sameness
+  severity: medium
+  weight: 64
+  evidenceRank: null
+  sources:
+    - { catalogue: redpen, ref: fingerprint-vocabulary }
+  channels: [fingerprint]
+  why: >-
+    Across every recorded page, the section kinds collapse to hero, card grid,
+    and CTA. The site has one idea about how to present anything.
+  fix: >-
+    Add section types the content actually calls for — a comparison table, a
+    sequence, a specimen, an index, a quote, an annotated screenshot.
+
+- id: palette-monoculture
+  title: Every page anchored to the same hue with no variation
+  category: sameness
+  severity: low
+  weight: 40
+  evidenceRank: null
+  sources:
+    - { catalogue: redpen, ref: fingerprint-palette }
+  channels: [fingerprint]
+  why: >-
+    Weaker than the structural rules and often correct — brand consistency is a
+    real goal. It fires only when hue, chroma, and the accent's area share are
+    all identical, which usually means the palette was pasted rather than
+    applied.
+  fix: >-
+    Vary the ground or the accent footprint by surface. A dense dashboard and a
+    marketing page should not carry the accent at the same weight.

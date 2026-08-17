@@ -1,0 +1,122 @@
+---
+name: redpen
+description: Judge and fix UI that reads as AI-generated. Runs a source scan, a real browser reading computed styles, and a structural comparison against the project's other pages, then reports only what more than one channel agrees on. Use when building, reviewing, or auditing any web UI — landing page, dashboard, component, design system — and whenever the user says a page looks generic, templated, AI-made, vibe-coded, or "like every other site", or asks for a design review, a UI audit, an accessibility check, or wants to know why a page feels off.
+---
+
+# redpen
+
+One verdict on a UI, from four evidence channels, weighted by what people
+actually notice.
+
+Read this before styling anything. It replaces running impeccable, hallmark,
+unslop-ui, and frontend-design-audit separately — the corpus below is those four
+merged, deduplicated, and cross-checked.
+
+## Run it
+
+```bash
+npx redpen scan . --url http://localhost:3000
+```
+
+Add every route worth judging. Without a `--url` the render channel never runs,
+every finding it could have confirmed is capped at `possible`, and the report
+says so. **Never read a source-only run as a clean page.**
+
+```bash
+npx redpen scan . --url http://localhost:3000 --url http://localhost:3000/pricing
+npx redpen scan . --url http://localhost:3000 --vision   # adds the screenshot pass; costs tokens
+npx redpen why ai-purple          # what a rule means and who said so
+npx redpen rules color            # the corpus, by category
+npx redpen fingerprints           # every page signature on record
+npx redpen scan . --json report.json --url http://localhost:3000
+```
+
+`--vision` puts the screenshot in front of a model for the judgements no rule
+can express — whether the hierarchy reads, whether a highlight band sits at the
+x-height. Use it when a page passes every check and still looks wrong. It costs
+tokens, so it is off by default.
+
+## How to read the report
+
+Findings are grouped by **confidence**, not severity. Work the top group first
+and treat the bottom group as leads.
+
+| | |
+| --- | --- |
+| **confirmed** | Two or more channels saw it independently, or the only channel that can see it did. Fix these. |
+| **likely** | One channel that reads real state saw it. Nothing disagreed. Fix these next. |
+| **possible** | Source-only, and the render pass checked the same thing without corroborating. Usually a false positive. Verify before touching. |
+
+The `[source+render]` tag on each finding names the channels that saw it.
+`weight` is 0–100 and comes from measured human complaint data where it exists —
+that is the ordering that matters, not the severity label.
+
+## The verbs
+
+**Audit.** Run the scan, then work the confirmed list top-down. Report the
+score, the confirmed count, and the single highest-weight finding first. Do not
+list every `possible` finding at the user unless they ask — that noise is what
+the confidence tiers exist to suppress.
+
+**Fix.** Each finding ships a concrete `fix`. Apply it, then re-run the scan on
+the same URL and confirm the finding is gone and the score moved. **A fix you
+have not re-scanned is not a fix.** If the score did not move, you changed
+something else.
+
+**Build.** Before writing UI, read `redpen rules` for the category you are about
+to touch, and check `redpen fingerprints` for what the project's other pages
+already look like. Building a page that clashes with an existing signature is
+the failure this tool exists to catch; do not create it and then fix it.
+
+**Gate.** `redpen baseline` once, committed; `redpen check` in CI. It fails on a
+score drop *or* on a new tell, so fixing one problem while introducing another
+still fails.
+
+## Rules that override your defaults
+
+These are the highest-weight findings in the corpus. Do not produce them in the
+first place.
+
+1. **No violet/indigo as the primary colour** unless the brand genuinely is
+   violet. It is the Tailwind default and ranks second among all named tells.
+2. **No gradient-filled heading text.** Ever. Solid colour on every heading;
+   presence comes from scale, weight, or a drawn rule.
+3. **No centred hero followed by three equal icon cards.** This skeleton is the
+   main carrier of "they all look the same". Break the symmetry — unequal
+   columns, a numbered sequence, a table, one annotated screenshot.
+4. **No italic headings**, including a single italicised word inside an upright
+   headline. Headers are roman; italic is a body-copy register.
+5. **No emoji as interface icons.** One icon library, or lead with the words.
+6. **No cream-plus-serif by reflex.** That was the escape route from AI purple,
+   which is what made it the new default.
+
+## Suppressing a finding
+
+When a finding is genuinely wrong for this project, suppress it *with a reason*:
+
+```css
+/* redpen-ignore:ai-purple brand is violet, signed off by design 2026-03 */
+```
+
+or project-wide in `.redpen/config.json` under `ignore`. The reason is
+mandatory. Never suppress a finding you have not first understood — check
+`redpen why <rule-id>` and confirm the pattern is deliberate rather than
+inherited.
+
+## Sameness
+
+`redpen fingerprints` records each page's skeleton, section rhythm, type scale,
+and palette anchor. When two pages score under 0.28 apart they are reported as
+the same page.
+
+The correct fix is **structural**. A palette swap does not clear a clash and the
+metric is weighted so that it barely moves — because readers register structure,
+not colour. Change the macrostructure: a long document, a stat-led opener, a
+catalogue index, a split studio, a workbench, a specimen table.
+
+## What this does not do
+
+It judges the rendered surface. It will not invent product copy, pick a brand,
+or enforce a house style — a page can score 100 and still be the wrong page.
+When the brief is unclear, ask, rather than defaulting to something the corpus
+happens not to penalise.

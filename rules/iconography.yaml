@@ -1,0 +1,173 @@
+# Icon and imagery tells.
+#
+# Emoji-as-icons ranks 7th in the complaint data and is one of the few tells
+# that a plain regex catches with near-zero false positives.
+
+- id: emoji-as-icon
+  title: Emoji used as interface icons
+  category: iconography
+  severity: high
+  weight: 75
+  evidenceRank: 7
+  sources:
+    - { catalogue: unslop-ui, ref: emoji-as-icons }
+    - { catalogue: hallmark, ref: "slop-gate:30" }
+    - { catalogue: hallmark, ref: "antipattern:generic-emoji-as-feature-icon" }
+  channels: [source, render]
+  source:
+    patterns:
+      - '>\s*[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}]\s*<'
+      - '(?:icon|emoji|symbol|glyph)\s*:\s*[''"][\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]'
+      - '^\s*[-*]\s+[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]'
+  render:
+    check: emoji-in-ui-slot
+    params:
+      slots: [feature-card, list-marker, button, nav-item, section-heading]
+  why: >-
+    Rocket, sparkle, lightning, checkmark. Emoji render differently on every
+    platform, carry no consistent weight or optical size, and read as a
+    placeholder that was never replaced.
+  fix: >-
+    One icon library (Lucide, Phosphor, Heroicons), or drop the icon and lead
+    with the words.
+
+- id: mixed-icon-sets
+  title: Two or more icon libraries on one page
+  category: iconography
+  severity: medium
+  weight: 58
+  evidenceRank: null
+  sources:
+    - { catalogue: hallmark, ref: "slop-gate:30" }
+    - { catalogue: hallmark, ref: "antipattern:mismatched-icon-sets" }
+    - { catalogue: frontend-design-audit, ref: "pattern:consolidate-icon-usage" }
+  channels: [source, render]
+  source:
+    patterns:
+      - 'from\s+[''"]lucide-react[''"]'
+      - 'from\s+[''"]@heroicons/react'
+      - 'from\s+[''"]react-icons/'
+      - 'from\s+[''"]@phosphor-icons/'
+      - 'material-symbols|material-icons'
+    minHits: 2
+  render:
+    check: icon-stroke-variance
+    params:
+      maxDistinctStrokeWidths: 1
+  why: >-
+    Icon sets differ in stroke weight, corner treatment, and optical size.
+    Mixing them is visible even to people who could not name what is wrong.
+  fix: >-
+    Pick one set and delete the others. If one icon is missing, draw it to match
+    rather than importing a second library for it.
+
+- id: icon-tile-feature-card
+  title: Icon-in-a-tinted-square above a feature heading
+  category: iconography
+  severity: medium
+  weight: 64
+  evidenceRank: 9
+  sources:
+    - { catalogue: impeccable, ref: icon-tile-stack }
+    - { catalogue: hallmark, ref: "antipattern:icon-tile-feature-card" }
+  channels: [render, vision]
+  render:
+    check: icon-tile-above-heading
+    params:
+      minInstances: 3
+  vision:
+    ask: >-
+      Do the feature cards each open with a small icon inside a rounded tinted
+      square, above the heading?
+  why: >-
+    The rounded square with a 10%-opacity brand fill and a stroke icon inside.
+    It is the single most reproduced component in generated marketing pages.
+  fix: >-
+    Drop the tile. A bare icon at the same optical size, a number, or nothing at
+    all — the heading is doing the work anyway.
+
+- id: broken-image
+  title: Broken or missing image
+  category: iconography
+  severity: critical
+  weight: 84
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: broken-image }
+  channels: [render]
+  render:
+    check: image-load-failure
+  why: >-
+    A referenced asset that does not resolve. Generated pages invent filenames
+    for images that were never created.
+  fix: >-
+    Supply the asset or remove the element. Never ship an img whose src 404s.
+
+- id: shape-assembled-illustration
+  title: Illustration assembled from primitive shapes
+  category: iconography
+  severity: low
+  weight: 40
+  evidenceRank: null
+  sources:
+    - { catalogue: impeccable, ref: shape-assembled-illustration }
+    - { catalogue: hallmark, ref: "antipattern:ai-illustration-look" }
+  channels: [render, vision]
+  render:
+    check: primitive-shape-cluster
+    params:
+      minShapes: 8
+      maxDistinctShapeTypes: 3
+  vision:
+    ask: >-
+      Is there an illustration built out of plain circles, rounded rectangles,
+      and arcs that reads as filler rather than as a real drawing?
+  why: >-
+    Circles and rounded rectangles arranged into something that gestures at a
+    diagram without depicting anything.
+  fix: >-
+    Replace with a real screenshot, a real diagram of the real system, or
+    nothing.
+
+- id: undecorated-svg
+  title: Decorative SVG with no accessible treatment
+  category: iconography
+  severity: medium
+  weight: 60
+  evidenceRank: null
+  sources:
+    - { catalogue: hallmark, ref: "slop-gate:33" }
+    - { catalogue: frontend-design-audit, ref: "heuristic:13-accessibility" }
+  channels: [source, render]
+  source:
+    patterns:
+      - '<svg(?![^>]*(aria-hidden|aria-label|aria-labelledby|role="img"))[^>]*>'
+  render:
+    check: svg-accessible-name
+  why: >-
+    Every inline SVG needs either an accessible name or an explicit hide.
+    Screen readers announce unlabelled graphics as "graphic", repeatedly.
+  fix: >-
+    `aria-hidden="true"` for decoration, `role="img"` plus `aria-label` for
+    anything that carries meaning.
+
+- id: missing-alt
+  title: Image without alt text
+  category: iconography
+  severity: high
+  weight: 80
+  evidenceRank: null
+  sources:
+    - { catalogue: frontend-design-audit, ref: "pattern:image-alt-text" }
+    - { catalogue: frontend-design-audit, ref: "heuristic:13-accessibility" }
+  channels: [source, render]
+  source:
+    patterns:
+      - '<img(?![^>]*\balt=)[^>]*>'
+  render:
+    check: img-alt-presence
+  why: >-
+    The most basic accessibility failure and still the most common one.
+  fix: >-
+    Describe the content for meaningful images; `alt=""` for decorative ones.
+    An empty alt is a decision; a missing alt is an omission.

@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.redpen/
+*.log
+.DS_Store
+test/fixtures/*/pricing.html
+test/fixtures/*/pricing.css
