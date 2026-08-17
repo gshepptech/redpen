@@ -147,6 +147,12 @@ export interface Baseline {
   recordedAt: string;
   /** Rule ids present at baseline, so new tells are reported even if the score held. */
   knownRules: string[];
+  /**
+   * Channels that produced this score. A later check that runs fewer of them
+   * sees fewer findings and a *higher* score, so it passes for having looked
+   * at less. Optional because baselines recorded before this existed have none.
+   */
+  channels?: string[];
 }
 
 export function loadBaseline(root: string): Baseline | null {

@@ -2,6 +2,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { promote, meetsThreshold } from '../dist/promote.js';
 import { score, grade, scoreKind } from '../dist/score.js';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 const ev = (channel, location, extra = {}) => ({ channel, location, ...extra });
 
@@ -187,4 +190,19 @@ test('the headline verdict names whichever axis is actually worse', async () => 
   assert.equal(verdict(78, 55), 'visibly rough');
   assert.equal(verdict(40, 95), 'heavily templated');
   assert.equal(verdict(100, 100), 'clean');
+});
+
+test('a baseline records which channels produced it', async () => {
+  // Without this a later check cannot tell that it ran fewer channels, sees
+  // fewer findings and a higher score, and passes for having looked at less.
+  const { saveBaseline, loadBaseline } = await import('../dist/config.js');
+  const dir = mkdtempSync(join(tmpdir(), 'redpen-baseline-'));
+  saveBaseline(dir, {
+    score: 100,
+    recordedAt: '2026-01-01T00:00:00.000Z',
+    knownRules: [],
+    channels: ['source', 'render', 'fingerprint'],
+  });
+  assert.deepEqual(loadBaseline(dir).channels, ['source', 'render', 'fingerprint']);
+  rmSync(dir, { recursive: true, force: true });
 });

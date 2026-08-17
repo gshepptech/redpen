@@ -271,6 +271,26 @@ async function cmdScan(root: string, args: Args, gating: boolean): Promise<void>
     process.exit(0);
   }
 
+  // A check that ran fewer channels than the baseline did sees fewer findings
+  // and therefore a *higher* score, so it passes for having looked at less.
+  // That is the one failure a gate must never have.
+  const ran = new Set<string>(result.channelsRun);
+  const missing = (baseline.channels ?? []).filter((c) => !ran.has(c));
+  if (missing.length) {
+    process.stderr.write(
+      pc.red(
+        `\n  cannot check: the baseline was recorded with ${baseline.channels!.join(', ')} but this run` +
+        ` only managed ${result.channelsRun.join(', ')}.\n  Missing ${missing.join(', ')} means fewer findings and a higher score, which would pass for the wrong reason.\n`,
+      ),
+    );
+    process.exit(2);
+  }
+  if (!baseline.channels) {
+    process.stderr.write(
+      pc.yellow('\n  ! this baseline predates channel recording, so a partial run cannot be detected.\n    Re-record it with `redpen baseline` to close that hole.\n'),
+    );
+  }
+
   const drop = baseline.score - result.score;
   const known = new Set(baseline.knownRules);
   const introduced = ruleIds(result.findings.filter((f) => f.confidence !== 'possible')).filter(
@@ -314,6 +334,7 @@ async function cmdBaseline(root: string, args: Args): Promise<void> {
     score: result.score,
     recordedAt: new Date().toISOString(),
     knownRules: ruleIds(result.findings.filter((f) => f.confidence !== 'possible')),
+    channels: result.channelsRun,
   });
 
   process.stdout.write(
