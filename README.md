@@ -202,6 +202,28 @@ anything, so `/* redpen-ignore */` alone does nothing. `redpen scan
 
 Each finding names the channels that saw it: `[source+render]`.
 
+### `redpen why-score`
+
+The score was the one output with no provenance, which is a strange gap in a
+tool built on provenance — and it cost someone an afternoon: four true findings
+fixed, score went *down*, nothing to explain why.
+
+```
+  redpen  72/100   reads as generated
+
+    31.5%    +8  tight-leading                quality · 2×
+    27.5%    +7  cramped-padding              quality · 1×
+    26.3%    +7  no-focus-visible             quality · 2×
+
+  Start here  tight-leading — 31% of the total
+```
+
+`share` is what proportion of the problem a finding is; `+pts` is what the score
+gains if it goes away on its own. The curve saturates, so on a badly-failing
+page every single fix is worth a fraction of a point — true, and useless for
+deciding what to do. Share ranks correctly at any score, and the command says
+so when the curve is saturated rather than printing a column of `+0`.
+
 ### The vision channel takes no API key
 
 Some judgements no rule can express: does the hierarchy read in two seconds, is
@@ -223,9 +245,25 @@ redpen scan . --url http://localhost:3000 --vision
 redpen scan . --url http://localhost:3000 --answers .redpen/vision-brief.json
 ```
 
-The brief carries its own instructions, skips any rule two channels already
-agree on, and pre-builds one row per page/question pair so answering is editing
-rather than authoring. An answer is discarded unless it is a `true` above 0.7
+**The brief is the artefact you hand to someone who wasn't there.** That is the
+design, and it has two consequences.
+
+It carries enough context to be answered cold — what the product is, who uses
+it, and what each page is for. Half these questions are meaningless without
+that: *could this hold a different product's content* means nothing if you do
+not know what this product's content is. Declare `product` in the config.
+
+And it leaks nothing that telegraphs the answer. Questions carry opaque handles
+(`q1`, `q2`) rather than rule ids, because `no-focal-point` and
+`nothing-memorable` *state the expected answer*. The `fix` text is left out for
+the same reason — it is the answer key printed beside the question. Questions
+are scattered so six typography questions do not arrive in a row and invite
+answering the category rather than the image. The mapping back to rules lives in
+`key`, which the answerer has no reason to open.
+
+The person who built the page is the worst available judge of these, because
+they cannot unsee it. `redpen brief` prints the whole thing readably — and
+deliberately does not print the key. An answer is discarded unless it is a `true` above 0.7
 confidence **with evidence** — an unevidenced yes is a guess, and it is rejected
 and reported rather than silently dropped.
 

@@ -27,6 +27,16 @@ export interface SurfaceVerdict {
   confidence: number;
   /** The signals that decided it, for the report. */
   signals: string[];
+  /**
+   * How much page there was to classify from.
+   *
+   * The same commit scored 49 or 61 depending on how many rows happened to be
+   * in the dev database, and nothing said so. When a page abstains, the honest
+   * diagnosis is usually "too little content here", not "declare it in config".
+   */
+  density: { rows: number; controls: number; characters: number };
+  /** True when the page had too little on it to classify from. */
+  sparse: boolean;
 }
 
 /**
@@ -114,6 +124,33 @@ export function surfaceSource(): string {
     return true;
   }).length;
 
+  // Repeated structure with no controls at all. A read-only data list is still
+  // a task surface — controls are one way of showing repetition, not the
+  // definition of it. Reported from the field: an 11-row merged queue view with
+  // zero buttons scored 0.0 on operate.
+  var repeatedShape = (function () {
+    var best = 0;
+    all('*').forEach(function (parent) {
+      var kids = Array.prototype.slice.call(parent.children).filter(visible);
+      if (kids.length < 4) return;
+      // Signature is the child's own tag skeleton — same shape repeated is the
+      // signal, whatever it contains.
+      var sig = kids.map(function (k) {
+        return Array.prototype.slice.call(k.children)
+          .map(function (c) { return c.tagName; }).join('>') || k.tagName;
+      });
+      var same = sig.filter(function (x) { return x === sig[0]; }).length;
+      // Uniform height as well: a repeated shape that varies wildly in size is
+      // a page of sections, not a list of records.
+      var heights = kids.map(function (k) { return Math.round(k.getBoundingClientRect().height); });
+      var uniform = heights.filter(function (h) { return Math.abs(h - heights[0]) <= 8; }).length;
+      if (same >= kids.length * 0.8 && uniform >= kids.length * 0.8) {
+        best = Math.max(best, kids.length);
+      }
+    });
+    return best;
+  })();
+
   // A page that is mostly one form is an operate surface even with no rows.
   var labelled = all('label').length;
   var submits  = all('button[type=submit], input[type=submit]').length;
@@ -144,7 +181,7 @@ export function surfaceSource(): string {
   return {
     inputs: inputs, buttons: buttons, tables: tables, rows: rows, tabs: tabs,
     menus: menus, toggles: toggles, sidebar: sidebar, toolbars: toolbars, authish: authish,
-    recordRows: recordRows, labelled: labelled, submits: submits,
+    recordRows: recordRows, repeatedShape: repeatedShape, labelled: labelled, submits: submits,
     h1: h1, ctas: ctas, pricing: pricing, hero: hero, testimonial: testimonial, logoWall: logoWall,
     paras: paras, prose: prose, headings: headings, lists: lists, article: article,
     codeBlk: codeBlk, toc: toc, total: total,
@@ -155,7 +192,7 @@ export function surfaceSource(): string {
 export interface SurfaceSignals {
   inputs: number; buttons: number; tables: number; rows: number; tabs: number;
   menus: number; toggles: number; sidebar: number; toolbars: number; authish: number;
-  recordRows: number; labelled: number; submits: number;
+  recordRows: number; repeatedShape: number; labelled: number; submits: number;
   h1: number; ctas: number; pricing: boolean; hero: boolean;
   testimonial: number; logoWall: number;
   paras: number; prose: number; headings: number; lists: number;
@@ -187,6 +224,10 @@ export function classify(s: SurfaceSignals): SurfaceVerdict {
   if (s.labelled >= 4 && s.submits >= 1) {
     operate += 4;
     reasons.operate.push(`a ${s.labelled}-field labelled form`);
+  }
+  if (s.recordRows < 3 && s.repeatedShape >= 5) {
+    operate += 3.5;
+    reasons.operate.push(`${s.repeatedShape} rows of identical structure`);
   }
   if (s.tables > 0 && s.rows >= 5) { operate += 3; reasons.operate.push(`${s.rows} data rows`); }
   if (s.inputs >= 4) { operate += 2.5; reasons.operate.push(`${s.inputs} form controls`); }
@@ -239,15 +280,27 @@ export function classify(s: SurfaceSignals): SurfaceVerdict {
     // A signal no other surface can produce settles it on its own. A page with
     // per-row controls or a labelled form is not a landing page, whatever else
     // the raw totals say.
-    if (winner === 'operate' && (s.recordRows >= 3 || (s.labelled >= 4 && s.submits >= 1))) {
+    if (winner === 'operate' && (s.recordRows >= 3 || s.repeatedShape >= 5 ||
+        (s.labelled >= 4 && s.submits >= 1))) {
       confidence = Math.max(confidence, 0.8);
     }
   }
+
+  const density = {
+    rows: Math.max(s.recordRows, s.repeatedShape, s.rows),
+    controls: s.inputs + s.buttons,
+    characters: s.total,
+  };
+  // A page with almost nothing on it cannot be classified, and saying so is a
+  // different message from "we could not decide".
+  const sparse = density.rows < 3 && density.controls < 4 && density.characters < 1200;
 
   return {
     surface: winner,
     confidence: Number(confidence.toFixed(2)),
     signals: reasons[winner].slice(0, 4),
+    density,
+    sparse,
   };
 }
 

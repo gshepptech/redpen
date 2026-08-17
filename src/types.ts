@@ -272,8 +272,12 @@ export interface ScanResult {
   slopScore: number;
   /** Is it broken? 100 = nothing. */
   qualityScore: number;
-  /** url -> surface actually used, and whether it was declared or detected. */
-  surfaces: Record<string, { surface: Surface; declared: boolean }>;
+  /**
+   * url -> surface actually used, and where it came from. `inherited` means the
+   * page could not be classified on its own and took the modal surface of the
+   * other routes in the same scan.
+   */
+  surfaces: Record<string, { surface: Surface; declared: boolean; inherited?: boolean }>;
   /** Reported but never scored. */
   advisory: Finding[];
   /**

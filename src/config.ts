@@ -45,6 +45,24 @@ export interface RedpenConfig {
    * scan forever.
    */
   capabilities: Capabilities;
+  /**
+   * What this project is, for the vision brief.
+   *
+   * Several composition questions cannot be answered fairly without it — "could
+   * this page hold a different product's content" is meaningless if you do not
+   * know what this product's content is. The brief is meant to be handed to
+   * someone who was not there, and this is what makes that possible.
+   */
+  product: Product;
+}
+
+export interface Product {
+  /** "Ledger", "the rounce board". */
+  name: string;
+  /** One sentence: what it does and for whom. */
+  purpose: string;
+  /** Who uses it, and what they are trying to get done. */
+  audience: string;
 }
 
 export interface IgnoreRule {
@@ -72,6 +90,7 @@ export const DEFAULT_CONFIG: RedpenConfig = {
   tolerance: 0,
   ignore: {},
   capabilities: { javascript: true, externalAssets: true },
+  product: { name: '', purpose: '', audience: '' },
 };
 
 const DIR = '.redpen';
@@ -107,6 +126,7 @@ export function loadConfig(root: string): RedpenConfig {
       ...DEFAULT_CONFIG,
       ...parsed,
       capabilities: { ...DEFAULT_CONFIG.capabilities, ...(parsed.capabilities ?? {}) },
+      product: { ...DEFAULT_CONFIG.product, ...(parsed.product ?? {}) },
     };
   } catch (err) {
     throw new Error(`redpen: ${file} is not valid JSON — ${err}`);

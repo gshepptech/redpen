@@ -184,7 +184,10 @@
     carry colour. It is the palette equivalent of unstyled text.
   fix: >-
     Rebuild the neutral ramp in OKLCH with chroma between 0.005 and 0.02, hue
-    locked to the anchor.
+    locked to the anchor. Note the floor is measured in OKLCH, not RGB spread —
+    a warm grey with 2% channel spread can still sit under 0.005 chroma, so
+    check the number rather than the intent. The evidence line reports the
+    measured value for each colour.
 
 - id: low-contrast
   kind: quality

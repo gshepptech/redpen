@@ -70,6 +70,75 @@ export function scoreByCategory(findings: Finding[]): Record<string, number> {
   return out;
 }
 
+export interface ScoreContribution {
+  ruleId: string;
+  title: string;
+  kind: Kind;
+  /** Points the score would gain if this finding went away, all else equal. */
+  worth: number;
+  /** Raw penalty units it contributes. */
+  penalty: number;
+  /**
+   * This finding's share of the total penalty, 0-1.
+   *
+   * The score curve saturates, so on a badly-failing page every single fix is
+   * worth a fraction of a point and `worth` ranks nothing. Share stays
+   * meaningful at any score: it is what proportion of the problem this is.
+   */
+  share: number;
+  instances: number;
+  confidence: Confidence;
+}
+
+/**
+ * Where the score came from.
+ *
+ * The number was the one output in this tool with no provenance, which is a
+ * strange gap in a tool whose whole design is provenance — and it cost someone
+ * a wasted afternoon: four true findings fixed, and the score went *down*,
+ * with nothing to explain why. `worth` answers the only question that matters
+ * when deciding what to fix next: how many points do I get back for this one.
+ */
+export function explainScore(findings: Finding[]): {
+  score: number;
+  ceiling: number;
+  contributions: ScoreContribution[];
+} {
+  const scored = findings.filter((f) => !f.advisory);
+  const total = score(scored);
+
+  let totalPenalty = 0;
+  for (const f of scored) {
+    const n = new Set(f.evidence.map((e) => `${e.location}:${e.line ?? e.selector ?? ''}`)).size;
+    totalPenalty += (f.weight / 100) * CONFIDENCE_DISCOUNT[f.confidence] * evidenceMultiplier(n);
+  }
+
+  const contributions = scored
+    .map((f) => {
+      const instances = new Set(
+        f.evidence.map((e) => `${e.location}:${e.line ?? e.selector ?? ''}`),
+      ).size;
+      const penalty =
+        (f.weight / 100) * CONFIDENCE_DISCOUNT[f.confidence] * evidenceMultiplier(instances);
+      // What the score becomes with this one finding removed. The curve is not
+      // linear, so this is measured rather than apportioned.
+      const without = score(scored.filter((x) => x.ruleId !== f.ruleId));
+      return {
+        ruleId: f.ruleId,
+        title: f.title,
+        kind: f.kind,
+        worth: Number((without - total).toFixed(1)),
+        penalty: Number(penalty.toFixed(3)),
+        share: totalPenalty > 0 ? penalty / totalPenalty : 0,
+        instances,
+        confidence: f.confidence,
+      };
+    })
+    .sort((a, b) => b.penalty - a.penalty);
+
+  return { score: total, ceiling: 100, contributions };
+}
+
 export function grade(value: number): string {
   if (value >= 90) return 'clean';
   if (value >= 75) return 'minor tells';

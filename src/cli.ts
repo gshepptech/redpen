@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import { writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { writeFileSync, readFileSync, existsSync } from 'node:fs';
+import { resolve, join } from 'node:path';
 import pc from 'picocolors';
 import { runScan, ruleIds } from './scan.js';
 import { renderTerminal } from './report/terminal.js';
@@ -11,10 +11,11 @@ import {
   saveBaseline,
   saveConfig,
   loadConfig,
+  stateRoot,
   DEFAULT_CONFIG,
 } from './config.js';
 import * as store from './fingerprint/store.js';
-import { grade } from './score.js';
+import { grade, explainScore } from './score.js';
 import type { Confidence } from './types.js';
 
 const HELP = `
@@ -25,8 +26,10 @@ ${pc.bold('redpen')} — one verdict on your UI
   ${pc.bold('redpen baseline')} [path]    record the current score as the bar to hold
   ${pc.bold('redpen rules')}              list the merged corpus
   ${pc.bold('redpen why')} <rule-id>      explain one rule and where it came from
+  ${pc.bold('redpen why-score')} [path]   what the score is made of and what would move it
   ${pc.bold('redpen sources')}            provenance rollup across upstream catalogues
   ${pc.bold('redpen fingerprints')}       show recorded page signatures
+  ${pc.bold('redpen brief')} [path]       print the vision brief so nobody has to open JSON
   ${pc.bold('redpen init')} [path]        write .redpen/config.json
 
 ${pc.dim('Options')}
@@ -116,7 +119,7 @@ function parseArgs(argv: string[]): Args {
     if (a.startsWith('--')) {
       fail(`unknown option ${a}`);
     }
-    if (first && ['scan', 'check', 'baseline', 'rules', 'why', 'sources', 'fingerprints', 'init', 'help'].includes(a)) {
+    if (first && ['scan', 'check', 'baseline', 'rules', 'why', 'sources', 'fingerprints', 'brief', 'init', 'why-score', 'help'].includes(a)) {
       args.command = a;
       first = false;
       continue;
@@ -147,10 +150,14 @@ async function main(): Promise<void> {
       return cmdRules(args);
     case 'why':
       return cmdWhy(args);
+    case 'why-score':
+      return cmdWhyScore(root, args);
     case 'sources':
       return cmdSources();
     case 'fingerprints':
       return cmdFingerprints(root);
+    case 'brief':
+      return cmdBrief(root);
     case 'init':
       return cmdInit(root);
     case 'baseline':
@@ -375,6 +382,62 @@ function cmdWhy(args: Args): void {
   }
 }
 
+async function cmdWhyScore(root: string, args: Args): Promise<void> {
+  const result = await runScan({
+    root,
+    urls: args.urls,
+    viewports: args.viewports,
+    only: args.only,
+    ephemeral: true,
+    onProgress: args.quiet ? undefined : (m) => process.stderr.write(pc.dim(`  … ${m}\n`)),
+  });
+
+  const { score: total, contributions } = explainScore(result.findings);
+  const w = process.stdout.write.bind(process.stdout);
+
+  w(`\n  ${pc.bold('redpen')}  ${pc.bold(String(total))}${pc.dim('/100')}   ${pc.dim(grade(total))}\n`);
+  w(`  ${pc.dim('slop')} ${result.slopScore}   ${pc.dim('quality')} ${result.qualityScore}\n\n`);
+
+  if (!contributions.length) {
+    w(pc.green('  Nothing is costing you anything.\n\n'));
+    return;
+  }
+
+  w(`  ${pc.bold('What the score is made of')}\n`);
+  w(pc.dim('  share = this finding\'s portion of the total problem.\n'));
+  w(pc.dim('  +pts  = what the score gains if it goes away, on its own.\n\n'));
+
+  // On a badly-failing page the curve is saturated and every individual fix is
+  // worth a fraction of a point — true, and useless for deciding what to do.
+  // Share ranks correctly at any score.
+  const saturated = contributions.every((c) => c.worth < 1);
+  if (saturated && contributions.length > 3) {
+    w(pc.yellow('  The curve is saturated: there is enough here that no single fix\n'));
+    w(pc.yellow('  moves the number much. Work down by share — the score starts\n'));
+    w(pc.yellow('  responding once the top few are gone.\n\n'));
+  }
+
+  for (const c of contributions) {
+    const bar = '█'.repeat(Math.max(1, Math.round(c.share * 40)));
+    const pct = `${(c.share * 100).toFixed(1)}%`.padStart(6);
+    const pts = c.worth >= 1 ? pc.green(`+${c.worth}`.padStart(5)) : pc.dim(`+${c.worth}`.padStart(5));
+    w(`   ${pct} ${pts}  ${c.ruleId.padEnd(28)} ${pc.dim(`${c.kind} · ${c.instances}×`)}\n`);
+    w(`   ${' '.repeat(12)}${c.kind === 'slop' ? pc.yellow(bar) : pc.red(bar)}\n`);
+  }
+
+  const best = contributions[0];
+  if (best) {
+    w(`\n  ${pc.bold('Start here')}  ${best.ruleId} ${pc.dim(`— ${(best.share * 100).toFixed(0)}% of the total`)}\n`);
+    w(pc.dim(`  ${result.findings.find((f) => f.ruleId === best.ruleId)?.fix ?? ''}\n`));
+  }
+
+  const advisory = result.advisory.length;
+  if (advisory) {
+    w(pc.dim(`\n  ${advisory} advisory finding(s) cost nothing and never will.\n`));
+  }
+  w('\n');
+}
+
 function cmdSources(): void {
   const counts = catalogueCounts();
   const total = loadCorpus().length;
@@ -410,13 +473,72 @@ function cmdFingerprints(root: string): void {
   }
 }
 
+/**
+ * Print the brief for a human.
+ *
+ * Deliberately does not print the key. The whole point of the brief is that it
+ * can be answered by someone who has not seen the project, and knowing which
+ * rule a question belongs to is the one thing that biases the answer.
+ */
+function cmdBrief(root: string): void {
+  const file = join(stateRoot(root), '.redpen', 'vision-brief.json');
+  if (!existsSync(file)) {
+    fail(`no brief at ${file} — run \`redpen scan <path> --url <url> --vision\` first`);
+  }
+  const brief = JSON.parse(readFileSync(file, 'utf8')) as {
+    context: { product: string; audience: string; surface: Record<string, string> };
+    screenshots: Record<string, string>;
+    questions: Array<{ id: string; ask: string }>;
+    answers: Array<{ page: string; question: string; present: boolean | null }>;
+  };
+
+  const w = process.stdout.write.bind(process.stdout);
+  w(`\n  ${pc.bold('Vision brief')}  ${pc.dim(file)}\n\n`);
+  w(`  ${pc.bold('What this is')}\n    ${wrapAt(brief.context.product, 72, '    ')}\n`);
+  w(`  ${pc.bold('Who uses it')}\n    ${wrapAt(brief.context.audience, 72, '    ')}\n\n`);
+
+  w(`  ${pc.bold('Pages')}\n`);
+  for (const [url, shot] of Object.entries(brief.screenshots)) {
+    w(`    ${pc.bold(url)}\n      ${pc.dim(shot)}\n      ${pc.dim(brief.context.surface[url] ?? '')}\n`);
+  }
+  w('\n');
+
+  w(`  ${pc.bold('Questions')}  ${pc.dim('yes means the thing described IS there')}\n`);
+  for (const q of brief.questions) {
+    w(`    ${pc.green(q.id.padEnd(4))} ${wrapAt(q.ask, 70, '         ')}\n`);
+  }
+
+  const answered = brief.answers.filter((a) => a.present !== null).length;
+  w(`\n  ${answered}/${brief.answers.length} rows answered.\n`);
+  w(pc.dim(`  Open each screenshot, fill in present / confidence / evidence, then:\n`));
+  w(pc.dim(`    redpen scan ${root} --url <url> --answers ${file}\n\n`));
+}
+
+function wrapAt(text: string, width: number, indent: string): string {
+  const words = String(text).split(/\s+/);
+  const lines: string[] = [];
+  let line = '';
+  for (const word of words) {
+    if ((line + ' ' + word).trim().length > width) {
+      lines.push(line.trim());
+      line = word;
+    } else line += ' ' + word;
+  }
+  if (line.trim()) lines.push(line.trim());
+  return lines.join('\n' + indent);
+}
+
 function cmdInit(root: string): void {
   const existing = loadConfig(root);
   saveConfig(root, { ...DEFAULT_CONFIG, ...existing });
   process.stdout.write(
-    `\n  wrote ${pc.bold('.redpen/config.json')}\n` +
-      pc.dim('  add your dev-server urls so the render channel can run:\n') +
-      pc.dim('    { "urls": ["http://localhost:3000", "http://localhost:3000/pricing"] }\n\n'),
+    `\n  wrote ${pc.bold(join(stateRoot(root), '.redpen', 'config.json'))}\n\n` +
+      pc.dim('  Two fields are worth filling in before anything else:\n\n') +
+      pc.dim('    "urls"    — without one the browser pass never runs and every\n') +
+      pc.dim('                finding it could confirm is capped at "possible".\n') +
+      pc.dim('    "product" — name, purpose, audience. The vision brief is meant to\n') +
+      pc.dim('                be answerable by someone who has not seen the project,\n') +
+      pc.dim('                and several questions are unfair without it.\n\n'),
   );
 }
 

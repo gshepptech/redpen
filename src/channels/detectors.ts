@@ -346,17 +346,31 @@ const CHECKS_LIB = `
   CHECKS['neutral-chroma-floor'] = function (p) {
     var min = p.minChroma || 0.005;
     var seen = {};
+    var area = {};
     all('*').forEach(function (el) {
       var s = getComputedStyle(el);
+      var r = el.getBoundingClientRect();
       [s.backgroundColor, s.color].forEach(function (c) {
         var ok = toOklch(parseColor(c));
         if (!ok || ok.alpha < 0.5) return;
-        if (ok.c < min) seen[c] = (seen[c] || 0) + 1;
+        // Pure black at full opacity on a zero-area element is almost always a
+        // UA default on something invisible, not a colour the page chose.
+        if (ok.l < 0.02 && r.width * r.height < 4) return;
+        if (ok.c < min) {
+          seen[c] = ok.c;
+          area[c] = (area[c] || 0) + r.width * r.height;
+        }
       });
     });
-    var keys = Object.keys(seen);
+    var keys = Object.keys(seen).filter(function (k) { return area[k] > 0; });
     if (keys.length < (p.minDistinctNeutrals || 3)) return [];
-    return [hit(document.body, keys.slice(0, 6).join(', ') + ' (zero chroma)')];
+    // Say the measured chroma and the floor. "Tinted" is not actionable; a
+    // number is — someone tinted their greys twice because of this rule and it
+    // kept firing, because 2% RGB spread is still under 0.005 OKLCH chroma.
+    var detail = keys.slice(0, 5).map(function (k) {
+      return k + ' (chroma ' + seen[k].toFixed(4) + ')';
+    }).join(', ');
+    return [hit(document.body, detail + ' — floor is ' + min + ' OKLCH chroma')];
   };
 
   CHECKS['contrast-threshold'] = function (p) {
@@ -723,11 +737,21 @@ const CHECKS_LIB = `
       var r = el.getBoundingClientRect();
       if (r.width < minPx || r.height < minPx) return false;
       var s = getComputedStyle(el);
+
+      // A container holds things: it has its own ground and its own padding.
+      // Without that requirement a row carrying a 2px inset state stripe read
+      // as a card, and the button inside it read as a card within a card.
+      var bg = parseColor(s.backgroundColor);
+      var hasGround = (bg && bg.a > 0.02) || parseFloat(s.borderTopWidth) > 0;
+      var pad = parseFloat(s.paddingTop) + parseFloat(s.paddingBottom) +
+                parseFloat(s.paddingLeft) + parseFloat(s.paddingRight);
+      if (!hasGround || pad < 8) return false;
+
       var n = 0;
       if (parseFloat(s.borderRadius) > 2) n++;
-      if (s.boxShadow && s.boxShadow !== 'none') n++;
+      // An inset shadow is a state marker, not elevation.
+      if (s.boxShadow && s.boxShadow !== 'none' && s.boxShadow.indexOf('inset') === -1) n++;
       if (parseFloat(s.borderTopWidth) > 0) n++;
-      var bg = parseColor(s.backgroundColor);
       if (bg && bg.a > 0.02) n++;
       return n >= minSignals;
     }
@@ -846,7 +870,11 @@ const CHECKS_LIB = `
 
       return r.height < minH || parseFloat(s.paddingLeft) < (p.minPaddingX || 12);
     }).map(function (el) {
-      return hit(el, Math.round(el.getBoundingClientRect().height) + 'px tall — "' + textOf(el) + '"');
+      // Say the assumption. A page may well have a coarse-pointer rule that
+      // grows this control; the scan runs with a fine pointer and never
+      // triggers it, and "32px tall" reads as unconditional without this.
+      return hit(el, Math.round(el.getBoundingClientRect().height) +
+        'px tall at ' + window.innerWidth + 'px with a fine pointer — "' + textOf(el) + '"');
     });
   };
 

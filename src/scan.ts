@@ -101,8 +101,9 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
       if (render.unavailable) warnings.push(render.unavailable);
       opts.onProgress?.(`render: ${render.findings.length} rule(s) hit`);
 
-      // Surface: declared beats detected, and a low-confidence detection is
-      // treated as unknown rather than acted on.
+      // Surface resolution, in three passes: declared beats detected, detected
+      // beats inherited, and inherited beats failing open.
+      const undecided: string[] = [];
       for (const url of urls) {
         const declared = config.surfaceByUrl[url] ?? config.surface ?? null;
         if (declared) {
@@ -113,11 +114,50 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
         if (detected && detected.confidence >= MIN_SURFACE_CONFIDENCE) {
           surfaces[url] = { surface: detected.surface, declared: false };
           opts.onProgress?.(
-            `surface: ${url} looks like "${detected.surface}" (${detected.confidence}) — ${detected.signals.join(', ')}`,
+            `surface: ${url} is "${detected.surface}" (${detected.confidence}) — ${detected.signals.join(', ')}`,
           );
-        } else if (detected) {
+        } else {
+          undecided.push(url);
+        }
+      }
+
+      // Inherit from the neighbours.
+      //
+      // Abstaining used to enable every rule — the most punishing default,
+      // applied exactly when confidence is lowest. But within one scan of one
+      // origin, "unclassified" does not mean "could be anything": if five
+      // routes of a product are operate surfaces, the sixth is too. Reported
+      // from the field, where every abstention across four runs would have
+      // been fixed by this and none by the config advice we were printing.
+      if (undecided.length && Object.keys(surfaces).length) {
+        const tally = new Map<Surface, number>();
+        for (const v of Object.values(surfaces)) {
+          tally.set(v.surface, (tally.get(v.surface) ?? 0) + 1);
+        }
+        const [modal, count] = [...tally].sort((a, b) => b[1] - a[1])[0]!;
+        // Only inherit from a clear majority, and only from more than one page.
+        if (count >= 2 && count >= Object.keys(surfaces).length * 0.6) {
+          for (const url of undecided.splice(0)) {
+            surfaces[url] = { surface: modal, declared: false, inherited: true };
+            const d = render.detectedSurfaces.get(url);
+            opts.onProgress?.(
+              `surface: ${url} inherited "${modal}" from ${count} sibling route(s)` +
+                (d?.sparse ? ` — too little on the page to classify (${d.density.rows} rows, ${d.density.controls} controls)` : ''),
+            );
+          }
+        }
+      }
+
+      // Anything still undecided leaves every rule on, and says why properly.
+      for (const url of undecided) {
+        const d = render.detectedSurfaces.get(url);
+        if (d?.sparse) {
           warnings.push(
-            `could not confidently classify ${url} (best guess "${detected.surface}" at ${detected.confidence}). Every rule stayed on. Declare "surface" in .redpen/config.json to gate the rules that only hold on one kind of page.`,
+            `${url} had too little on it to classify (${d.density.rows} rows, ${d.density.controls} controls, ${d.density.characters} characters). Every rule stayed on. This is usually a thin dev fixture rather than a problem with the page — scan against fuller data, or declare "surface" in .redpen/config.json.`,
+          );
+        } else {
+          warnings.push(
+            `could not confidently classify ${url} (best guess "${d?.surface ?? 'unknown'}" at ${d?.confidence ?? 0}). Every rule stayed on. Declare "surface" in .redpen/config.json to gate the rules that only hold on one kind of page.`,
           );
         }
       }
@@ -159,7 +199,17 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
     for (const f of raw) counts.set(f.ruleId, (counts.get(f.ruleId) ?? 0) + 1);
     const confirmed = new Set([...counts].filter(([, n]) => n >= 2).map(([id]) => id));
 
-    const brief = buildBrief({ screenshots, alreadyConfirmed: confirmed });
+    const brief = buildBrief({
+      screenshots,
+      alreadyConfirmed: confirmed,
+      surfaces,
+      product: config.product,
+    });
+    if (!config.product.name) {
+      warnings.push(
+        'no "product" declared in .redpen/config.json — the vision brief cannot say what this is, and the questions about specificity are unanswerable without it',
+      );
+    }
     if (brief) {
       briefPath = resolve(stateRoot(root), '.redpen', 'vision-brief.json');
       writeBrief(briefPath, brief);

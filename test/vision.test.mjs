@@ -17,10 +17,22 @@ import { rulesForChannel } from '../dist/corpus/load.js';
 const shots = (n = 1) =>
   new Map(Array.from({ length: n }, (_, i) => [`http://x/${i}`, `/tmp/shot-${i}.png`]));
 
-function answerFile(answers) {
+/**
+ * Answers are keyed by an opaque question id, resolved through the brief's own
+ * key — so a test writes both, exactly as a real brief does.
+ */
+function answerFile(rows) {
+  const brief = buildBrief({ screenshots: shots() });
+  const key = {};
+  const answers = rows.map((r, i) => {
+    const q = `q${i + 1}`;
+    key[q] = r.ruleId;
+    return { page: r.page ?? 'http://x', question: q, present: r.present,
+             confidence: r.confidence, evidence: r.evidence };
+  });
   const dir = mkdtempSync(join(tmpdir(), 'redpen-vision-'));
   const path = join(dir, 'answers.json');
-  writeFileSync(path, JSON.stringify({ version: 1, answers }, null, 2), 'utf8');
+  writeFileSync(path, JSON.stringify({ version: 2, key, answers }, null, 2), 'utf8');
   return path;
 }
 
@@ -29,7 +41,8 @@ const anyVisionRule = () => rulesForChannel('vision')[0].id;
 test('the brief carries its own instructions', () => {
   const brief = buildBrief({ screenshots: shots() });
   assert.ok(brief.instructions.length > 100, 'a reader without the docs must still know what to do');
-  assert.match(brief.instructions, /present=true means the tell IS present/);
+  assert.match(brief.instructions, /present=true means the thing the question describes IS there/);
+  assert.match(brief.instructions, /someone who was not there/);
   assert.match(brief.instructions, /--answers/);
 });
 
@@ -37,7 +50,52 @@ test('the brief pre-builds one answer row per page and question', () => {
   const brief = buildBrief({ screenshots: shots(3) });
   assert.equal(brief.answers.length, 3 * brief.questions.length);
   assert.ok(brief.answers.every((a) => a.present === null), 'rows start unanswered');
-  assert.ok(brief.questions.every((q) => q.ask && q.fix), 'each question ships its own fix');
+  assert.ok(brief.questions.every((q) => q.id && q.ask), 'each question has an id and an ask');
+});
+
+test('the brief leaks nothing that telegraphs the answer', () => {
+  const brief = buildBrief({ screenshots: shots() });
+  // Rule ids state the expected answer — `no-focal-point`, `nothing-memorable`.
+  // A reader who sees them is being led, so questions carry opaque handles and
+  // the mapping lives in `key`, which the answerer has no reason to open.
+  for (const q of brief.questions) {
+    assert.match(q.id, /^q\d+$/, `question id "${q.id}" is not opaque`);
+    assert.equal(q.fix, undefined, 'the fix is the answer key printed beside the question');
+  }
+  assert.ok(brief.key, 'the mapping must still exist for redpen itself');
+  assert.equal(Object.keys(brief.key).length, brief.questions.length);
+});
+
+test('the brief carries enough context to be answered cold', () => {
+  const brief = buildBrief({
+    screenshots: shots(),
+    product: { name: 'Queue', purpose: 'a work queue', audience: 'one engineer' },
+    surfaces: { 'http://x/0': { surface: 'operate' } },
+  });
+  assert.match(brief.context.product, /Queue/);
+  assert.match(brief.context.audience, /engineer/);
+  assert.match(brief.context.surface['http://x/0'], /completing a task/);
+});
+
+test('an undeclared product says so rather than leaving a blank', () => {
+  const brief = buildBrief({ screenshots: shots() });
+  assert.match(brief.context.product, /NOT DECLARED/);
+  assert.match(brief.context.audience, /NOT DECLARED/);
+});
+
+test('questions are not grouped by category', () => {
+  // Six typography questions in a row invites answering the category rather
+  // than the image. Ordering must not track the corpus file order.
+  const brief = buildBrief({ screenshots: shots() });
+  const corpusOrder = rulesForChannel('vision').map((r) => r.id);
+  const briefOrder = brief.questions.map((q) => brief.key[q.id]);
+  assert.notDeepEqual(briefOrder, corpusOrder, 'brief order matches corpus order');
+});
+
+test('the same brief is generated the same way twice', () => {
+  const a = buildBrief({ screenshots: shots() });
+  const b = buildBrief({ screenshots: shots() });
+  assert.deepEqual(a.key, b.key, 'scatter must be deterministic');
 });
 
 test('rules two channels already agree on are not asked about again', () => {
@@ -105,7 +163,7 @@ test('an unknown rule id is reported rather than skipped', () => {
     answerFile([{ page: 'http://x', ruleId: 'not-a-rule', present: true, confidence: 1, evidence: 'x' }]),
   );
   assert.deepEqual(result.findings, []);
-  assert.match(result.discarded[0], /unknown rule id/);
+  assert.match(result.discarded[0], /not in this brief's key/);
 });
 
 test('an unreadable or malformed file reports unavailable, never clean', () => {
@@ -117,8 +175,12 @@ test('an unreadable or malformed file reports unavailable, never clean', () => {
   assert.match(readAnswers(bad).unavailable, /not valid JSON/);
 
   const noArray = join(dir, 'noarray.json');
-  writeFileSync(noArray, JSON.stringify({ version: 1 }), 'utf8');
+  writeFileSync(noArray, JSON.stringify({ version: 2 }), 'utf8');
   assert.match(readAnswers(noArray).unavailable, /no "answers" array/);
+
+  const noKey = join(dir, 'nokey.json');
+  writeFileSync(noKey, JSON.stringify({ version: 2, answers: [] }), 'utf8');
+  assert.match(readAnswers(noKey).unavailable, /no "key"/);
 });
 
 test('every vision rule asks a question whose yes-answer means the tell is present', () => {
