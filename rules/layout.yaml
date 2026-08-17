@@ -200,9 +200,14 @@
     Nobody dragged the window. A single 100vw element or an un-wrapped flex row
     breaks the whole page, and it is invisible at the width the author used.
   fix: >-
-    Set `overflow-x: clip` on both html and body — clip, not hidden, so sticky
-    and fixed descendants survive — then find the element that exceeds the
-    viewport and fix it at source.
+    Find the element that exceeds the viewport and fix it at source — wrap the
+    flex row, drop the 100vw, or give the wide thing its own `overflow-x: auto`
+    container. Do not reach for `overflow-x: clip` on the root: it hides the
+    symptom while leaving the content off-screen, and because clip also sets
+    scrollWidth equal to clientWidth it defeats every measurement that would
+    have caught it. A project that took that advice put three of five
+    navigation destinations past the right edge at 375px, unreachable, and
+    measured clean by every overflow metric there is.
 
 - id: text-overflow
   kind: quality

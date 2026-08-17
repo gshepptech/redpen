@@ -301,3 +301,59 @@ test('a run whose urls are unreachable says so rather than scoring blind', opts,
     'a render pass that reached nothing must not count as having run',
   );
 });
+
+test('content clipped past the viewport edge is found, not passed', opts, async () => {
+  // redpen's own fix text used to recommend `overflow-x: clip` on the root.
+  // A project took that advice and put three of five nav destinations past
+  // the right edge at 375px — unreachable, and measuring clean by every
+  // overflow metric, because clip sets scrollWidth equal to clientWidth.
+  const url = await serve(join(HERE, 'fixtures', 'clipped'));
+  const result = await runScan({
+    root: join(HERE, 'fixtures', 'clipped'),
+    urls: [url],
+    viewports: [375],
+    ephemeral: true,
+  });
+
+  const f = result.findings.find((x) => x.ruleId === 'horizontal-overflow');
+  assert.ok(f, 'clipped-away overflow must still be reported');
+  assert.ok(
+    f.evidence.some((e) => /unreachable/.test(e.excerpt ?? '')),
+    'the report must say the content cannot be scrolled to',
+  );
+
+  // Both guards: the wide table lives in its own scroll container, and the
+  // skip link is parked off-screen on purpose. Neither is a defect.
+  const flagged = f.evidence.map((e) => e.selector ?? '').join(' ');
+  assert.ok(!/table|wrap/.test(flagged), 'a table inside overflow-x:auto is the correct pattern');
+  assert.ok(!/skip/.test(flagged), 'the visually-hidden skip link is not overflow');
+});
+
+test('a filled mark beside stroked icons is not two icon libraries', opts, async () => {
+  // Three false positives with one cause each, all reported from the field.
+  const url = await serve(join(HERE, 'fixtures', 'marks'));
+  const result = await runScan({
+    root: join(HERE, 'fixtures', 'marks'),
+    urls: [url],
+    viewports: [1440],
+    ephemeral: true,
+  });
+  const ids = new Set(result.findings.map((f) => f.ruleId));
+
+  // A filled mark has no stroke; its computed stroke-width is the SVG default.
+  assert.ok(!ids.has('mixed-icon-sets'), 'filled mark + stroked icon is a deliberate pairing');
+
+  // The root carries the CSS initial color rgb(0,0,0) that nothing authored.
+  assert.ok(!ids.has('zero-chroma-neutrals'), 'an unauthored UA default is not a palette choice');
+
+  // An identifier repeating is data. Three rows naming one file is the product
+  // working, not placeholder copy that survived into production.
+  assert.ok(!ids.has('repeated-container-text'), 'a repeated file path is data, not placeholder copy');
+
+  // A 12px monospace path in chrome clears the 12px chrome floor.
+  const tiny = result.findings.find((f) => f.ruleId === 'tiny-text');
+  assert.ok(
+    !tiny || !tiny.evidence.some((e) => /prose/.test(e.excerpt ?? '')),
+    'a path with no spaces in it is never prose',
+  );
+});

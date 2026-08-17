@@ -1,13 +1,13 @@
 /**
  * The browser-side detector bundle.
  *
- * Everything below the `DETECTOR_SOURCE` boundary is stringified and evaluated
+ * Everything below the DETECTOR_SOURCE boundary is stringified and evaluated
  * inside the page, so it cannot close over anything from the Node side and must
  * stay dependency-free. It receives the render matchers from the corpus and
  * returns raw hits keyed by rule id.
  *
  * This is the channel that distinguishes redpen from a linter: it reads
- * `getComputedStyle`, so a tell reaches it identically whether it was written
+ * getComputedStyle, so a tell reaches it identically whether it was written
  * as a Tailwind class, a CSS-in-JS object, a theme variable, or injected after
  * hydration.
  */
@@ -26,7 +26,7 @@ export interface DetectorHit {
 }
 
 /**
- * Returned as a string and passed to `page.evaluate`. Written as a function
+ * Returned as a string and passed to page.evaluate. Written as a function
  * body rather than an imported module because Playwright serialises the
  * function, and any import would be undefined by the time it runs.
  */
@@ -287,7 +287,7 @@ const HELPERS_LIB = `
 `;
 
 /* ------------------------------------------------------------------ *
- * The checks themselves. One entry per `render.check` name in the corpus.
+ * The checks themselves. One entry per render.check name in the corpus.
  * ------------------------------------------------------------------ */
 const CHECKS_LIB = `
   var CHECKS = {};
@@ -387,7 +387,13 @@ const CHECKS_LIB = `
     all('*').forEach(function (el) {
       var s = getComputedStyle(el);
       var r = el.getBoundingClientRect();
-      [s.backgroundColor, s.color].forEach(function (c) {
+      // The root carries the CSS initial color: rgb(0,0,0) unless something
+      // sets it, and html/body usually set only layout. Reading it reported a
+      // pure black that appears nowhere in the source. A text colour only
+      // counts where there is text wearing it.
+      var pairs = [s.backgroundColor];
+      if (isTextBearing(el)) pairs.push(s.color);
+      pairs.forEach(function (c) {
         var ok = toOklch(parseColor(c));
         if (!ok || ok.alpha < 0.5) return;
         // Pure black at full opacity on a zero-area element is almost always a
@@ -646,6 +652,12 @@ const CHECKS_LIB = `
       if (!t) return true;
       // A short, sentence-less label is chrome. Prose has sentences.
       if (t.length <= 24 && !/[.!?]\\s/.test(t)) return true;
+      // Nothing without a space in it is prose. A file path, a url, a hash or
+      // an id is chrome at any length — a 68-character temp path in a menu was
+      // being held to the 14px prose floor with no way to satisfy the rule.
+      if (!/\\s/.test(t)) return true;
+      // Monospace is how a page says "this is an identifier, not sentences".
+      if (/mono/i.test(getComputedStyle(el).fontFamily)) return true;
       return /^(label|badge|chip|tag|meta|caption|id|count|unit|hint|status)$/i.test(
         (el.getAttribute('class') || '').split(/[\\s_-]/).pop() || '',
       );
@@ -851,17 +863,57 @@ const CHECKS_LIB = `
     return [hit(document.body, sections.length + ' sections all padded ~' + Math.round(pads[0]) + 'px with no drawn boundary (variance ' + cv.toFixed(3) + ')')];
   };
 
+  // Elements that sit past the viewport edge.
+  //
+  // This used to gate on document.scrollWidth, which overflow-x: clip on the
+  // root sets equal to clientWidth — so a page could put three of five nav
+  // destinations and a destructive action off-screen at 375px and measure as
+  // perfectly clean. Reported from a project that applied the clip *because
+  // redpen told it to*. So: measure element rects against the viewport, and
+  // treat a clipping root as a reason to look harder rather than as a pass.
+  function pastViewport() {
+    var vw = window.innerWidth;
+    return all('*').filter(function (el) {
+      // The standard visually-hidden idiom parks content at -9999px on purpose.
+      if (isVisuallyHidden(el)) return false;
+      var r = el.getBoundingClientRect();
+      if (r.width === 0 && r.height === 0) return false;
+      if (r.right <= vw + 1 && r.left >= -1) return false;
+
+      // A wide table inside its own overflow-x: auto wrapper is the correct
+      // pattern, not a defect — measuring it against the viewport rather than
+      // against its scroll parent manufactures a finding.
+      for (var p = el.parentElement; p && p !== document.documentElement; p = p.parentElement) {
+        var ps = getComputedStyle(p);
+        if (ps.overflowX === 'auto' || ps.overflowX === 'scroll') {
+          var pr = p.getBoundingClientRect();
+          if (pr.right <= vw + 1 && pr.left >= -1) return false;
+        }
+      }
+      return true;
+    });
+  }
+
   CHECKS['horizontal-scroll'] = function () {
     var doc = document.documentElement;
-    if (doc.scrollWidth <= window.innerWidth + 1) return [];
-    var culprits = all('*').filter(function (el) {
-      var r = el.getBoundingClientRect();
-      return r.right > window.innerWidth + 1 || r.left < -1;
-    }).slice(0, 6);
-    var overflow = doc.scrollWidth - window.innerWidth;
-    if (!culprits.length) return [hit(document.body, overflow + 'px of horizontal overflow at ' + window.innerWidth + 'px')];
-    return culprits.map(function (el) {
-      return hit(el, 'extends past the viewport at ' + window.innerWidth + 'px (page overflows by ' + overflow + 'px)');
+    var rootClips = /clip|hidden/.test(getComputedStyle(doc).overflowX);
+    var scrolls = doc.scrollWidth > window.innerWidth + 1;
+    if (!rootClips && !scrolls) return [];
+
+    var culprits = pastViewport();
+    if (!culprits.length) {
+      if (!scrolls) return [];
+      return [hit(document.body, (doc.scrollWidth - window.innerWidth) + 'px of horizontal overflow at ' + window.innerWidth + 'px')];
+    }
+
+    return culprits.slice(0, 6).map(function (el) {
+      var over = Math.round(el.getBoundingClientRect().right - window.innerWidth);
+      // Clipped is strictly worse than scrollable: the reader cannot even drag
+      // to it. Say which, because the two need different fixes.
+      var how = rootClips
+        ? over + 'px past the edge at ' + window.innerWidth + 'px and unreachable — the root clips overflow, so it cannot be scrolled to'
+        : over + 'px past the edge at ' + window.innerWidth + 'px';
+      return hit(el, how + (textOf(el) ? ': "' + textOf(el) + '"' : ''));
     });
   };
 
@@ -871,6 +923,10 @@ const CHECKS_LIB = `
       if (!isTextBearing(el)) return false;
       // A visually-hidden label is clipped on purpose.
       if (isVisuallyHidden(el)) return false;
+      // A textarea scrolls by contract — scrollHeight > clientHeight is its
+      // resting state, not clipped content. Same for a multi-row select.
+      var tag = el.tagName;
+      if (tag === 'TEXTAREA' || tag === 'SELECT') return false;
       var s = getComputedStyle(el);
       if (s.overflow === 'visible' && s.overflowY === 'visible') return false;
       if (/ellipsis/.test(s.textOverflow)) return false;
@@ -962,6 +1018,13 @@ const CHECKS_LIB = `
     all('p, h2, h3, li, span').forEach(function (el) {
       var t = textOf(el);
       if (t.length < (p.minLength || 24)) return;
+      // The rule looks for placeholder prose that survived into production.
+      // An identifier repeating is data, not copy: three queue rows naming the
+      // same file is how you see one file blocking three items. Prose has
+      // spaces and does not look like a path, a url, or a code point.
+      if (!/\\s/.test(t)) return;
+      if (/^[^\\s]+\\/[^\\s]+$/.test(t)) return;
+      if (el.closest('a[href], code, pre, kbd, samp')) return;
       counts[t] = (counts[t] || 0) + 1;
     });
     return Object.keys(counts)
@@ -1231,9 +1294,20 @@ const CHECKS_LIB = `
   CHECKS['icon-stroke-variance'] = function (p) {
     var widths = {};
     all('svg').forEach(function (svg) {
+      // A filled mark draws no stroke, so its *computed* stroke-width is the
+      // SVG initial value of 1 — a number nobody authored. Counting it made a
+      // brand mark beside stroked nav icons read as two icon libraries, which
+      // is a normal and deliberate pairing.
+      var parts = Array.prototype.slice.call(svg.querySelectorAll('*'));
+      parts.unshift(svg);
+      var stroked = parts.filter(function (el) {
+        var st = getComputedStyle(el).stroke;
+        return st && st !== 'none';
+      });
+      if (!stroked.length) return;
       var w = svg.getAttribute('stroke-width') ||
               (svg.querySelector('[stroke-width]') || {}).getAttribute?.('stroke-width') ||
-              getComputedStyle(svg).strokeWidth;
+              getComputedStyle(stroked[0]).strokeWidth;
       if (w && w !== '0px' && w !== 'none') widths[String(parseFloat(w))] = (widths[String(parseFloat(w))] || 0) + 1;
     });
     var keys = Object.keys(widths).filter(function (k) { return k !== 'NaN'; });

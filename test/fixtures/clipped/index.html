@@ -1,0 +1,23 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Clipped nav</title>
+<style>
+  /* The exact shape redpen used to recommend: the clip satisfies every
+     horizontal-overflow metric by deleting the evidence, and the nav items
+     past the edge become unreachable rather than scrollable. */
+  html, body { overflow-x: clip; margin: 0; font: 16px/1.5 system-ui; }
+  nav { display: flex; gap: 24px; width: 900px; padding: 16px; }
+  nav a { white-space: nowrap; }
+  .skip { position: absolute; left: -9999px; }
+  .wrap { overflow-x: auto; max-width: 100%; }
+  table { width: 900px; }
+</style>
+<a class="skip" href="#main">Skip to content</a>
+<nav>
+  <a href="/">Board</a><a href="/parked">Parked</a><a href="/search">Search</a>
+  <a href="/activity">Activity</a><a href="/all">All</a>
+</nav>
+<main id="main">
+  <!-- Correct pattern: wide table inside its own scroll container. -->
+  <div class="wrap"><table><tr><td>a</td><td>b</td></tr></table></div>
+</main>
