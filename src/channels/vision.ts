@@ -118,8 +118,18 @@ export interface AnswerResult {
   discarded: string[];
   /** Set when the file could not be used at all. Never silently returns clean. */
   unavailable: string | null;
-  /** Answers actually acted on, for the progress line. */
+  /** Answers that produced a finding. */
   accepted: number;
+  /**
+   * Questions answered "no, I looked, it is not there" with confidence.
+   *
+   * These matter as much as the yeses. Without them a fully answered pass is
+   * indistinguishable from one where nobody opened a screenshot — which undoes
+   * the whole reason redpen refuses to let a channel fail silently.
+   */
+  cleared: number;
+  /** Every rule the reader actually judged, present or not. */
+  checked: string[];
 }
 
 /**
@@ -130,7 +140,9 @@ export interface AnswerResult {
  * dropped half its answers is indistinguishable from a page with fewer problems.
  */
 export function readAnswers(path: string): AnswerResult {
-  const empty: AnswerResult = { findings: [], discarded: [], unavailable: null, accepted: 0 };
+  const empty: AnswerResult = {
+    findings: [], discarded: [], unavailable: null, accepted: 0, cleared: 0, checked: [],
+  };
 
   let raw: string;
   try {
@@ -153,27 +165,42 @@ export function readAnswers(path: string): AnswerResult {
   const known = new Set(rulesForChannel('vision').map((r) => r.id));
   const hits = new Map<string, Evidence[]>();
   const discarded: string[] = [];
+  const checked = new Set<string>();
   let accepted = 0;
+  let cleared = 0;
 
   for (const row of parsed.answers) {
     const a = row as Partial<VisionAnswer>;
 
+    // An unknown rule id is always worth saying out loud, whatever the answer:
+    // a hand-edited file with `flat-hierarchy` instead of `flat-type-hierarchy`
+    // would otherwise look answered and do nothing.
+    if (typeof a.ruleId !== 'string' || !known.has(a.ruleId)) {
+      if (a.present !== null && a.present !== undefined) {
+        discarded.push(`unknown rule id "${String(a.ruleId)}" — check the spelling against the questions array`);
+      }
+      continue;
+    }
+
     // Unanswered rows are the expected state for anything not judged.
     if (a.present === null || a.present === undefined) continue;
 
-    if (typeof a.ruleId !== 'string' || !known.has(a.ruleId)) {
-      discarded.push(`unknown rule id "${String(a.ruleId)}"`);
-      continue;
-    }
     if (typeof a.present !== 'boolean') {
       discarded.push(`${a.ruleId}: "present" must be true, false, or null`);
       continue;
     }
-    if (!a.present) continue;
 
     const confidence = typeof a.confidence === 'number' ? a.confidence : 0;
     if (confidence < MIN_CONFIDENCE) {
       discarded.push(`${a.ruleId}: confidence ${confidence} below the ${MIN_CONFIDENCE} floor`);
+      continue;
+    }
+
+    // A confident "no, I looked, it is not there" is a result. It clears the
+    // rule and proves the pass happened.
+    checked.add(a.ruleId);
+    if (!a.present) {
+      cleared++;
       continue;
     }
 
@@ -198,5 +225,5 @@ export function readAnswers(path: string): AnswerResult {
     findings.push({ ruleId, channel: 'vision', evidence });
   }
 
-  return { findings, discarded, unavailable: null, accepted };
+  return { findings, discarded, unavailable: null, accepted, cleared, checked: [...checked] };
 }

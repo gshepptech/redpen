@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>New item</title><link rel="stylesheet" href="style.css"></head>
+<body>
+  <header class="bar"><span class="mark">Queue</span>
+    <nav><a href="/backlog">Backlog</a><a href="/new" aria-current="page">New</a></nav></header>
+  <main>
+    <h1>New item</h1>
+    <form class="form">
+      <label for="t">Title</label><input id="t" name="t">
+      <label for="p">Project</label><select id="p" name="p"><option>core</option></select>
+      <label for="o">Owner</label><input id="o" name="o">
+      <label for="e">Estimate</label><input id="e" name="e" type="number">
+      <label for="d">Due</label><input id="d" name="d" type="date">
+      <label for="n">Notes</label><textarea id="n" name="n"></textarea>
+      <label for="l">Labels</label><input id="l" name="l">
+      <label for="r">Reviewer</label><input id="r" name="r">
+      <label for="s">Source</label><input id="s" name="s">
+      <button type="submit">Create item</button>
+    </form>
+  </main>
+</body>
+</html>

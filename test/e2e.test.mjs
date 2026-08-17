@@ -57,12 +57,14 @@ const opts = { skip: HAS_BROWSER ? false : 'playwright not installed' };
 
 let cleanUrl;
 let sloppyUrl;
+let appUrl;
 
 before(async () => {
   if (!HAS_BROWSER) return;
   cleanUrl = await serve(join(HERE, 'fixtures', 'clean'));
   sloppyUrl = await serve(join(HERE, 'fixtures', 'sloppy'));
-  for (const d of ['clean', 'sloppy']) {
+  appUrl = await serve(join(HERE, 'fixtures', 'app'));
+  for (const d of ['clean', 'sloppy', 'app']) {
     rmSync(join(HERE, 'fixtures', d, '.redpen'), { recursive: true, force: true });
   }
 });
@@ -173,5 +175,52 @@ test('a source-only run says so instead of reporting a clean page', opts, async 
   assert.ok(
     result.warnings.some((w) => w.includes('render channel did not run')),
     'not looking and finding nothing must never look the same',
+  );
+});
+
+/* ---- surface detection --------------------------------------------------
+ * Both shapes below were misclassified in the field and the reason string gave
+ * the bug away: per-row action buttons were being counted as "repeated CTAs",
+ * so a list of records read as a landing page.
+ * --------------------------------------------------------------------- */
+
+test('a list of records with per-row controls is an operate surface', opts, async () => {
+  const result = await runScan({
+    root: join(HERE, 'fixtures', 'app'),
+    urls: [appUrl],
+    viewports: [1440],
+    ephemeral: true,
+  });
+  const verdict = result.surfaces[appUrl];
+  assert.ok(verdict, 'the page should have been classified');
+  assert.equal(verdict.surface, 'operate');
+  assert.equal(verdict.declared, false, 'this must come from detection, not config');
+});
+
+test('a page that is one labelled form is an operate surface', opts, async () => {
+  const url = `${appUrl}/new.html`;
+  const result = await runScan({
+    root: join(HERE, 'fixtures', 'app'),
+    urls: [url],
+    viewports: [1440],
+    ephemeral: true,
+  });
+  assert.equal(result.surfaces[url]?.surface, 'operate');
+});
+
+test('an app surface raises no slop findings and still catches real defects', opts, async () => {
+  const result = await runScan({
+    root: join(HERE, 'fixtures', 'app'),
+    urls: [appUrl, `${appUrl}/new.html`],
+    viewports: [1440],
+    ephemeral: true,
+  });
+  // Consistent chrome across an app is the point, not a tell.
+  assert.equal(result.slopScore, 100, 'an app should not be penalised for looking like an app');
+  // But quality rules apply everywhere — broken is broken.
+  assert.ok(result.qualityScore < 100, 'quality rules must still run on an operate surface');
+  assert.ok(
+    !result.findings.some((f) => f.ruleId === 'repeated-macrostructure'),
+    'sameness across app routes is consistency, not slop',
   );
 });

@@ -9,7 +9,7 @@ import { loadCorpus, appliesTo, isActionable } from './corpus/load.js';
 import { findClashes, fingerprintFindings } from './fingerprint/distance.js';
 import * as store from './fingerprint/store.js';
 import { score, scoreKind } from './score.js';
-import { loadConfig, configIgnores, type RedpenConfig } from './config.js';
+import { loadConfig, configIgnores, stateRoot, type RedpenConfig } from './config.js';
 import type { ScanResult, RawFinding, Channel, Finding, Surface } from './types.js';
 
 /**
@@ -29,7 +29,12 @@ export interface ScanOptions {
   vision?: boolean;
   /** Path to answers produced from a brief. Folds them in as a vision channel. */
   answers?: string | null;
-  /** Skip persisting fingerprints. Used by `redpen check` on throwaway branches. */
+  /**
+   * Neither read nor write the fingerprint store. Used by `redpen check` on
+   * throwaway branches and by tests. Skipping only the write was wrong: the run
+   * still compared against whatever was on disk, so an unrelated project's
+   * pages could produce a sameness finding.
+   */
   ephemeral?: boolean;
   onProgress?: (message: string) => void;
 }
@@ -46,6 +51,10 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
   const viewports = opts.viewports?.length ? opts.viewports : config.viewports;
 
   const warnings: string[] = [];
+  const state = stateRoot(root);
+  if (state !== root) {
+    opts.onProgress?.(`state: writing .redpen/ to the project root (${state}), not the scanned path`);
+  }
   const channelsRun: Channel[] = [];
   const timing: Record<string, number> = {};
   const raw: RawFinding[] = [];
@@ -68,7 +77,7 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
     opts.onProgress?.(`rendering ${urls.length} url(s) at ${viewports.join(', ')}px`);
     const t1 = Date.now();
     const wantShots = opts.screenshots || opts.vision;
-    const screenshotDir = wantShots ? resolve(root, '.redpen', 'screenshots') : null;
+    const screenshotDir = wantShots ? resolve(stateRoot(root), '.redpen', 'screenshots') : null;
     if (screenshotDir) mkdirSync(screenshotDir, { recursive: true });
 
     const render = await scanRender({ urls, viewports, screenshotDir });
@@ -114,6 +123,8 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
 
   // ---- vision: fold in answers from a previous brief ----
   let briefPath: string | null = null;
+  let visionChecked = 0;
+  let visionCleared = 0;
   if (opts.answers) {
     const t2 = Date.now();
     const answers = readAnswers(opts.answers);
@@ -124,9 +135,11 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
     } else {
       channelsRun.push('vision');
       raw.push(...answers.findings);
+      visionChecked = answers.checked.length;
+      visionCleared = answers.cleared;
       for (const d of answers.discarded) warnings.push(`vision answer discarded: ${d}`);
       opts.onProgress?.(
-        `vision: ${answers.accepted} answer(s) accepted across ${answers.findings.length} rule(s)`,
+        `vision: ${answers.checked.length} question(s) judged — ${answers.findings.length} present, ${answers.cleared} cleared`,
       );
     }
   }
@@ -140,7 +153,7 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
 
     const brief = buildBrief({ screenshots, alreadyConfirmed: confirmed });
     if (brief) {
-      briefPath = resolve(root, '.redpen', 'vision-brief.json');
+      briefPath = resolve(stateRoot(root), '.redpen', 'vision-brief.json');
       writeBrief(briefPath, brief);
       opts.onProgress?.(
         `vision: wrote a brief with ${brief.questions.length} question(s) over ${screenshots.size} screenshot(s)`,
@@ -156,7 +169,7 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
   let clashes: ScanResult['clashes'] = [];
   if (fingerprints.length) {
     channelsRun.push('fingerprint');
-    const prior = store.priorPages(root, fingerprints.map((f) => f.page));
+    const prior = opts.ephemeral ? [] : store.priorPages(root, fingerprints.map((f) => f.page));
     const all = [...prior, ...fingerprints];
     clashes = findClashes(all);
     raw.push(...fingerprintFindings(all, clashes));
@@ -223,6 +236,7 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
     qualityScore: scoreKind(scored, 'quality'),
     surfaces,
     advisory,
+    vision: { checked: visionChecked, cleared: visionCleared },
     findings: inScope.filter((f) => !f.advisory),
     ignored: promoted.ignored,
     fingerprints,

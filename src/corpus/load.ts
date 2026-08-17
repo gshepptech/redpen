@@ -38,6 +38,7 @@ const VALID_CATEGORIES: ReadonlySet<string> = new Set<Category>([
   'sameness',
   'chrome',
   'system',
+  'composition',
 ]);
 
 const VALID_CHANNELS: ReadonlySet<string> = new Set<Channel>([

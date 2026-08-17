@@ -59,7 +59,7 @@ export interface PromoteOptions {
   /** Rule ids that do not apply on this surface. Dropped before promotion. */
   offSurface?: Set<string>;
   /** Rule ids suppressed by a project-level ignore, with their reasons. */
-  ignored?: Map<string, { reason: string; location: string }>;
+  ignored?: Map<string, { reason: string; location: string; selector?: string; scopedTo?: string }>;
 }
 
 export function promote(raw: RawFinding[], opts: PromoteOptions): {
@@ -109,10 +109,27 @@ export function promote(raw: RawFinding[], opts: PromoteOptions): {
 
     const suppression = opts.ignored?.get(ruleId);
     if (suppression) {
-      ignored.push({ ...finding, ignored: suppression });
-    } else {
-      findings.push(finding);
+      // An unscoped ignore silences the rule. A scoped one silences only the
+      // matching evidence, so the same rule can stay live elsewhere on the page.
+      if (!suppression.selector && !suppression.scopedTo) {
+        ignored.push({ ...finding, ignored: suppression });
+        continue;
+      }
+      const kept = finding.evidence.filter((e) => {
+        const bySelector = suppression.selector
+          ? !(e.selector ?? '').includes(suppression.selector)
+          : true;
+        const byLocation = suppression.scopedTo ? !e.location.includes(suppression.scopedTo) : true;
+        return bySelector && byLocation;
+      });
+      if (!kept.length) {
+        ignored.push({ ...finding, ignored: suppression });
+        continue;
+      }
+      findings.push({ ...finding, evidence: kept });
+      continue;
     }
+    findings.push(finding);
   }
 
   findings.sort(rank);

@@ -5,3 +5,4 @@ dist/
 .DS_Store
 test/fixtures/*/pricing.html
 test/fixtures/*/pricing.css
+test/fixtures/*/.redpen/

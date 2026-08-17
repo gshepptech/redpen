@@ -1,5 +1,6 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
+import { stateRoot } from '../config.js';
 import type { Fingerprint } from '../types.js';
 
 /**
@@ -19,7 +20,7 @@ interface StoreShape {
 }
 
 function path(root: string): string {
-  return join(root, DIR, FILE);
+  return join(stateRoot(root), DIR, FILE);
 }
 
 export function load(root: string): Fingerprint[] {
@@ -41,7 +42,7 @@ export function load(root: string): Fingerprint[] {
  */
 export function save(root: string, prints: Fingerprint[]): void {
   if (!prints.length) return;
-  const dir = join(root, DIR);
+  const dir = join(stateRoot(root), DIR);
   mkdirSync(dir, { recursive: true });
 
   const existing = load(root);

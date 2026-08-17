@@ -22,7 +22,9 @@ export type Category =
   /** Browser surfaces nobody drew: selection, caret, scrollbar, focus ring. */
   | 'chrome'
   /** Drift from the project's own declared tokens. */
-  | 'system';
+  | 'system'
+  /** Judgements no measurement reaches: proportion, rhythm, memorability. */
+  | 'composition';
 
 export type Channel = 'source' | 'render' | 'vision' | 'fingerprint';
 
@@ -269,6 +271,12 @@ export interface ScanResult {
   surfaces: Record<string, { surface: Surface; declared: boolean }>;
   /** Reported but never scored. */
   advisory: Finding[];
+  /**
+   * How much the vision pass actually judged. `checked` counts every question
+   * answered with confidence, present or not — so a report can say a pass
+   * happened and found nothing, rather than looking identical to no pass.
+   */
+  vision: { checked: number; cleared: number };
   findings: Finding[];
   ignored: Finding[];
   fingerprints: Fingerprint[];

@@ -1,0 +1,21 @@
+:root{--paper:oklch(.98 .004 250);--ink:oklch(.24 .02 250);--line:oklch(.88 .01 250);
+--accent:oklch(.52 .14 250);--font-body:"Helvetica Neue",system-ui,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 var(--font-body)}
+.bar{display:flex;align-items:center;gap:24px;padding:12px 20px;border-bottom:1px solid var(--line)}
+.bar nav{display:flex;gap:16px}.bar a{color:var(--ink);font-size:14px}
+main{padding:24px 20px}h1{font-size:22px;margin:0 0 16px}
+.rows{list-style:none;margin:0;padding:0}
+.row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.row .id{font-variant-numeric:tabular-nums;font-size:13px;color:var(--ink);min-width:9ch}
+.row .t{flex:1}
+button{height:30px;padding:0 12px;border:1px solid var(--line);background:transparent;color:var(--ink);font:inherit}
+.form{display:grid;grid-template-columns:10rem 1fr;gap:10px 16px;max-width:44rem;align-items:center}
+.form label{font-size:14px}
+input,select,textarea{height:32px;padding:0 8px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font:inherit}
+textarea{height:5rem;padding:8px}
+button[type=submit]{grid-column:2;justify-self:start;height:32px}
+::selection{background:oklch(.52 .14 250/.18);color:var(--ink)}
+input,textarea{caret-color:var(--accent)}
+html{scrollbar-color:var(--line) var(--paper);scrollbar-width:thin}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}

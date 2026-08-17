@@ -1,0 +1,166 @@
+# Composition — what the page is like, rather than what is true of it.
+#
+# Every other rule in the corpus measures a property: a hex value, a ratio, a
+# count, a distance. This file holds the judgements no measurement reaches, and
+# they exist because of a field report from a real project:
+#
+#   "your measurable channels answer *what is true of this page*; vision should
+#    answer *what this page is like*. Right now it asks twelve more
+#    measurable-ish questions with a human doing the measuring."
+#
+# That was fair. The vision channel had twelve questions and ten were landing-
+# page questions that are trivially false on an app — answered "no" twelve times
+# with 0.95 confidence and taught the reader nothing.
+#
+# These are vision-only by construction. If a detector could answer one of
+# these, it would belong in another file. They apply on every surface, because
+# "does one thing want your attention first" is as true of a dashboard as of a
+# hero — the report of that project's UI was that everything sat at one weight
+# for a week, which is measurable as font sizes and invisible as effect.
+
+- id: no-focal-point
+  kind: slop
+  title: Nothing on the page asks for your attention first
+  category: composition
+  severity: high
+  weight: 74
+  evidenceRank: null
+  sources:
+    - { catalogue: redpen, ref: composition-focal-point }
+    - { catalogue: hallmark, ref: "critique-axis:B-hierarchy" }
+  channels: [vision]
+  vision:
+    ask: >-
+      Looking at this page for two seconds without reading it, is there nothing
+      that clearly wants your attention first?
+  why: >-
+    A page with no entry point makes the reader do the triage the design should
+    have done. This survives every measurable check — the type scale can be
+    correct and the effect still absent, because emphasis is relative and a
+    scale applied evenly emphasises nothing.
+  fix: >-
+    Decide what the page is for and let one element carry it. Size, weight,
+    colour, isolation, or position — one of them, decisively, not all of them
+    slightly.
+
+- id: undifferentiated-spacing
+  kind: slop
+  title: Spacing does not group what belongs together
+  category: composition
+  severity: medium
+  weight: 66
+  evidenceRank: null
+  sources:
+    - { catalogue: redpen, ref: composition-proximity }
+    - { catalogue: impeccable, ref: monotonous-spacing }
+  channels: [vision]
+  vision:
+    ask: >-
+      Do the gaps between elements look roughly equal everywhere, so nothing
+      reads as belonging together more than anything else?
+  why: >-
+    A perfect 4px scale applied uniformly is exactly the failure — every gap is
+    on the scale and the page still has no groups. Proximity is the cheapest
+    grouping signal there is and the one a spacing-token check cannot audit,
+    because the tokens are all correct.
+  fix: >-
+    Tighten space inside a group and open it between groups. The ratio matters,
+    not the values: related things want noticeably less air than unrelated ones.
+
+- id: sized-to-fit
+  kind: slop
+  title: Everything is sized to fit rather than because it matters
+  category: composition
+  severity: medium
+  weight: 68
+  evidenceRank: null
+  sources:
+    - { catalogue: redpen, ref: composition-intent }
+  channels: [vision]
+  vision:
+    ask: >-
+      Does every element look sized to fill the space available to it, rather
+      than sized because of how much it matters?
+  why: >-
+    The signature of a layout assembled rather than composed. Equal columns,
+    full-width blocks, and cards stretched to their container all say the grid
+    decided, not the content.
+  fix: >-
+    Let importance set size. Give the thing that matters more room than it
+    needs and the thing that does not less than it could have.
+
+- id: content-interchangeable
+  kind: slop
+  title: The page could hold anyone else's content unchanged
+  category: composition
+  severity: high
+  weight: 79
+  evidenceRank: 0
+  sources:
+    - { catalogue: redpen, ref: composition-specificity }
+    - { catalogue: hallmark, ref: "critique-axis:D-specificity" }
+  channels: [vision]
+  vision:
+    ask: >-
+      Could this page's content be swapped for a different product's without
+      changing the layout, so nothing about the design is specific to what it
+      holds?
+  why: >-
+    The operate-surface equivalent of a headline that fits any company. A layout
+    that would serve any content equally was designed for none of it, and this
+    is the closest any single question gets to "it looks AI generated" — the
+    complaint that ranks first in the Reddit data and that nothing measurable
+    can see.
+  fix: >-
+    Find the one thing this content has that another product's would not — a
+    long field, a natural sequence, a dominant record, a real image — and let
+    the layout be shaped by it.
+
+- id: nothing-memorable
+  kind: slop
+  title: Nothing on the page would be remembered tomorrow
+  category: composition
+  severity: medium
+  weight: 61
+  evidenceRank: null
+  sources:
+    - { catalogue: redpen, ref: composition-memory }
+    - { catalogue: hallmark, ref: "critique-axis:A-philosophy" }
+  channels: [vision]
+  vision:
+    ask: >-
+      Is there nothing here you would still be able to describe tomorrow — no
+      single detail, image, or decision that stands out?
+  why: >-
+    A page can clear every rule in this corpus and still be completely
+    forgettable, which for anything competing for attention is the actual
+    failure. Deliberately weighted below the structural rules: forgettable is a
+    weaker charge than broken, and plenty of good tools are correctly plain.
+  fix: >-
+    Commit to one thing. A real photograph, a drawn mark, an unusual but
+    legible type choice, a colour used with conviction in one place. One is
+    enough; the failure is having none.
+
+- id: affordance-mismatch
+  kind: quality
+  title: Things look interactive that are not, or inert that are
+  category: composition
+  severity: high
+  weight: 72
+  evidenceRank: null
+  sources:
+    - { catalogue: redpen, ref: composition-affordance }
+    - { catalogue: frontend-design-audit, ref: "heuristic:11-affordances-and-signifiers" }
+  channels: [vision]
+  vision:
+    ask: >-
+      Looking only at the image, is anything styled like a control that is not
+      one, or styled like plain content when it is actually clickable?
+  why: >-
+    Cursor and role checks confirm what an element *is*; only looking confirms
+    what it *appears to be*. A card with a border and a shadow that does nothing
+    costs a click, and a clickable row that looks like text never gets one.
+  fix: >-
+    Make the two vocabularies distinct and keep them apart: whatever says
+    "clickable" — fill, border, elevation, underline — appears on controls and
+    nowhere else.

@@ -63,12 +63,59 @@ export function surfaceSource(): string {
   var toolbars = all('[role="toolbar"], [class*="toolbar"]').length;
   var authish  = all('[class*="avatar"], [class*="account"], [aria-label*="profile" i]').length;
 
+  // A list of records with per-row actions. This is the strongest operate
+  // signal there is, and the first version counted it the other way: eight
+  // rows each carrying Promote/Drop read as "a landing page repeating its
+  // call to action". No marketing page repeats a control cluster per item.
+  var recordRows = (function () {
+    var best = 0;
+    all('*').forEach(function (parent) {
+      var kids = Array.prototype.slice.call(parent.children).filter(visible);
+      if (kids.length < 3) return;
+      var withControls = kids.filter(function (k) {
+        return k.querySelector('button, a[class], [role="button"], input, select');
+      });
+      if (withControls.length < 3) return;
+      // Same control vocabulary in each child means these are records, not
+      // sections that happen to have buttons.
+      var sig = withControls.map(function (k) {
+        return Array.prototype.slice.call(
+          k.querySelectorAll('button, a[class], [role="button"], input, select'),
+        ).map(function (c) {
+          return (c.tagName + ':' + (c.textContent || c.getAttribute('aria-label') || '').trim()).slice(0, 40);
+        }).sort().join('|');
+      });
+      var same = sig.filter(function (x) { return x === sig[0]; }).length;
+      if (same >= Math.max(3, Math.floor(withControls.length * 0.6))) {
+        best = Math.max(best, withControls.length);
+      }
+    });
+    return best;
+  })();
+
+  // Controls that are NOT inside a repeated record row. Counting row actions
+  // as calls to action is what produced four confident misclassifications.
+  var standaloneCtas = all('a[class], button').filter(function (el) {
+    var t = (el.textContent || '').trim();
+    if (!t.length || t.length >= 32) return false;
+    var p = el.parentElement, depth = 0;
+    while (p && depth < 4) {
+      var sibs = Array.prototype.slice.call(p.children).filter(visible);
+      if (sibs.length >= 3 && sibs.filter(function (s2) {
+        return s2.querySelector('button, a[class], [role="button"]');
+      }).length >= 3) return false;
+      p = p.parentElement; depth++;
+    }
+    return true;
+  }).length;
+
+  // A page that is mostly one form is an operate surface even with no rows.
+  var labelled = all('label').length;
+  var submits  = all('button[type=submit], input[type=submit]').length;
+
   // --- persuade: the page is selling something ---
   var h1       = all('h1').length;
-  var ctas     = all('a[class], button').filter(function (el) {
-    var t = (el.textContent || '').trim();
-    return t.length > 0 && t.length < 32;
-  }).length;
+  var ctas     = standaloneCtas;
   var pricing  = /\\b(pricing|per month|\\/mo\\b|free trial|get started|book a demo|sign up)\\b/i
                    .test(textLen(body) ? body.innerText : '');
   var hero     = (function () {
@@ -92,6 +139,7 @@ export function surfaceSource(): string {
   return {
     inputs: inputs, buttons: buttons, tables: tables, rows: rows, tabs: tabs,
     menus: menus, toggles: toggles, sidebar: sidebar, toolbars: toolbars, authish: authish,
+    recordRows: recordRows, labelled: labelled, submits: submits,
     h1: h1, ctas: ctas, pricing: pricing, hero: hero, testimonial: testimonial, logoWall: logoWall,
     paras: paras, prose: prose, headings: headings, lists: lists, article: article,
     codeBlk: codeBlk, toc: toc, total: total,
@@ -102,6 +150,7 @@ export function surfaceSource(): string {
 export interface SurfaceSignals {
   inputs: number; buttons: number; tables: number; rows: number; tabs: number;
   menus: number; toggles: number; sidebar: number; toolbars: number; authish: number;
+  recordRows: number; labelled: number; submits: number;
   h1: number; ctas: number; pricing: boolean; hero: boolean;
   testimonial: number; logoWall: number;
   paras: number; prose: number; headings: number; lists: number;
@@ -122,8 +171,20 @@ export function classify(s: SurfaceSignals): SurfaceVerdict {
   let read = 0;
 
   // operate — controls, data, and a task chrome
+  //
+  // recordRows and a labelled form are the two shapes marketing pages never
+  // have. They are weighted to win on their own, because a list of records or
+  // a page that is one form is an operate surface whatever else is present.
+  if (s.recordRows >= 3) {
+    operate += 4;
+    reasons.operate.push(`${s.recordRows} rows with identical per-row controls`);
+  }
+  if (s.labelled >= 4 && s.submits >= 1) {
+    operate += 4;
+    reasons.operate.push(`a ${s.labelled}-field labelled form`);
+  }
   if (s.tables > 0 && s.rows >= 5) { operate += 3; reasons.operate.push(`${s.rows} data rows`); }
-  if (s.inputs >= 4) { operate += 2; reasons.operate.push(`${s.inputs} form controls`); }
+  if (s.inputs >= 4) { operate += 2.5; reasons.operate.push(`${s.inputs} form controls`); }
   if (s.sidebar > 0) { operate += 2; reasons.operate.push('side navigation'); }
   if (s.tabs > 0) { operate += 1.5; reasons.operate.push('tabs'); }
   if (s.toolbars > 0) { operate += 1.5; reasons.operate.push('toolbar'); }
@@ -137,7 +198,8 @@ export function classify(s: SurfaceSignals): SurfaceVerdict {
   if (s.pricing) { persuade += 2; reasons.persuade.push('pricing or signup language'); }
   if (s.testimonial > 0) { persuade += 1.5; reasons.persuade.push('testimonial'); }
   if (s.logoWall >= 3) { persuade += 1.5; reasons.persuade.push('logo wall'); }
-  if (s.h1 === 1 && s.ctas >= 2 && s.prose < 2500) {
+  // Only counts standalone calls to action — row actions are excluded above.
+  if (s.h1 === 1 && s.ctas >= 2 && s.prose < 2500 && s.recordRows < 3) {
     persuade += 2;
     reasons.persuade.push('single headline with repeated CTAs and little prose');
   }
@@ -166,6 +228,12 @@ export function classify(s: SurfaceSignals): SurfaceVerdict {
   if (top > 0) {
     const margin = (top - runnerUp) / top;
     confidence = Math.min(1, (top / 6) * 0.5 + margin * 0.5);
+    // A signal no other surface can produce settles it on its own. A page with
+    // per-row controls or a labelled form is not a landing page, whatever else
+    // the raw totals say.
+    if (winner === 'operate' && (s.recordRows >= 3 || (s.labelled >= 4 && s.submits >= 1))) {
+      confidence = Math.max(confidence, 0.8);
+    }
   }
 
   return {

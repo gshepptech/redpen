@@ -1,5 +1,5 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve, dirname } from 'node:path';
 import type { Category, Confidence, Surface } from './types.js';
 
 /**
@@ -28,8 +28,13 @@ export interface RedpenConfig {
   skipCategories: Category[];
   /** Allowed drop below the baseline before `check` fails. */
   tolerance: number;
-  /** Rule ids suppressed project-wide, each with a mandatory reason. */
-  ignore: Record<string, string>;
+  /**
+   * Rule ids suppressed project-wide. A bare string is the reason; the object
+   * form scopes the suppression to elements matching a selector, which is the
+   * only way to excuse a render finding on one component — those have no source
+   * line to annotate with a comment.
+   */
+  ignore: Record<string, string | IgnoreRule>;
   /**
    * What this project is able to do. A rule whose fix requires a capability the
    * project does not have is not a finding — it is a standing complaint the
@@ -40,6 +45,14 @@ export interface RedpenConfig {
    * scan forever.
    */
   capabilities: Capabilities;
+}
+
+export interface IgnoreRule {
+  reason: string;
+  /** Suppress only where the render evidence selector contains this. */
+  selector?: string;
+  /** Suppress only on this url or file. */
+  location?: string;
 }
 
 export interface Capabilities {
@@ -65,8 +78,28 @@ const DIR = '.redpen';
 const CONFIG_FILE = 'config.json';
 const BASELINE_FILE = 'baseline.json';
 
+/**
+ * Where redpen keeps its state.
+ *
+ * Walks up from the scanned path for a project marker, so pointing redpen at
+ * `internal/dash` writes to the repo root rather than burying a state directory
+ * inside a source tree. Reported from the field twice — it got swept into a
+ * commit both times.
+ */
+export function stateRoot(scanRoot: string): string {
+  const markers = ['.git', 'package.json', 'go.mod', 'Cargo.toml', 'pyproject.toml', 'deno.json'];
+  let dir = resolve(scanRoot);
+  for (let i = 0; i < 12; i++) {
+    if (markers.some((m) => existsSync(join(dir, m)))) return dir;
+    const parent = dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+  return resolve(scanRoot);
+}
+
 export function loadConfig(root: string): RedpenConfig {
-  const file = join(root, DIR, CONFIG_FILE);
+  const file = join(stateRoot(root), DIR, CONFIG_FILE);
   if (!existsSync(file)) return { ...DEFAULT_CONFIG };
   try {
     const parsed = JSON.parse(readFileSync(file, 'utf8')) as Partial<RedpenConfig>;
@@ -81,9 +114,9 @@ export function loadConfig(root: string): RedpenConfig {
 }
 
 export function saveConfig(root: string, config: RedpenConfig): void {
-  mkdirSync(join(root, DIR), { recursive: true });
+  mkdirSync(join(stateRoot(root), DIR), { recursive: true });
   writeFileSync(
-    join(root, DIR, CONFIG_FILE),
+    join(stateRoot(root), DIR, CONFIG_FILE),
     JSON.stringify(config, null, 2) + '\n',
     'utf8',
   );
@@ -97,7 +130,7 @@ export interface Baseline {
 }
 
 export function loadBaseline(root: string): Baseline | null {
-  const file = join(root, DIR, BASELINE_FILE);
+  const file = join(stateRoot(root), DIR, BASELINE_FILE);
   if (!existsSync(file)) return null;
   try {
     return JSON.parse(readFileSync(file, 'utf8')) as Baseline;
@@ -107,26 +140,38 @@ export function loadBaseline(root: string): Baseline | null {
 }
 
 export function saveBaseline(root: string, baseline: Baseline): void {
-  mkdirSync(join(root, DIR), { recursive: true });
+  mkdirSync(join(stateRoot(root), DIR), { recursive: true });
   writeFileSync(
-    join(root, DIR, BASELINE_FILE),
+    join(stateRoot(root), DIR, BASELINE_FILE),
     JSON.stringify(baseline, null, 2) + '\n',
     'utf8',
   );
 }
 
 /** Ignores from config become the same shape the source channel produces. */
-export function configIgnores(
-  config: RedpenConfig,
-): Map<string, { reason: string; location: string }> {
-  const map = new Map<string, { reason: string; location: string }>();
-  for (const [ruleId, reason] of Object.entries(config.ignore)) {
-    if (!reason || !reason.trim()) {
+export interface ResolvedIgnore {
+  reason: string;
+  location: string;
+  /** When set, only evidence matching this selector or url is suppressed. */
+  selector?: string;
+  scopedTo?: string;
+}
+
+export function configIgnores(config: RedpenConfig): Map<string, ResolvedIgnore> {
+  const map = new Map<string, ResolvedIgnore>();
+  for (const [ruleId, entry] of Object.entries(config.ignore)) {
+    const rule: IgnoreRule = typeof entry === 'string' ? { reason: entry } : entry;
+    if (!rule?.reason || !rule.reason.trim()) {
       throw new Error(
         `redpen: ignore for "${ruleId}" has no reason — an ignore without a reason is how a rule set stops meaning anything`,
       );
     }
-    map.set(ruleId, { reason, location: '.redpen/config.json' });
+    map.set(ruleId, {
+      reason: rule.reason,
+      location: '.redpen/config.json',
+      ...(rule.selector ? { selector: rule.selector } : {}),
+      ...(rule.location ? { scopedTo: rule.location } : {}),
+    });
   }
   return map;
 }
