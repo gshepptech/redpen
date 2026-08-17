@@ -244,3 +244,20 @@ test('scan and why-score report the same number', opts, async () => {
   );
   assert.equal(explainScore(scorable).score, result.score);
 });
+
+test('visually-hidden content is not a finding', opts, async () => {
+  // The standard clip-rect recipe looks like clipped text sitting off-canvas.
+  // Flagging it means adding a skip link or an sr-only label *creates* two
+  // findings — the tool punishing the correct accessibility pattern. Found by
+  // running /redpen:polish for the first time.
+  const dir = join(HERE, 'fixtures', 'clean');
+  const result = await runScan({ root: dir, urls: [cleanUrl], viewports: [1440], ephemeral: true });
+  for (const id of ['text-overflow', 'body-text-viewport-edge']) {
+    const f = result.findings.find((x) => x.ruleId === id);
+    if (!f) continue;
+    assert.ok(
+      !f.evidence.some((e) => /skip|sr-only/i.test(e.selector ?? '') || /Skip to content/i.test(e.excerpt ?? '')),
+      `${id} fired on visually-hidden content`,
+    );
+  }
+});

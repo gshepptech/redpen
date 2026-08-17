@@ -38,8 +38,16 @@ JSON output tags every finding, so `--json` and filter on `kind` if it helps.
 3. **States.** Default, hover, focus-visible, active, disabled — all five, on
    every interactive element. `outline: none` with nothing replacing it is the
    single most common line that breaks keyboard use.
+
+   Reach for `!important` here and stop: it means the state rule is losing a
+   specificity fight, and the fix is the selector, not the flag.
 4. **Overflow and geometry.** Sideways scroll at any width, clipped text,
    controls under 44px, mismatched heights in a row.
+
+   Fix leading **per role, never globally.** Setting `line-height: 1.55` on
+   `body` fixes every `tight-leading` finding on prose and immediately creates
+   one on the hero, because a 72px heading at body leading is as wrong in the
+   other direction. This happened on the first real run of this command.
 5. **Browser surfaces.** Selection, caret, scrollbar, underline offset, tabular
    numerals.
 
@@ -52,5 +60,20 @@ decide.
 
 ## Finish
 
-Re-run. Report the quality score before and after; the slop score should be
-unchanged, and if it moved you did something outside the brief.
+Re-run. Report the quality score before and after; **the slop score should be
+unchanged**, and if it moved you did something outside the brief.
+
+## What this looked like the first time it was run
+
+On a deliberately-bad fixture: **quality 6 → 45**, twenty-three findings to
+four, with the **slop score at exactly 4 before and after** — which is the
+contract, and it held.
+
+Two things the run taught, both now fixed in the detectors rather than worked
+around here: adding a skip link and a visually-hidden label used to *create*
+two findings, because the standard clip-rect recipe looks like clipped text
+sitting off-canvas; and `low-contrast` reported a confident 1.00:1 for white
+text on a gradient button, because a gradient leaves `backgroundColor`
+transparent and the walk-up found the white page behind it. It now declines to
+measure contrast over a gradient at all — a wrong number is worse than no
+number, and that judgement belongs to the vision channel.

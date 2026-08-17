@@ -127,6 +127,24 @@ const CONTRAST_LIB = `
   // Walk up for the first non-transparent background. Alpha-compositing a
   // semi-transparent card over its parent is what makes muted-text-on-tinted-
   // surface failures so easy to miss.
+  /**
+   * True when a gradient or image sits between this element and the first
+   * solid colour above it. Contrast cannot be computed against those from
+   * computed styles alone, and guessing produced a confident 1.00:1 for white
+   * text on a violet gradient button.
+   */
+  function hasPaintedAncestor(el) {
+    var node = el, depth = 0;
+    while (node && depth < 4) {
+      var s = getComputedStyle(node);
+      if (s.backgroundImage && s.backgroundImage !== 'none') return true;
+      var bg = parseColor(s.backgroundColor);
+      if (bg && bg.a >= 0.999) return false;
+      node = node.parentElement; depth++;
+    }
+    return false;
+  }
+
   function effectiveBackground(el) {
     var node = el;
     var stack = [];
@@ -202,6 +220,25 @@ const HELPERS_LIB = `
 
   function viewportArea() {
     return window.innerWidth * Math.max(window.innerHeight, document.documentElement.scrollHeight);
+  }
+
+  // The standard visually-hidden recipe: 1px box, clipped, off-canvas. It is
+  // meant to be unreadable on screen and readable to a screen reader, so every
+  // geometry check has to skip it or adding a skip link creates findings.
+  function isVisuallyHidden(el) {
+    var s = getComputedStyle(el);
+    if (s.clip === 'rect(0px, 0px, 0px, 0px)' || /inset\\(100%|circle\\(0/.test(s.clipPath)) return true;
+    var r = el.getBoundingClientRect();
+    if (r.width <= 1 && r.height <= 1 && (el.textContent || '').trim().length > 1) return true;
+    // Parked off-canvas rather than clipped.
+    if (r.right < 0 || r.bottom < 0 || r.left > window.innerWidth * 2) return true;
+    var node = el.parentElement, depth = 0;
+    while (node && depth < 3) {
+      var ps = getComputedStyle(node);
+      if (ps.clip === 'rect(0px, 0px, 0px, 0px)') return true;
+      node = node.parentElement; depth++;
+    }
+    return false;
   }
 
   function isTextBearing(el) {
@@ -377,6 +414,11 @@ const CHECKS_LIB = `
     var out = [];
     all('*').forEach(function (el) {
       if (!isTextBearing(el)) return;
+      if (isVisuallyHidden(el)) return;
+      // A gradient or image behind the text cannot be measured from computed
+      // styles. Reporting a number derived from the wrong surface is worse
+      // than reporting nothing — this is a job for the vision channel.
+      if (hasPaintedAncestor(el)) return;
       var s = getComputedStyle(el);
       var fg = parseColor(s.color);
       if (!fg || fg.a < 0.1) return;
@@ -827,6 +869,8 @@ const CHECKS_LIB = `
     var min = p.minOverflowPx || 2;
     return all('*').filter(function (el) {
       if (!isTextBearing(el)) return false;
+      // A visually-hidden label is clipped on purpose.
+      if (isVisuallyHidden(el)) return false;
       var s = getComputedStyle(el);
       if (s.overflow === 'visible' && s.overflowY === 'visible') return false;
       if (/ellipsis/.test(s.textOverflow)) return false;
@@ -838,6 +882,7 @@ const CHECKS_LIB = `
     var min = p.minGutterPx || 16;
     return all('p, h1, h2, h3, li').filter(function (el) {
       if (!isTextBearing(el)) return false;
+      if (isVisuallyHidden(el)) return false;
       var r = el.getBoundingClientRect();
       return r.left < min || (window.innerWidth - r.right) < min;
     }).map(function (el) {
