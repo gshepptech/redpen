@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { findCancelledFloors, specificity } from '../dist/channels/cascade.js';
+import { findCancelledFloors, specificity, parse } from '../dist/channels/cascade.js';
 
 /**
  * The claim: a more specific rule pinning `height` below a floor a weaker rule
@@ -132,4 +132,70 @@ test('comments cannot hide a conflict and do not shift line numbers', () => {
   const [c] = find(css);
   assert.ok(c);
   assert.equal(c.line, 4, 'the reported line must survive comment blanking');
+});
+
+/**
+ * The stylesheet parser underneath all of the above.
+ *
+ * Twelve tests covered the cascade logic and none covered the thing that feeds
+ * it, so three parser bugs sat under a green suite. Each one silently reported
+ * *less* than it was asked to look at, which is this project's recurring
+ * failure and the hardest kind to notice: the run succeeds, the count is just
+ * quietly wrong.
+ *
+ * Every case here is a stylesheet shape that occurs in ordinary CSS, not a
+ * contrived one.
+ */
+
+const CONFLICT = `.btn { min-height: 44px; }
+.acts .btn { height: 32px; }
+`;
+
+test('a statement at-rule does not swallow the rule after it', () => {
+  // `@import` opens no block. The scanner ran past its semicolon to the next
+  // rule's brace and read `@import url("base.css"); .btn` as one at-rule head,
+  // pushed it as a condition, and lost `.btn`. Since `@import` opens a great
+  // many stylesheets, this rule reported nothing at all on them.
+  for (const statement of ['@import url("base.css");', '@charset "utf-8";', '@namespace svg url(http://www.w3.org/2000/svg);']) {
+    const css = `${statement}\n${CONFLICT}`;
+    assert.deepEqual(
+      parse(css).map((r) => r.selector),
+      ['.btn', '.acts .btn'],
+      `${statement} lost a rule`,
+    );
+    assert.equal(find(css).length, 1, `${statement} suppressed the conflict`);
+  }
+});
+
+test('a brace inside a string is not a brace', () => {
+  // `content: "{"` is ordinary CSS. Counting it desynchronised the brace depth
+  // and every rule after it in the file was dropped without a word.
+  for (const decl of ['content: "{";', "content: '}';", 'content: "a{b}c";']) {
+    const css = `.x::after { ${decl} }\n${CONFLICT}`;
+    assert.equal(find(css).length, 1, `${decl} swallowed the rest of the sheet`);
+  }
+});
+
+test('the last declaration in a block is the one that counts', () => {
+  // One bug facing both ways: taking the first value reported a cancelled floor
+  // where the browser uses the larger second value, and passed a page clean
+  // where it uses the smaller one.
+  assert.equal(
+    find('.btn { min-height: 44px; }\n.acts .btn { height: 32px; height: 48px; }\n').length,
+    0,
+    'reported a conflict against a value the browser never uses',
+  );
+  assert.equal(
+    find('.btn { min-height: 44px; }\n.acts .btn { height: 48px; height: 32px; }\n').length,
+    1,
+    'missed the value the browser does use',
+  );
+});
+
+test('conditions still wrap the rules inside them', () => {
+  // The at-rule fixes must not cost the media-query tracking they sit beside.
+  const sets = parse('@media (max-width: 720px) { .btn { height: 32px; } }\n.btn { height: 44px; }\n');
+  assert.equal(sets.length, 2);
+  assert.deepEqual(sets[0].conditions, ['@media (max-width: 720px)']);
+  assert.deepEqual(sets[1].conditions, []);
 });

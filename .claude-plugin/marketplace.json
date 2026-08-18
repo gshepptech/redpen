@@ -7,7 +7,7 @@
     {
       "source": "./",
       "name": "redpen",
-      "description": "One verdict on your UI — four AI-slop catalogues merged into 113 rules, cross-checked against a real browser before anything is reported."
+      "description": "One verdict on your UI. 119 design rules merged from four catalogues, cross-checked against a real browser where one is available."
     }
   ]
 }

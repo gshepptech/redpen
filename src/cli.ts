@@ -149,8 +149,14 @@ async function main(): Promise<void> {
     return;
   }
 
-  const root = resolve(args.positional[0] ?? '.');
-  if (args.positional[0] && !existsSync(root)) {
+  // Only the commands that scan something take a path. `why` takes a rule id
+  // and `rules` takes a category filter, and checking their argument against
+  // the filesystem meant every documented use of either exited 2 with "no such
+  // directory: ai-purple" — including the `redpen why <rule-id>` the report
+  // itself prints under every folded roster.
+  const TAKES_A_PATH = new Set(['scan', 'check', 'baseline', 'fingerprints', 'brief', 'init', 'why-score']);
+  const root = resolve(TAKES_A_PATH.has(args.command) ? args.positional[0] ?? '.' : '.');
+  if (TAKES_A_PATH.has(args.command) && args.positional[0] && !existsSync(root)) {
     fail(`no such directory: ${args.positional[0]}`);
   }
 

@@ -56,6 +56,10 @@ test('the prose agrees with the corpus it describes', () => {
     ['README.md', /^ {2}(\d+) rules merged from:/m, c.rules],
     ['NOTICE', /(\d+) rules collapsed from/, c.rules],
     ['NOTICE', /collapsed from (\d+)\s*\n?\s*upstream references/, c.upstreamRefs],
+    // Shipped metadata drifts too, and nobody reads it — both of these were
+    // still advertising 113 rules six rules later.
+    ['.claude-plugin/plugin.json', /(\d+) design rules/, c.rules],
+    ['.claude-plugin/marketplace.json', /(\d+) design rules/, c.rules],
   ];
 
   const wrong = [];

@@ -1,12 +1,12 @@
 {
   "name": "redpen",
   "version": "0.1.0",
-  "description": "One verdict on your UI. 113 design rules merged from four catalogues, then cross-checked against a real browser before anything is reported.",
+  "description": "One verdict on your UI. 119 design rules merged from four catalogues, cross-checked against a real browser where one is available.",
   "author": {
     "name": "redpen"
   },
   "homepage": "https://github.com/gshepptech/redpen",
-  "license": "MIT",
+  "license": "MIT AND Apache-2.0",
   "keywords": [
     "design",
     "ai-slop",

@@ -156,11 +156,21 @@ function px(value: string): number | null {
   return n;
 }
 
+/**
+ * The winning value for a property in one block — which is the *last* one.
+ *
+ * This took the first, so `height: 32px; height: 48px` (the fallback-then-real
+ * pattern) was reported as a cancelled floor when 48px is what the browser
+ * uses, and `height: 48px; height: 32px` was reported as clean when 32px is.
+ * One bug, a false positive and a false negative, pointing opposite ways.
+ */
 function declValue(body: string, prop: string): { value: string; offset: number } | null {
-  const re = new RegExp(`(^|[;{\\s])${prop}\\s*:\\s*([^;}]+)`, 'i');
-  const m = re.exec(body);
-  if (!m) return null;
-  return { value: m[2]!.trim(), offset: m.index };
+  const re = new RegExp(`(^|[;{\\s])${prop}\\s*:\\s*([^;}]+)`, 'gi');
+  let last: { value: string; offset: number } | null = null;
+  for (const m of body.matchAll(re)) {
+    last = { value: m[2]!.trim(), offset: m.index };
+  }
+  return last;
 }
 
 /** Flatten a stylesheet into rule sets, tracking the conditions around each. */
@@ -173,8 +183,47 @@ export function parse(css: string): RuleSet[] {
 
   const lineAt = (offset: number) => text.slice(0, offset).split('\n').length;
 
+  /**
+   * Index just past a quoted string starting at `from`.
+   *
+   * Braces live inside strings — `content: "{"` is ordinary CSS — and the
+   * scanner used to count them. One such declaration desynchronised the brace
+   * depth and every rule after it in the file was dropped without a word.
+   */
+  const skipString = (from: number): number => {
+    const quote = text[from];
+    let k = from + 1;
+    while (k < text.length) {
+      if (text[k] === '\\\\') { k += 2; continue; }
+      if (text[k] === quote) return k + 1;
+      k++;
+    }
+    return k;
+  };
+
   while (i < text.length) {
     const ch = text[i];
+
+    if (ch === '"' || ch === "'") {
+      i = skipString(i);
+      continue;
+    }
+
+    /**
+     * A statement at-rule ends at its semicolon and wraps nothing.
+     *
+     * `@import` and `@charset` open no block, so the scanner ran on to the next
+     * rule's brace and read `@import url("x"); .btn` as one at-rule head —
+     * pushing it as a condition and losing `.btn` entirely. Since `@import` is
+     * the first line of a great many stylesheets, the rule this file exists for
+     * reported nothing at all on them.
+     */
+    if (ch === ';' && text.slice(selectorStart, i).trim().startsWith('@')) {
+      i++;
+      selectorStart = i;
+      continue;
+    }
+
     if (ch === '{') {
       const head = text.slice(selectorStart, i).trim();
       if (head.startsWith('@')) {
@@ -183,12 +232,13 @@ export function parse(css: string): RuleSet[] {
         selectorStart = i;
         continue;
       }
-      // Find the matching close brace, allowing one level of nesting.
       let depth = 1;
       let j = i + 1;
       while (j < text.length && depth > 0) {
-        if (text[j] === '{') depth++;
-        else if (text[j] === '}') depth--;
+        const c = text[j];
+        if (c === '"' || c === "'") { j = skipString(j); continue; }
+        if (c === '{') depth++;
+        else if (c === '}') depth--;
         j++;
       }
       const body = text.slice(i + 1, j - 1);
@@ -197,6 +247,7 @@ export function parse(css: string): RuleSet[] {
       selectorStart = i;
       continue;
     }
+
     if (ch === '}') {
       conditions.pop();
       i++;
