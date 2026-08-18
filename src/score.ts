@@ -101,11 +101,19 @@ export interface ScoreContribution {
  */
 export function explainScore(findings: Finding[]): {
   score: number;
+  slop: number;
+  quality: number;
   ceiling: number;
   contributions: ScoreContribution[];
 } {
   const scored = findings.filter((f) => !f.advisory);
-  const total = score(scored);
+  // The same headline `scan` prints, computed the same way. When this returned
+  // the union score instead, `why-score` and `scan` disagreed by nine points
+  // and a whole verdict band — and the command you run to work out what to fix
+  // was the one telling you the wrong number.
+  const slop = scoreKind(scored, 'slop');
+  const quality = scoreKind(scored, 'quality');
+  const total = headline(slop, quality);
 
   let totalPenalty = 0;
   for (const f of scored) {
@@ -120,14 +128,24 @@ export function explainScore(findings: Finding[]): {
       ).size;
       const penalty =
         (f.weight / 100) * CONFIDENCE_DISCOUNT[f.confidence] * evidenceMultiplier(instances);
-      // What the score becomes with this one finding removed. The curve is not
-      // linear, so this is measured rather than apportioned.
-      const without = score(scored.filter((x) => x.ruleId !== f.ruleId));
+      // What this finding's own axis becomes without it. Measured against the
+      // axis rather than the headline, because the headline is the worse of the
+      // two: on a page failing one axis, every fix on the other would show a
+      // worth of zero, which is arithmetically true and useless for deciding
+      // what to do. The curve is not linear, so this is measured, not
+      // apportioned.
+      // Filter by identity, not by rule id. promote.ts emits one finding per
+      // rule so the two agree today, but if that ever stops holding, matching
+      // on the id removes every sibling too and reports each of them as worth
+      // the whole group — the exact wrong-number-to-act-on this function was
+      // written to prevent.
+      const axis = scored.filter((x) => x.kind === f.kind);
+      const without = score(axis.filter((x) => x !== f));
       return {
         ruleId: f.ruleId,
         title: f.title,
         kind: f.kind,
-        worth: Number((without - total).toFixed(1)),
+        worth: Number((without - (f.kind === 'slop' ? slop : quality)).toFixed(1)),
         penalty: Number(penalty.toFixed(3)),
         share: totalPenalty > 0 ? penalty / totalPenalty : 0,
         instances,
@@ -136,7 +154,7 @@ export function explainScore(findings: Finding[]): {
     })
     .sort((a, b) => b.penalty - a.penalty);
 
-  return { score: total, ceiling: 100, contributions };
+  return { score: total, slop, quality, ceiling: 100, contributions };
 }
 
 export function grade(value: number): string {
@@ -166,4 +184,26 @@ function qualityGrade(value: number): string {
  */
 export function verdict(slop: number, quality: number): string {
   return quality < slop ? qualityGrade(quality) : grade(slop);
+}
+
+/**
+ * The single number on the header line: whichever axis is worse.
+ *
+ * It used to be `score()` over both axes at once, which reads like a summary
+ * and is not one. Penalties add before the curve is applied, so the union is
+ * always at or below *both* parts — two axes of 89 headlined 79, and two of 39
+ * headlined 15. The decomposition printed underneath did not decompose, and
+ * worse, `verdict()` names the worse axis while the number came from the union,
+ * so the header could read "heavily templated" over a 15 that grades as slop.
+ *
+ * A page is as good as its weakest dimension. Taking the worse axis makes the
+ * word and the number come from the same place by construction, and the two
+ * lines below the header now add up to the one above them.
+ *
+ * `redpen check` does not gate on this. It gates on each axis separately, which
+ * is strictly stronger: a regression on the healthier axis is invisible to any
+ * min, and a gate that cannot see a regression is not a gate.
+ */
+export function headline(slop: number, quality: number): number {
+  return Math.min(slop, quality);
 }

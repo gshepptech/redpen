@@ -1,5 +1,6 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
-import { join, resolve, dirname } from 'node:path';
+import { join, resolve, dirname, basename } from 'node:path';
+import { homedir } from 'node:os';
 import type { Category, Confidence, Surface } from './types.js';
 
 /**
@@ -111,17 +112,32 @@ const BASELINE_FILE = 'baseline.json';
  * `internal/dash` writes to the repo root rather than burying a state directory
  * inside a source tree. Reported from the field twice — it got swept into a
  * commit both times.
+ *
+ * Two things bound the walk, both because it once wrote a baseline into
+ * `~/.claude/.redpen`. That directory has a package.json, so by the marker rule
+ * it was a project; it was five levels above the scanned path with nothing in
+ * between, and it was not remotely what anyone meant. So: never a home
+ * directory or anything above one, and never a dot-directory — `.claude`,
+ * `.config`, `.cache` are not projects you scan. Failing both, the state goes
+ * beside what was scanned, which is always defensible even when it is not
+ * tidy.
  */
 export function stateRoot(scanRoot: string): string {
   const markers = ['.git', 'package.json', 'go.mod', 'Cargo.toml', 'pyproject.toml', 'deno.json'];
-  let dir = resolve(scanRoot);
+  const home = resolve(homedir());
+  const start = resolve(scanRoot);
+
+  let dir = start;
   for (let i = 0; i < 12; i++) {
-    if (markers.some((m) => existsSync(join(dir, m)))) return dir;
+    const usable = dir === start || (dir !== home && !dir.startsWith(`${home}/.`) && !basename(dir).startsWith('.'));
+    if (usable && markers.some((m) => existsSync(join(dir, m)))) return dir;
     const parent = dirname(dir);
-    if (parent === dir) break;
+    // Stop at the home directory rather than walking through it. Above it there
+    // is nothing that could be this scan's project.
+    if (parent === dir || dir === home) break;
     dir = parent;
   }
-  return resolve(scanRoot);
+  return start;
 }
 
 export function loadConfig(root: string): RedpenConfig {
@@ -151,6 +167,18 @@ export function saveConfig(root: string, config: RedpenConfig): void {
 
 export interface Baseline {
   score: number;
+  /**
+   * The two axes, recorded separately because that is what `check` gates on.
+   *
+   * A combined score cannot see a regression on the healthier axis, and until
+   * these were stored there was nothing else to compare. Optional because
+   * baselines written before they existed have none — and because `score` meant
+   * something different then (the union of both axes rather than the worse of
+   * them), such a baseline is not comparable and `check` refuses it outright
+   * rather than gating on two numbers that were never the same quantity.
+   */
+  slop?: number;
+  quality?: number;
   recordedAt: string;
   /** Rule ids present at baseline, so new tells are reported even if the score held. */
   knownRules: string[];

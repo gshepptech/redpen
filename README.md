@@ -434,12 +434,14 @@ dashboard: `default-sans`, `monotonous-spacing`, `ghost-cards`, `over-rounding`,
 
 ## What this has and has not been proven against
 
-v0.1.0. The corpus is 119 rules across 13 categories, the suite is 127 tests,
+v0.1.0. The corpus is 119 rules across 13 categories, the suite is 137 tests,
 and the whole thing has been run end to end against exactly **one** real
 project — a ten-route Go dashboard — plus its own fixtures. That run found six
-defects in the dashboard and six in redpen itself, which is the honest summary
-of how mature this is: it works, and it has not met a codebase that surprised
-it yet.
+defects in the dashboard and six in redpen itself. Auditing redpen's own output
+afterwards found several more, including a header that printed a number and a
+word computed from different things. That is the honest summary of how mature
+this is: it works, most of what has been found in it was found by pointing it
+at something real, and it has not yet met a codebase that surprised it.
 
 Specifically not yet true:
 

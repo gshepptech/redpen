@@ -16,7 +16,7 @@ import {
   DEFAULT_CONFIG,
 } from './config.js';
 import * as store from './fingerprint/store.js';
-import { grade, verdict, explainScore } from './score.js';
+import { verdict, explainScore } from './score.js';
 import type { Confidence } from './types.js';
 
 const HELP = `
@@ -291,17 +291,39 @@ async function cmdScan(root: string, args: Args, gating: boolean): Promise<void>
     );
   }
 
-  const drop = baseline.score - result.score;
+  // A baseline without the two axes was written under the old scoring model,
+  // where `score` was the union of both rather than the worse of them. The two
+  // numbers are not the same quantity, so comparing them would gate on
+  // arithmetic rather than on the page.
+  if (baseline.slop === undefined || baseline.quality === undefined) {
+    process.stderr.write(
+      pc.red(
+        '\n  cannot check: this baseline predates the two-axis score, so its number is not\n' +
+        '  the same quantity as this run\'s. Re-record it with `redpen baseline`.\n',
+      ),
+    );
+    process.exit(2);
+  }
+
+  // Gate on each axis, not on the headline. The headline is the worse of the
+  // two, so a page that regresses on its healthier axis moves the headline not
+  // at all — and a gate that cannot see a regression is not a gate.
+  const drops = [
+    { axis: 'slop', was: baseline.slop, now: result.slopScore },
+    { axis: 'quality', was: baseline.quality, now: result.qualityScore },
+  ]
+    .map((a) => ({ ...a, drop: a.was - a.now }))
+    .filter((a) => a.drop > result.config.tolerance);
   const known = new Set(baseline.knownRules);
   const introduced = ruleIds(result.findings.filter((f) => f.confidence !== 'possible')).filter(
     (id) => !known.has(id),
   );
 
   process.stderr.write('\n');
-  if (drop > result.config.tolerance) {
+  for (const a of drops) {
     process.stderr.write(
       pc.red(
-        `  score dropped ${drop} point(s) below the baseline of ${baseline.score} (tolerance ${result.config.tolerance})\n`,
+        `  ${a.axis} dropped ${a.drop} point(s), ${a.was} to ${a.now} (tolerance ${result.config.tolerance})\n`,
       ),
     );
   }
@@ -309,12 +331,15 @@ async function cmdScan(root: string, args: Args, gating: boolean): Promise<void>
     process.stderr.write(pc.red(`  new tells since baseline: ${introduced.join(', ')}\n`));
   }
 
-  if (drop > result.config.tolerance || introduced.length) {
+  if (drops.length || introduced.length) {
     process.exit(1);
   }
 
   process.stderr.write(
-    pc.green(`  holding at ${result.score} against a baseline of ${baseline.score}\n`),
+    pc.green(
+      `  holding: slop ${result.slopScore} against ${baseline.slop}, ` +
+        `quality ${result.qualityScore} against ${baseline.quality}\n`,
+    ),
   );
 }
 
@@ -332,6 +357,8 @@ async function cmdBaseline(root: string, args: Args): Promise<void> {
 
   saveBaseline(root, {
     score: result.score,
+    slop: result.slopScore,
+    quality: result.qualityScore,
     recordedAt: new Date().toISOString(),
     knownRules: ruleIds(result.findings.filter((f) => f.confidence !== 'possible')),
     channels: result.channelsRun,
@@ -451,7 +478,12 @@ async function cmdWhyScore(root: string, args: Args): Promise<void> {
   const excluded = result.findings.length - scorable.length;
   const w = process.stdout.write.bind(process.stdout);
 
-  w(`\n  ${pc.bold('redpen')}  ${pc.bold(String(total))}${pc.dim('/100')}   ${pc.dim(grade(total))}\n`);
+  // The word comes from the same pair of numbers the header prints, so it can
+  // never name a band the number is not in.
+  w(
+    `\n  ${pc.bold('redpen')}  ${pc.bold(String(total))}${pc.dim('/100')}   ` +
+      `${pc.dim(verdict(result.slopScore, result.qualityScore))}\n`,
+  );
   w(`  ${pc.dim('slop')} ${result.slopScore}   ${pc.dim('quality')} ${result.qualityScore}\n\n`);
 
   if (!contributions.length) {

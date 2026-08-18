@@ -8,7 +8,7 @@ import { MIN_SURFACE_CONFIDENCE } from './channels/surface.js';
 import { loadCorpus, appliesTo, isActionable } from './corpus/load.js';
 import { findClashes, fingerprintFindings } from './fingerprint/distance.js';
 import * as store from './fingerprint/store.js';
-import { score, scoreKind } from './score.js';
+import { scoreKind, headline } from './score.js';
 import { loadConfig, configIgnores, stateRoot, type RedpenConfig } from './config.js';
 import type { ScanResult, RawFinding, Channel, Finding, Surface } from './types.js';
 
@@ -327,10 +327,13 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
   // legitimately often enough that counting them would be noise, not signal.
   const advisory = inScope.filter((f) => f.advisory);
 
+  const slopScore = scoreKind(scored, 'slop');
+  const qualityScore = scoreKind(scored, 'quality');
+
   return {
-    score: score(scored),
-    slopScore: scoreKind(scored, 'slop'),
-    qualityScore: scoreKind(scored, 'quality'),
+    score: headline(slopScore, qualityScore),
+    slopScore,
+    qualityScore,
     surfaces,
     advisory,
     vision: { checked: visionChecked, cleared: visionCleared },
