@@ -4,6 +4,11 @@
 
 One verdict on your UI.
 
+A linter for the things that make an interface read as machine-made — the
+default violet, the three-card grid, the gradient heading — plus the ordinary
+defects that are just broken. It reads your source, drives the real page in a
+browser, and only calls something a fact when more than one of them agrees.
+
 ```
 npx @gshepptech/redpen scan . --url http://localhost:3000
 ```
@@ -35,7 +40,7 @@ Several good catalogues already describe what AI-generated UI looks like, and
 
 Running them together is worse than running one. They use different
 vocabularies, they contradict each other, and concatenating ~200 rules doubles
-the false positives without doubling the truth. redpen merges them into 96 rules
+the false positives without doubling the truth. redpen merges them into 119 rules
 with provenance intact, then does three things none of them does.
 
 **It cross-checks before it reports.** The four catalogues inspect three
@@ -68,6 +73,12 @@ same page wearing different words. Changing the palette does not count as
 variety; the metric is weighted so that it barely moves.
 
 ## Install
+
+> **Not released yet.** @gshepptech/redpen is not on npm and this repository is
+> private, so every command in this section will fail today. The working path
+> is a clone: `git clone`, `npm install`, `npm run build`, then `node dist/cli.js
+> scan .` — or `npm link` to get `redpen` on your PATH. The instructions below
+> are what will work once it ships.
 
 **As a Claude Code plugin** — gives you `/redpen:audit`, `/redpen:why`,
 `/redpen:gate`, and a skill that fires whenever you build or review UI:
@@ -318,7 +329,7 @@ decides which rules are true there.**
 On an operate surface familiarity is a *feature*. A single type family is the
 right answer there and a tell on a landing page; uniform spacing is consistency
 in a settings panel and monotony on a marketing site; identical repeating
-components are the point of a data table. 20 rules are scoped accordingly, and
+components are the point of a data table. 21 rules are scoped accordingly, and
 firing them on the wrong surface is a false positive by construction.
 
 redpen detects the surface from the rendered DOM — controls and data rows versus
@@ -341,10 +352,41 @@ dashboard: `default-sans`, `monotonous-spacing`, `ghost-cards`, `over-rounding`,
 `line-length`, `hero-three-cards`, `centered-everything-hero`, `generic-cta`,
 `marketing-buzzword`, `numbered-section-labels`.
 
+## What this has and has not been proven against
+
+v0.1.0. The corpus is 119 rules across 13 categories, the suite is 116 tests,
+and the whole thing has been run end to end against exactly **one** real
+project — a ten-route Go dashboard — plus its own fixtures. That run found six
+defects in the dashboard and six in redpen itself, which is the honest summary
+of how mature this is: it works, and it has not met a codebase that surprised
+it yet.
+
+Specifically not yet true:
+
+- **No independent validation.** Every project it has scanned was built
+  alongside it. Nothing here has been tested against a repository whose author
+  was not in the room.
+- **The vision channel is hand-answered.** It writes a brief and folds answers
+  back in; it does not look at the screenshots itself.
+- **Dark mode is one extra pass.** An emulated preference and, where the page
+  ships one, its own theme toggle — but not a matrix of both against every
+  viewport.
+- **The composition rules are unmeasured.** Seven of them ask a human a
+  question no detector can answer, and they carry no evidence ranking because
+  no study measured them.
+
+If you run it against a codebase it has never seen and it says something
+useless, that is the most valuable bug report available right now.
+
 ## Rule categories
 
 `color` · `typography` · `layout` · `depth` · `motion` · `iconography` · `copy`
-· `usability` · `a11y` · `sameness`
+· `usability` · `a11y` · `sameness` · `chrome` · `system` · `composition`
+
+`chrome` is the surfaces nobody drew — selection, caret, scrollbar, focus ring.
+`system` is drift from the project's own declared tokens. `composition` is the
+seven judgements no measurement reaches, and the only category that is
+vision-only by construction.
 
 Accessibility rules sit next to the visual rule they interact with — contrast in
 `color`, heading order in `typography`, alt text in `iconography` — because that
@@ -358,11 +400,11 @@ taste. See [NOTICE](NOTICE) for the projects behind each and their licences.
 `redpen sources`:
 
 ```
-  96 rules merged from:
-     132  catalogue     curated lists of design tells
-      46  heuristics    the usability and a11y tradition
+  119 rules merged from:
+     155  catalogue     curated lists of design tells
+      50  heuristics    the usability and a11y tradition
       18  study         a tabulation of 3,033 Reddit comments
-       5  redpen        named here first
+      12  redpen        named here first
 ```
 
 The counts exceed the rule total because most rules were named by more than one
