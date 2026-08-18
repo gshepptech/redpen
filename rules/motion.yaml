@@ -37,7 +37,7 @@
 
 - id: transition-all
   kind: slop
-  title: transition-all
+  title: Every property animated at once
   category: motion
   severity: medium
   weight: 63

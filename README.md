@@ -55,10 +55,10 @@ hidden behind a count:
       style.css:35  background: linear-gradient(90deg, #7c3aed, #3b82f6);
       … and 6 more
 
-  ◐  79  no-focus-visible          Interactive element missing focus, active, o…
-  ◐  78  unlabelled-input          Form control with no associated label
-  ◐  76  italic-display            Italic headings or display type
-  ◐  74  default-sans              Inter, Geist, or Roboto as the only face
+  ◐  79  no-focus-visible         Interactive element missing focus, active, or…
+  ◐  78  unlabelled-input         Form control with no associated label
+  ◐  76  italic-display           Italic headings or display type
+  ◐  74  default-sans             Inter, Geist, or Roboto as the only face
       19 listed, not argued — `redpen why <rule-id>`, or --verbose for all
 ```
 
@@ -439,7 +439,7 @@ dashboard: `default-sans`, `monotonous-spacing`, `ghost-cards`, `over-rounding`,
 
 ## What this has and has not been proven against
 
-v0.1.0. The corpus is 119 rules across 13 categories, the suite is 140 tests,
+v0.1.0. The corpus is 119 rules across 13 categories, the suite is 142 tests,
 and the whole thing has been run end to end against exactly **one** real
 project — a ten-route Go dashboard — plus its own fixtures. That run found six
 defects in the dashboard and six in redpen itself. Auditing redpen's own output

@@ -22,6 +22,20 @@ const CONFIDENCE_MARK: Record<Confidence, string> = {
   possible: '○',
 };
 
+/**
+ * The pip, painted.
+ *
+ * It encodes confidence, and confidence is what the whole tool exists to
+ * establish, but it was printed in the default colour while the section header
+ * fifty lines above carried the meaning. On a report this long the header is off
+ * the screen for most of the reading, and a filled circle in the terminal's
+ * foreground colour says nothing on its own. Same palette as the section header
+ * it belongs to, so the two agree.
+ */
+function mark(c: Confidence): string {
+  return CONFIDENCE_LABEL[c](CONFIDENCE_MARK[c]);
+}
+
 export interface TerminalOptions {
   verbose: boolean;
   showIgnored: boolean;
@@ -81,7 +95,7 @@ export function renderTerminal(result: ScanResult, opts: TerminalOptions): strin
   }
 
   const cats = scoreByCategory(findings);
-  out.push(pc.dim('  by category'));
+  out.push(pc.dim('  BY CATEGORY'));
   // Thirteen categories on one line ran to 138 characters. Pack them into rows
   // that hold the same right edge as everything else, measuring the plain text
   // because the coloured string carries escape codes that occupy no columns.
@@ -120,7 +134,8 @@ export function renderTerminal(result: ScanResult, opts: TerminalOptions): strin
     }
     const rest = list.slice(depth);
     if (rest.length) {
-      for (const f of rest) out.push(rosterLine(f));
+      const idWidth = idColumn(rest);
+      for (const f of rest) out.push(rosterLine(f, idWidth));
       // Named, not hidden. The count on its own is the failure this project
       // keeps finding in itself — a report that says how much it is not saying
       // reads as complete, and a reader cannot tell what they were not shown.
@@ -134,7 +149,7 @@ export function renderTerminal(result: ScanResult, opts: TerminalOptions): strin
   }
 
   if (result.clashes.length) {
-    out.push(pc.red(pc.bold('  SAMENESS')));
+    out.push(pc.red(pc.bold(`  SAMENESS (${result.clashes.length})`)));
     out.push(pc.dim('  Pages in this project that share a skeleton.'));
     out.push('');
     for (const c of result.clashes.slice(0, 6)) {
@@ -148,9 +163,10 @@ export function renderTerminal(result: ScanResult, opts: TerminalOptions): strin
 
   if (result.advisory.length) {
     out.push(pc.dim(`  ADVISORY (${result.advisory.length}) — reported, never scored`));
+    const advWidth = idColumn(result.advisory);
     for (const f of result.advisory) {
       out.push(
-        pc.dim(`    ${f.ruleId.padEnd(24)}  ${f.title}`),
+        pc.dim(`         ${f.ruleId.padEnd(advWidth)}  ${f.title}`),
       );
     }
     out.push('');
@@ -175,25 +191,34 @@ const MEASURE = 80;
  * title is truncated here and nowhere else — in a roster the title is a list
  * item, not a heading, and the rule id beside it recovers anything the cut lost.
  */
-function rosterLine(f: Finding): string {
-  const mark = CONFIDENCE_MARK[f.confidence];
+function rosterLine(f: Finding, idWidth: number): string {
   const weight = String(f.weight).padStart(3);
-  const id = f.ruleId.padEnd(24);
+  const id = f.ruleId.padEnd(idWidth);
   const room = MEASURE - 4 - weight.length - 2 - id.length - 2;
   const title = f.title.length > room ? `${f.title.slice(0, room - 1)}\u2026` : f.title;
-  return `  ${mark} ${pc.dim(weight)}  ${pc.dim(id)}  ${title}`;
+  return `  ${mark(f.confidence)} ${pc.dim(weight)}  ${pc.dim(id)}  ${title}`;
 }
+
+/**
+ * The id column is as wide as the widest id in the group and no wider.
+ *
+ * It was a fixed 24 characters, which is a guess about a corpus that changes
+ * every time a rule is added. Every character it guesses too wide is a
+ * character taken off the end of every title on the screen — which is how
+ * `no-reduced-motion` came to read "Motion with no prefers-reduced-motion
+ * fallba…" while eight columns of the id gutter sat empty beside it.
+ */
+const idColumn = (list: Finding[]) => Math.max(...list.map((f) => f.ruleId.length));
 
 function renderFinding(f: Finding, opts: TerminalOptions): string[] {
   const out: string[] = [];
-  const mark = CONFIDENCE_MARK[f.confidence];
   const channels = pc.dim(`[${f.channels.join('+')}]`);
 
   // The title line is deliberately exempt from MEASURE. The 78-character limit
   // redpen enforces on the pages it scans is about running text — past that the
   // eye loses the line return — and a single heading has no line return to
   // lose. Truncating a title costs the reader the one thing they scan for.
-  out.push(`  ${mark} ${pc.bold(f.title)} ${channels} ${pc.dim(`${f.ruleId} · ${f.weight}`)}`);
+  out.push(`  ${mark(f.confidence)} ${pc.bold(f.title)} ${channels} ${pc.dim(`${f.ruleId} · ${f.weight}`)}`);
   out.push(`    ${wrap(f.why, MEASURE - 4, '    ')}`);
   out.push(`    ${pc.green('fix')} ${wrap(f.fix, MEASURE - 8, '        ')}`);
 

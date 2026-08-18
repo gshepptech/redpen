@@ -108,3 +108,53 @@ test('the header states a verdict and leaves the measuring to the rows', () => {
   assert.ok(!header.includes('█'), `the header is drawing a bar again: ${header}`);
   assert.match(header, /22/);
 });
+
+test('the pip carries its tier colour, so a scrolled report still says which', () => {
+  // It used to print in the terminal's default colour while the section header
+  // fifty lines above carried the meaning. On a report this long that header is
+  // off the screen for most of the reading.
+  const r = pageNear(0);
+  r.findings = [
+    { ...finding('slop', 90, 'a-confirmed'), confidence: 'confirmed' },
+    { ...finding('slop', 80, 'b-likely'), confidence: 'likely' },
+  ];
+  r.slopScore = 30;
+  r.qualityScore = 70;
+  const lines = renderTerminal(r, OPTS).split('\n');
+
+  for (const [id, pip] of [['a-confirmed', '\u25cf'], ['b-likely', '\u25d0']]) {
+    const row = lines.find((l) => l.includes(id) && l.includes(pip));
+    assert.ok(row, `no row for ${id}`);
+    const before = row.slice(0, row.indexOf(pip));
+    // A fresh regex per check: COLOUR carries the /g flag, and assert.match
+    // advances its lastIndex, so reusing it here fails the second row for a
+    // reason that has nothing to do with the pip.
+    assert.match(
+      before,
+      new RegExp(ESC + '\\[3[0-7]m'),
+      `the ${id} pip is unpainted: ${JSON.stringify(row)}`,
+    );
+  }
+});
+
+test('the id column is as wide as the widest id and no wider', () => {
+  // Fixed at 24, every character it guessed too wide came off the end of every
+  // title on screen.
+  const r = pageNear(0);
+  r.findings = Array.from({ length: 9 }, (_, i) => ({
+    ...finding('slop', 70 - i, `short-${i}`),
+    confidence: 'likely',
+    title: 'A title long enough that the room left for it is worth measuring exactly',
+  }));
+  r.slopScore = 30;
+  const strip2 = (x) => x.replace(COLOUR, '').replace(new RegExp(ESC + '\\[[0-9;]*m', 'g'), '');
+  const roster = renderTerminal(r, OPTS)
+    .split('\n')
+    .map(strip2)
+    .filter((l) => /^  [\u25cf\u25d0\u25cb] +\d+ +short-\d/.test(l));
+  assert.ok(roster.length, 'nothing was folded into a roster');
+  for (const l of roster) {
+    const gap = l.match(/short-\d(\s+)/)[1];
+    assert.equal(gap.length, 2, `id gutter padded to a guess, not to the ids: ${JSON.stringify(l)}`);
+  }
+});
