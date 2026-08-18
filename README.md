@@ -434,7 +434,7 @@ dashboard: `default-sans`, `monotonous-spacing`, `ghost-cards`, `over-rounding`,
 
 ## What this has and has not been proven against
 
-v0.1.0. The corpus is 119 rules across 13 categories, the suite is 116 tests,
+v0.1.0. The corpus is 119 rules across 13 categories, the suite is 127 tests,
 and the whole thing has been run end to end against exactly **one** real
 project — a ten-route Go dashboard — plus its own fixtures. That run found six
 defects in the dashboard and six in redpen itself, which is the honest summary
@@ -492,4 +492,7 @@ catalogue. That overlap is what the merge collapsed.
 
 ## Licence
 
-MIT.
+MIT, except for five files. `commands/{typeset,layout,color,polish,distill}.md`
+are derivative works of Apache-2.0 material and stay under that licence — each
+says so at the top, [LICENSE-APACHE-2.0](LICENSE-APACHE-2.0) is the text, and
+[NOTICE](NOTICE) itemises what came from where.

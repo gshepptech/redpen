@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "One verdict on your UI. Source, rendered DOM, and vision \u2014 cross-confirmed, weighted by what humans actually notice.",
   "type": "module",
-  "license": "MIT",
+  "license": "MIT AND Apache-2.0",
   "engines": {
     "node": ">=20.11"
   },
@@ -16,7 +16,9 @@
     "skills",
     "commands",
     ".claude-plugin",
-    "NOTICE"
+    "NOTICE",
+    "LICENSE",
+    "LICENSE-APACHE-2.0"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",

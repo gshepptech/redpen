@@ -2,6 +2,11 @@ redpen
 Copyright 2026 the redpen authors
 Licensed under the MIT License. See LICENSE.
 
+Five files — commands/{typeset,layout,color,polish,distill}.md — are derivative
+works of Apache-2.0 material and remain under that licence. Each carries its own
+notice saying so and stating what was changed; the licence text ships as
+LICENSE-APACHE-2.0. Everything else in this repository is MIT.
+
 ------------------------------------------------------------------------------
 Upstream catalogues
 ------------------------------------------------------------------------------
@@ -27,8 +32,9 @@ severity weighting in rules/*.yaml are original work.
     on which kind of page.
 
     The five fix commands — typeset, layout, color, polish, distill — are ported
-    from skill/reference/{typeset,layout,colorize,polish,distill}.md. Their
-    structure and much of their craft guidance is impeccable's, in particular:
+    from skill/reference/{typeset,layout,colorize,polish,distill}.md and stay
+    under Apache-2.0 for that reason; see LICENSE-APACHE-2.0. Their structure
+    and much of their craft guidance is impeccable's, in particular:
       - "two isolated assessments": look first, scan second, and do not let the
         findings anchor the looking;
       - "a clean scan is a floor, not proof";
@@ -64,7 +70,7 @@ severity weighting in rules/*.yaml are original work.
 What redpen added
 ------------------------------------------------------------------------------
 
-  - The unified schema and the merge itself: 96 rules collapsed from 202
+  - The unified schema and the merge itself: 119 rules collapsed from 223
     upstream references, each with provenance retained.
   - Cross-channel promotion (src/promote.ts). No upstream catalogue reconciles
     a source-level hit against a rendered-DOM hit, so none of them can tell a
