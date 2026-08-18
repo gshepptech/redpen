@@ -1,3 +1,5 @@
+![redpen scanning a page: a score of 76 with the verdict "minor tells", an "AI purple as the primary colour" finding promoted from source-only to source+render once both channels agree, and a sameness block reporting two pages that share a section rhythm](assets/hero.gif)
+
 # redpen
 
 One verdict on your UI.
