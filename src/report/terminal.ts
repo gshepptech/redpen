@@ -80,7 +80,7 @@ export function renderTerminal(result: ScanResult, opts: TerminalOptions): strin
     }
 
     out.push(CONFIDENCE_LABEL[conf](`  ${conf.toUpperCase()} (${list.length})`));
-    out.push(pc.dim(`  ${describeConfidence(conf)}`));
+    out.push(pc.dim(`  ${wrap(describeConfidence(conf), MEASURE - 2, '  ')}`));
     out.push('');
 
     for (const f of list) {
@@ -102,12 +102,27 @@ export function renderTerminal(result: ScanResult, opts: TerminalOptions): strin
   }
 
   const cats = scoreByCategory(findings);
-  const catLine = Object.entries(cats)
-    .sort((a, b) => a[1] - b[1])
-    .map(([k, v]) => `${k} ${colorScore(v)}`)
-    .join(pc.dim('  ·  '));
   out.push(pc.dim('  by category'));
-  out.push(`  ${catLine}`);
+  // Thirteen categories on one line ran to 138 characters. Pack them into rows
+  // that hold the same right edge as everything else, measuring the plain text
+  // because the coloured string carries escape codes that occupy no columns.
+  const items = Object.entries(cats)
+    .sort((a, b) => a[1] - b[1])
+    .map(([k, v]) => ({ plain: `${k} ${String(v).padStart(3)}`, shown: `${k} ${colorScore(v)}` }));
+  const SEP = '  ·  ';
+  let row: typeof items = [];
+  let used = 0;
+  for (const it of items) {
+    const cost = it.plain.length + (row.length ? SEP.length : 0);
+    if (row.length && used + cost > MEASURE - 2) {
+      out.push(`  ${row.map((r) => r.shown).join(pc.dim(SEP))}`);
+      row = [];
+      used = 0;
+    }
+    row.push(it);
+    used += it.plain.length + (row.length > 1 ? SEP.length : 0);
+  }
+  if (row.length) out.push(`  ${row.map((r) => r.shown).join(pc.dim(SEP))}`);
   out.push('');
 
   if (result.advisory.length) {
@@ -131,14 +146,21 @@ export function renderTerminal(result: ScanResult, opts: TerminalOptions): strin
   return out.join('\n');
 }
 
+/** The right edge every block in the report shares. */
+const MEASURE = 80;
+
 function renderFinding(f: Finding, opts: TerminalOptions): string[] {
   const out: string[] = [];
   const mark = CONFIDENCE_MARK[f.confidence];
   const channels = pc.dim(`[${f.channels.join('+')}]`);
 
+  // The title line is deliberately exempt from MEASURE. The 78-character limit
+  // redpen enforces on the pages it scans is about running text — past that the
+  // eye loses the line return — and a single heading has no line return to
+  // lose. Truncating a title costs the reader the one thing they scan for.
   out.push(`  ${mark} ${pc.bold(f.title)} ${channels} ${pc.dim(`${f.ruleId} · ${f.weight}`)}`);
-  out.push(`    ${wrap(f.why, 76, '    ')}`);
-  out.push(`    ${pc.green('fix')} ${wrap(f.fix, 76, '    ')}`);
+  out.push(`    ${wrap(f.why, MEASURE - 4, '    ')}`);
+  out.push(`    ${pc.green('fix')} ${wrap(f.fix, MEASURE - 8, '        ')}`);
 
   const shown = f.evidence.slice(0, opts.maxEvidence);
   for (const e of shown) {
@@ -167,8 +189,19 @@ function formatEvidence(e: Evidence): string {
   // Only say the scheme when it is dark. Light is the assumption, and printing
   // it on every line of an unthemed site is noise.
   const scheme = e.scheme === 'dark' ? ' dark' : '';
-  const excerpt = e.excerpt ? `  ${e.excerpt}` : '';
-  return `${where}${vp}${scheme}${excerpt}`;
+  const head = `${where}${vp}${scheme}`;
+  if (!e.excerpt) return head;
+
+  // The prose above wraps at 76 from an indent of 4, so the block has a right
+  // edge at column 80. Evidence sits at an indent of 6 and used to ignore that
+  // edge entirely, running to 146 characters — past the 78ch maximum redpen's
+  // own line-length rule enforces on the pages it scans. The address is never
+  // cut, because a location you cannot copy is worth nothing; the excerpt is,
+  // because it is there to recognise the line, not to read it.
+  const budget = MEASURE - 6 - head.length - 2;
+  const excerpt =
+    budget > 12 && e.excerpt.length > budget ? `${e.excerpt.slice(0, budget - 1)}…` : e.excerpt;
+  return `${head}  ${excerpt}`;
 }
 
 function describeConfidence(c: Confidence): string {
