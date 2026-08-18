@@ -1,6 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { distance, findClashes, fingerprintFindings, CLASH_THRESHOLD } from '../dist/fingerprint/distance.js';
+import { pageId, save, priorPages, clear } from '../dist/fingerprint/store.js';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 const base = {
   page: 'a',
@@ -159,4 +163,50 @@ test('the corpus-wide sameness rules also respect the surface hint', () => {
   );
   assert.ok(fingerprintFindings(pages, []).length > 0, 'marketing pages still report');
   assert.deepEqual(fingerprintFindings(pages, [], new Set(['a', 'b', 'c'])), []);
+});
+
+/**
+ * A page's identity, and the dev-server port that is not part of it.
+ *
+ * Merging by page id exists so a re-scanned page replaces its own record
+ * rather than clashing with itself, and that only holds if the id is stable. A
+ * loopback port is the least stable thing about a local URL: Vite walks 5173,
+ * 5174, 5175 as ports are taken; Next walks 3000, 3001.
+ *
+ * Found on a real single-page app. Two runs on two ports left two records of
+ * one page, and redpen reported it as two pages sharing a skeleton — its
+ * strongest finding, about nothing.
+ */
+
+test('a loopback port is not part of a page identity', () => {
+  assert.equal(pageId('http://localhost:5174/'), pageId('http://localhost:5175/'));
+  assert.equal(pageId('http://127.0.0.1:3000/guide'), pageId('http://127.0.0.1:3001/guide'));
+  // Different paths stay different pages.
+  assert.notEqual(pageId('http://localhost:5174/'), pageId('http://localhost:5174/guide'));
+});
+
+test('a real host keeps its port, because there two ports are two deployments', () => {
+  assert.notEqual(pageId('https://example.com:8080/'), pageId('https://example.com:9090/'));
+  assert.equal(pageId('https://example.com/'), 'https://example.com/');
+});
+
+test('the same page on two ports is one record, not two', () => {
+  const root = mkdtempSync(join(tmpdir(), 'redpen-fp-'));
+  try {
+    const print = (page) => ({ ...base, page });
+    save(root, [print('http://localhost:5175/')]);
+    save(root, [print('http://localhost:5174/')]);
+
+    // Nothing is "prior" to a scan of the same page on a different port, so
+    // there is nothing for it to clash with.
+    const prior = priorPages(root, ['http://localhost:5174/']);
+    assert.deepEqual(
+      prior.map((p) => p.page),
+      [],
+      `the same page on another port was treated as a different page: ${prior.map((p) => p.page).join(', ')}`,
+    );
+  } finally {
+    clear(root);
+    rmSync(root, { recursive: true, force: true });
+  }
 });
