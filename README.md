@@ -149,6 +149,48 @@ redpen init [path]        write .redpen/config.json
 | `--verbose` | include single-channel findings and rule provenance |
 | `--min <level>` | confidence floor for scoring: `confirmed`, `likely`, `possible` |
 
+### The markdown report
+
+`--markdown` writes the same verdict in the shape a pull request wants — every
+finding keeps its weight, its channels and its provenance, so a reviewer can
+argue with the rule rather than only with the number.
+
+````markdown
+# redpen — 9/100 (slop)
+
+| Axis | Score | Findings | What it measures |
+| --- | --- | --- | --- |
+| **slop** | 22 | 16 | whether it reads as machine-made |
+| **quality** | 42 | 11 | whether it is broken regardless of taste |
+
+Channels run: source.
+
+> Not run: render, vision. Findings that depend on those channels are
+> unconfirmed rather than absent.
+
+## confirmed (3)
+
+### Full-height sections measured against the wrong viewport
+
+`viewport-height-jump` · weight 63 · seen by source
+
+On mobile browsers `100vh` is the viewport with the address bar hidden, so a
+section sized to it is taller than the screen on load and the page jumps as the
+bar retracts. The author never sees it, because desktop has no retracting bar.
+
+**Fix.** Use `100dvh` for the height that follows the bar, or `100svh` for the
+smallest guaranteed viewport when you need no jump at all.
+
+```
+style.css:23  min-height: 100vh;
+pricing.css:23  min-height: 100vh;
+```
+
+<sub>from catalogue:dynamic-viewport-units</sub>
+````
+
+Pass a filename to write it instead of printing: `--markdown report.md`.
+
 ### Configuration
 
 `.redpen/config.json`:

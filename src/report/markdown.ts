@@ -12,10 +12,19 @@ export function renderMarkdown(result: ScanResult): string {
 
   out.push(`# redpen — ${score}/100 (${verdict(result.slopScore, result.qualityScore)})`);
   out.push('');
-  out.push(`| | Score | |`);
-  out.push(`| --- | --- | --- |`);
-  out.push(`| **slop** | ${result.slopScore} | reads as machine-made |`);
-  out.push(`| **quality** | ${result.qualityScore} | broken regardless of taste |`);
+  // The bare gloss on its own reads as a verdict — "slop 100 | reads as
+  // machine-made" invites exactly the wrong conclusion. The terminal report
+  // disambiguates with a finding count; this one has to as well.
+  const slopCount = findings.filter((f) => f.kind === 'slop').length;
+  const qualCount = findings.filter((f) => f.kind === 'quality').length;
+  out.push(`| Axis | Score | Findings | What it measures |`);
+  out.push(`| --- | --- | --- | --- |`);
+  out.push(
+    `| **slop** | ${result.slopScore} | ${slopCount} | whether it reads as machine-made |`,
+  );
+  out.push(
+    `| **quality** | ${result.qualityScore} | ${qualCount} | whether it is broken regardless of taste |`,
+  );
   out.push('');
   const surfaceEntries = Object.entries(result.surfaces);
   if (surfaceEntries.length) {
