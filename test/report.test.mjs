@@ -89,3 +89,30 @@ test('every finding carries where the rule came from', () => {
   assert.match(md, /from study:ai-purple/);
   assert.match(md, /`ai-purple` · weight 94 · seen by source/);
 });
+
+test('the markdown fold names every finding it does not argue', () => {
+  const findings = [];
+  for (let i = 0; i < 12; i++) {
+    findings.push(
+      finding({
+        ruleId: `rule-number-${i}`,
+        title: `Finding number ${i}`,
+        weight: 90 - i,
+        confidence: ['confirmed', 'likely', 'possible'][i % 3],
+        kind: i % 2 ? 'quality' : 'slop',
+      }),
+    );
+  }
+  const md = renderMarkdown(result({ score: 40, slopScore: 30, qualityScore: 55, findings }));
+
+  for (const f of findings) {
+    assert.ok(md.includes(f.ruleId), `${f.ruleId} appears nowhere in the report`);
+    assert.ok(md.includes(f.title), `${f.title} appears nowhere in the report`);
+  }
+  assert.match(md, /listed not argued/, 'nothing was folded');
+  // A pull-request comment that argues all twelve is one nobody finishes.
+  assert.ok(
+    (md.match(/^### /gm) ?? []).length < findings.length,
+    'every finding was argued in full — the fold did nothing',
+  );
+});

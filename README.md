@@ -211,6 +211,20 @@ pricing.css:23  min-height: 100vh;
 ```
 
 <sub>from catalogue:dynamic-viewport-units</sub>
+
+## likely (24)
+
+… five argued in full, then:
+
+<details><summary>19 more, listed not argued</summary>
+
+| | Weight | Rule | Finding |
+| --- | --- | --- | --- |
+| ◐ | 79 | `no-focus-visible` | Interactive element missing focus, active, or disabled styling |
+| ◐ | 78 | `unlabelled-input` | Form control with no associated label |
+| ◐ | 76 | `italic-display` | Italic headings or display type |
+
+</details>
 ````
 
 Pass a filename to write it instead of printing: `--markdown report.md`.

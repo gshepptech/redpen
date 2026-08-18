@@ -1,5 +1,19 @@
 import type { ScanResult, Finding, Evidence } from '../types.js';
 import { verdict, scoreByCategory } from '../score.js';
+import type { Confidence } from '../types.js';
+
+/**
+ * How many findings each tier argues in full before the rest become a table.
+ * Matches the terminal report — a reader who has seen one should not have to
+ * learn the other.
+ */
+const DETAIL: Record<Confidence, number> = {
+  confirmed: Number.POSITIVE_INFINITY,
+  likely: 5,
+  possible: 0,
+};
+
+const MARK: Record<Confidence, string> = { confirmed: '●', likely: '◐', possible: '○' };
 
 /**
  * Markdown report — the format an agent reads back and a human pastes into a
@@ -66,7 +80,26 @@ export function renderMarkdown(result: ScanResult): string {
     if (!list.length) continue;
     out.push(`## ${conf} (${list.length})`);
     out.push('');
-    for (const f of list) out.push(...findingBlock(f));
+
+    for (const f of list.slice(0, DETAIL[conf])) out.push(...findingBlock(f));
+
+    // Same fold as the terminal report, and for a sharper reason: this one goes
+    // into a pull request, where twenty-seven full arguments is a comment
+    // nobody finishes. The tail is a table rather than a count, so every
+    // finding stays named and every rule id stays copyable.
+    const rest = list.slice(DETAIL[conf]);
+    if (rest.length) {
+      out.push(`<details><summary>${rest.length} more, listed not argued</summary>`);
+      out.push('');
+      out.push('| | Weight | Rule | Finding |');
+      out.push('| --- | --- | --- | --- |');
+      for (const f of rest) {
+        out.push(`| ${MARK[f.confidence]} | ${f.weight} | \`${f.ruleId}\` | ${f.title} |`);
+      }
+      out.push('');
+      out.push('</details>');
+      out.push('');
+    }
   }
 
   if (clashes.length) {
