@@ -33,6 +33,30 @@ npx @gshepptech/redpen scan . --url http://localhost:3000
       shares section rhythm (nav → hero-full → card-grid-3 → cta → footer)
 ```
 
+That is a two-finding page. A page with twenty-seven looks like this — the
+strongest are argued in full, the tail is named and locatable, and nothing is
+hidden behind a count:
+
+```
+  LIKELY (24)
+  Seen by one channel that reads real state. No channel disagreed.
+
+  ◐ AI purple as the primary colour [source] ai-purple · 94
+    Violet/indigo is Tailwind's out-of-the-box accent and the colour every model
+    reaches for unprompted, so it reads as "nobody chose this". It ranks second
+    among all named tells in a 3,033-comment sample.
+    fix Pick an anchor hue outside the 265-305 band and derive the ramp from it.
+      style.css:2  --primary: #7c3aed;
+      style.css:35  background: linear-gradient(90deg, #7c3aed, #3b82f6);
+      … and 6 more
+
+  ◐  79  no-focus-visible          Interactive element missing focus, active, o…
+  ◐  78  unlabelled-input          Form control with no associated label
+  ◐  76  italic-display            Italic headings or display type
+  ◐  74  default-sans              Inter, Geist, or Roboto as the only face
+      19 listed, not argued — `redpen why <rule-id>`, or --verbose for all
+```
+
 ## Why this exists
 
 Several good catalogues already describe what AI-generated UI looks like, and
@@ -146,7 +170,7 @@ redpen init [path]        write .redpen/config.json
 | `--screenshots` | full-page PNGs to `.redpen/screenshots` |
 | `--vision` | capture screenshots and write `.redpen/vision-brief.json` |
 | `--answers <file>` | fold answered vision questions back into the verdict |
-| `--verbose` | include single-channel findings and rule provenance |
+| `--verbose` | argue every finding in full rather than folding the tail into a roster, and show rule provenance |
 | `--min <level>` | confidence floor for scoring: `confirmed`, `likely`, `possible` |
 
 ### The markdown report

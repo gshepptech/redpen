@@ -46,7 +46,7 @@ ${pc.dim('Options')}
                      (color typography layout depth motion iconography copy
                       usability a11y sameness chrome system composition)
   --min <level>      confidence floor for scoring: confirmed | likely | possible
-  --verbose          include single-channel findings and rule provenance
+  --verbose          argue every finding in full, and show rule provenance
   --show-ignored     list findings suppressed by redpen-ignore
   --quiet            suppress progress output
 

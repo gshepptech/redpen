@@ -28,6 +28,22 @@ export interface TerminalOptions {
   maxEvidence: number;
 }
 
+/**
+ * How many findings each tier argues in full before it switches to a roster.
+ *
+ * Printing all of them at full depth produced a 275-line wall in which a
+ * weight-94 finding was typeset identically to a weight-43 one, so nothing on
+ * screen said where to start. Confidence is what the whole tool is built to
+ * establish, so confidence is what buys depth: everything two channels agree on
+ * gets argued, the strongest few of the rest get argued, and the tail is still
+ * named and locatable rather than hidden behind a count.
+ */
+const DETAIL: Record<Confidence, number> = {
+  confirmed: Number.POSITIVE_INFINITY,
+  likely: 5,
+  possible: 0,
+};
+
 export function renderTerminal(result: ScanResult, opts: TerminalOptions): string {
   const out: string[] = [];
   const { score: value, findings } = result;
@@ -69,22 +85,27 @@ export function renderTerminal(result: ScanResult, opts: TerminalOptions): strin
   for (const conf of ['confirmed', 'likely', 'possible'] as const) {
     const list = byConfidence.get(conf);
     if (!list?.length) continue;
-    if (conf === 'possible' && !opts.verbose) {
-      out.push(
-        pc.dim(
-          `  ${list.length} single-channel finding${list.length === 1 ? '' : 's'} not shown — pass --verbose`,
-        ),
-      );
-      out.push('');
-      continue;
-    }
 
     out.push(CONFIDENCE_LABEL[conf](`  ${conf.toUpperCase()} (${list.length})`));
     out.push(pc.dim(`  ${wrap(describeConfidence(conf), MEASURE - 2, '  ')}`));
     out.push('');
 
-    for (const f of list) {
+    const depth = opts.verbose ? list.length : DETAIL[conf];
+    for (const f of list.slice(0, depth)) {
       out.push(...renderFinding(f, opts));
+    }
+    const rest = list.slice(depth);
+    if (rest.length) {
+      for (const f of rest) out.push(rosterLine(f));
+      // Named, not hidden. The count on its own is the failure this project
+      // keeps finding in itself — a report that says how much it is not saying
+      // reads as complete, and a reader cannot tell what they were not shown.
+      out.push(
+        pc.dim(
+          `      ${rest.length} listed, not argued — \`redpen why <rule-id>\`, or --verbose for all`,
+        ),
+      );
+      out.push('');
     }
   }
 
@@ -129,7 +150,7 @@ export function renderTerminal(result: ScanResult, opts: TerminalOptions): strin
     out.push(pc.dim(`  ADVISORY (${result.advisory.length}) — reported, never scored`));
     for (const f of result.advisory) {
       out.push(
-        pc.dim(`    ${f.ruleId.padEnd(26)} ${f.title}`),
+        pc.dim(`    ${f.ruleId.padEnd(24)}  ${f.title}`),
       );
     }
     out.push('');
@@ -148,6 +169,20 @@ export function renderTerminal(result: ScanResult, opts: TerminalOptions): strin
 
 /** The right edge every block in the report shares. */
 const MEASURE = 80;
+
+/**
+ * One finding on one line: enough to recognise it, enough to look it up. The
+ * title is truncated here and nowhere else — in a roster the title is a list
+ * item, not a heading, and the rule id beside it recovers anything the cut lost.
+ */
+function rosterLine(f: Finding): string {
+  const mark = CONFIDENCE_MARK[f.confidence];
+  const weight = String(f.weight).padStart(3);
+  const id = f.ruleId.padEnd(24);
+  const room = MEASURE - 4 - weight.length - 2 - id.length - 2;
+  const title = f.title.length > room ? `${f.title.slice(0, room - 1)}\u2026` : f.title;
+  return `  ${mark} ${pc.dim(weight)}  ${pc.dim(id)}  ${title}`;
+}
 
 function renderFinding(f: Finding, opts: TerminalOptions): string[] {
   const out: string[] = [];

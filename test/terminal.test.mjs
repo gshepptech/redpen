@@ -77,3 +77,31 @@ test('a long evidence excerpt is cut but its address never is', () => {
   assert.match(ev, /file\.tsx:128/, 'the address was cut, and the address is what you copy');
   assert.match(ev, /…$/, 'a cut excerpt has to say it was cut');
 });
+
+test('the fold argues fewer findings but never hides one', () => {
+  const r = busy();
+  const lines = renderTerminal(r, OPTS).split('\n').map(strip);
+  const body = lines.join('\n');
+
+  // Every finding is on the page somewhere, argued in full or named in the
+  // roster. A report that says how many it is not showing reads as complete;
+  // the reader cannot tell what they were not shown.
+  for (const f of r.findings) {
+    assert.ok(body.includes(f.ruleId), `${f.ruleId} appears nowhere in the report`);
+  }
+
+  // ...and it is a fold, not a reprint: the full report is materially longer.
+  const full = renderTerminal(r, { ...OPTS, verbose: true }).split('\n').length;
+  assert.ok(lines.length < full * 0.75, `fold saved nothing: ${lines.length} vs ${full}`);
+});
+
+test('a roster line carries the rule id whole, so it can be looked up', () => {
+  const r = busy();
+  const lines = renderTerminal(r, OPTS).split('\n').map(strip);
+  const roster = lines.filter((l) => /^  [\u25cf\u25d0\u25cb] +\d+ /.test(l));
+  assert.ok(roster.length > 0, 'nothing was folded into a roster');
+  for (const l of roster) {
+    assert.ok(l.length <= 80, `roster line ran to ${l.length}: ${l}`);
+    assert.match(l, /rule-with-a-fairly-long-identifier-\d+/, `rule id was cut: ${l}`);
+  }
+});
