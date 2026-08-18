@@ -804,7 +804,16 @@ const CHECKS_LIB = `
     var signals = p.signals || ['borderRadius', 'boxShadow', 'borderWidth'];
     var minSignals = p.minSignals || 2;
     var minPx = p.minSurfacePx || 24;
+    var CONTROLS = { INPUT: 1, SELECT: 1, TEXTAREA: 1, BUTTON: 1, OPTION: 1, PROGRESS: 1, METER: 1 };
     function isSurface(el) {
+      // A control is not a container. Every design system gives its inputs and
+      // buttons a background, a border, a radius and padding, which is four of
+      // the four signals below — so on the first real app this ever scanned,
+      // input.field inside div.card was reported as a card inside a card,
+      // twelve times, at weight 73. Card-in-card is about two levels of chrome
+      // around the same content; a field inside a card is one level of chrome
+      // around a control that has always looked like that.
+      if (CONTROLS[el.tagName] || el.getAttribute('role') === 'button') return false;
       // Anything smaller than a tap target is an indicator, not a card. A 5px
       // status dot inside a menu item is not a nested surface.
       var r = el.getBoundingClientRect();

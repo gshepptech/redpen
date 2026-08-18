@@ -526,3 +526,65 @@ test('a toggled-theme pass that cannot enter its theme is skipped, not relabelle
     }
   }
 });
+
+test('a control inside a card is not a card inside a card', opts, async () => {
+  // Found by pointing redpen at the first codebase nobody here built. Every
+  // design system gives its inputs and buttons a background, a border, a radius
+  // and padding — every signal the nested-surface test looks for — so a form
+  // inside a card was reported as card-in-card twelve times, at weight 73, near
+  // the top of the report.
+  //
+  // The fixture carries both cases side by side: a card full of ordinary
+  // controls, which must stay quiet, and a card genuinely inside a card, which
+  // must fire. Only the second discriminates.
+  const url = await serve(join(HERE, 'fixtures', 'controls'));
+  const result = await runScan({
+    root: join(HERE, 'fixtures', 'controls'),
+    urls: [url],
+    viewports: [1440],
+    ephemeral: true,
+  });
+
+  const nested = result.findings.filter((f) => f.ruleId === 'nested-cards');
+  assert.equal(nested.length, 1, 'the genuinely nested card should be reported');
+
+  const on = (nested[0]?.evidence ?? []).map((e) => e.selector ?? '');
+  for (const control of ['input', 'select', 'textarea', 'button']) {
+    assert.ok(
+      !on.some((sel) => sel.includes(control)),
+      `${control} reported as a nested card: ${on.join(' | ')}`,
+    );
+  }
+});
+
+test('a --only filter that matches no category says so rather than reporting clean', opts, async () => {
+  // `--only` takes categories and reads like it takes rule ids, so
+  // `--only nested-cards` printed a confident 100/100 clean. A filter that does
+  // not recognise its argument must never answer with a clean page.
+  const url = await serve(join(HERE, 'fixtures', 'sloppy'));
+  const result = await runScan({
+    root: join(HERE, 'fixtures', 'sloppy'),
+    urls: [url],
+    viewports: [1440],
+    only: ['nested-cards'],
+    ephemeral: true,
+  });
+  assert.equal(result.findings.length, 0, 'the filter should still filter');
+  assert.ok(
+    result.warnings.some((w) => w.includes('no such categor')),
+    `nothing warned about the unknown name: ${result.warnings.join(' | ')}`,
+  );
+
+  const real = await runScan({
+    root: join(HERE, 'fixtures', 'sloppy'),
+    urls: [url],
+    viewports: [1440],
+    only: ['layout'],
+    ephemeral: true,
+  });
+  assert.ok(real.findings.length > 0, 'a real category should still return findings');
+  assert.ok(
+    !real.warnings.some((w) => w.includes('no such categor')),
+    'a real category should not warn',
+  );
+});

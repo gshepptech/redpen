@@ -10,7 +10,7 @@ import { findClashes, fingerprintFindings } from './fingerprint/distance.js';
 import * as store from './fingerprint/store.js';
 import { scoreKind, headline } from './score.js';
 import { loadConfig, configIgnores, stateRoot, type RedpenConfig } from './config.js';
-import type { ScanResult, RawFinding, Channel, Finding, Surface } from './types.js';
+import type { ScanResult, RawFinding, Channel, Finding, Surface, Category } from './types.js';
 
 /**
  * The orchestrator. Runs every available channel, promotes, scores.
@@ -315,6 +315,19 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
   // below still describe the whole page.
   if (opts.only?.length) {
     const wanted = new Set(opts.only);
+    // A filter that matches no category is not an empty result, it is a typo.
+    // `--only` takes categories and reads like it takes rule ids, so
+    // `--only nested-cards` printed a confident 100/100 clean — the one answer
+    // a filter must never give for a name it did not recognise.
+    const known = new Set(loadCorpus().map((r) => r.category));
+    const unknown = [...wanted].filter((c) => !known.has(c as Category));
+    if (unknown.length) {
+      warnings.push(
+        `--only ${unknown.join(', ')}: no such categor${unknown.length === 1 ? 'y' : 'ies'}. ` +
+          `It takes categories, not rule ids — ${[...known].sort().join(', ')}. ` +
+          `Nothing was reported under ${unknown.length === 1 ? 'that name' : 'those names'}.`,
+      );
+    }
     inScope = inScope.filter((f) => wanted.has(f.category));
   }
 

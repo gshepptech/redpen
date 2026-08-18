@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Controls inside cards</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main id="main">
+    <!-- The forgiving case: a card holding ordinary form controls. Every design
+         system gives an input a ground, a border, a radius and padding, which is
+         every signal the nested-surface test looks for — and none of it makes a
+         field a card. This must NOT be reported. -->
+    <section class="card">
+      <h2>Record a stand</h2>
+      <form>
+        <label class="row">Name
+          <input class="field" type="text" name="name">
+        </label>
+        <label class="row">Season
+          <select class="field" name="season">
+            <option>Early</option>
+            <option>Late</option>
+          </select>
+        </label>
+        <label class="row">Notes
+          <textarea class="field" name="notes" rows="3"></textarea>
+        </label>
+        <button class="btn" type="submit">Save stand</button>
+      </form>
+    </section>
+
+    <!-- The discriminating case: a card genuinely inside a card. Two levels of
+         border, radius and shadow around the same content. This MUST fire. -->
+    <section class="card">
+      <h2>Nested for real</h2>
+      <div class="card">
+        <p>An inner panel with its own border, radius and shadow, holding the
+        same content the outer one already framed.</p>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
