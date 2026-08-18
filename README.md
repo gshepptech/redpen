@@ -14,7 +14,12 @@ npx @gshepptech/redpen scan . --url http://localhost:3000
 ```
 
 ```
-  redpen   76  ██████████████████░░░░░░  minor tells
+  redpen   76/100  minor tells
+
+  slop      76  ███████████░░░  2 findings — reads as machine-made
+  quality  100  ██████████████  0 findings — broken regardless of taste
+
+  channels: source, render
 
   CONFIRMED (2)
   Seen independently by more than one channel, or by the only channel that can see it.
@@ -434,7 +439,7 @@ dashboard: `default-sans`, `monotonous-spacing`, `ghost-cards`, `over-rounding`,
 
 ## What this has and has not been proven against
 
-v0.1.0. The corpus is 119 rules across 13 categories, the suite is 137 tests,
+v0.1.0. The corpus is 119 rules across 13 categories, the suite is 140 tests,
 and the whole thing has been run end to end against exactly **one** real
 project — a ten-route Go dashboard — plus its own fixtures. That run found six
 defects in the dashboard and six in redpen itself. Auditing redpen's own output

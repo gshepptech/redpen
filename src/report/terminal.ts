@@ -80,6 +80,30 @@ export function renderTerminal(result: ScanResult, opts: TerminalOptions): strin
     return out.join('\n');
   }
 
+  const cats = scoreByCategory(findings);
+  out.push(pc.dim('  by category'));
+  // Thirteen categories on one line ran to 138 characters. Pack them into rows
+  // that hold the same right edge as everything else, measuring the plain text
+  // because the coloured string carries escape codes that occupy no columns.
+  const items = Object.entries(cats)
+    .sort((a, b) => a[1] - b[1])
+    .map(([k, v]) => ({ plain: `${k} ${String(v).padStart(3)}`, shown: `${k} ${colorScore(v)}` }));
+  const SEP = '  ·  ';
+  let row: typeof items = [];
+  let used = 0;
+  for (const it of items) {
+    const cost = it.plain.length + (row.length ? SEP.length : 0);
+    if (row.length && used + cost > MEASURE - 2) {
+      out.push(`  ${row.map((r) => r.shown).join(pc.dim(SEP))}`);
+      row = [];
+      used = 0;
+    }
+    row.push(it);
+    used += it.plain.length + (row.length > 1 ? SEP.length : 0);
+  }
+  if (row.length) out.push(`  ${row.map((r) => r.shown).join(pc.dim(SEP))}`);
+  out.push('');
+
   const byConfidence = group(findings);
 
   for (const conf of ['confirmed', 'likely', 'possible'] as const) {
@@ -121,30 +145,6 @@ export function renderTerminal(result: ScanResult, opts: TerminalOptions): strin
       out.push('');
     }
   }
-
-  const cats = scoreByCategory(findings);
-  out.push(pc.dim('  by category'));
-  // Thirteen categories on one line ran to 138 characters. Pack them into rows
-  // that hold the same right edge as everything else, measuring the plain text
-  // because the coloured string carries escape codes that occupy no columns.
-  const items = Object.entries(cats)
-    .sort((a, b) => a[1] - b[1])
-    .map(([k, v]) => ({ plain: `${k} ${String(v).padStart(3)}`, shown: `${k} ${colorScore(v)}` }));
-  const SEP = '  ·  ';
-  let row: typeof items = [];
-  let used = 0;
-  for (const it of items) {
-    const cost = it.plain.length + (row.length ? SEP.length : 0);
-    if (row.length && used + cost > MEASURE - 2) {
-      out.push(`  ${row.map((r) => r.shown).join(pc.dim(SEP))}`);
-      row = [];
-      used = 0;
-    }
-    row.push(it);
-    used += it.plain.length + (row.length > 1 ? SEP.length : 0);
-  }
-  if (row.length) out.push(`  ${row.map((r) => r.shown).join(pc.dim(SEP))}`);
-  out.push('');
 
   if (result.advisory.length) {
     out.push(pc.dim(`  ADVISORY (${result.advisory.length}) — reported, never scored`));
@@ -258,9 +258,17 @@ function describeConfidence(c: Confidence): string {
 function kindLine(result: ScanResult): string {
   const slop = result.findings.filter((f) => f.kind === 'slop').length;
   const qual = result.findings.filter((f) => f.kind === 'quality').length;
+  // Both axes get a bar, not just the headline. The headline is the worse of
+  // the two, so its number already appears again on one of these rows — which
+  // read as a second measurement until you could see the two bars side by side
+  // and watch one of them match the header exactly.
+  const row = (name: string, value: number, n: number, gloss: string) =>
+    `  ${pc.dim(name)}${' '.repeat(7 - name.length)}  ${colorScore(value)}  ${meter(value, 14)}  ` +
+    pc.dim(`${n} finding${n === 1 ? '' : 's'} — ${gloss}`);
   return (
-    `  ${pc.dim('slop')}     ${colorScore(result.slopScore)}  ${pc.dim(`${slop} finding${slop === 1 ? '' : 's'} — reads as machine-made`)}\n` +
-    `  ${pc.dim('quality')}  ${colorScore(result.qualityScore)}  ${pc.dim(`${qual} finding${qual === 1 ? '' : 's'} — broken regardless of taste`)}`
+    row('slop', result.slopScore, slop, 'reads as machine-made') +
+    '\n' +
+    row('quality', result.qualityScore, qual, 'broken regardless of taste')
   );
 }
 
@@ -276,27 +284,48 @@ function surfaceLine(result: ScanResult): string | null {
   return pc.dim(`  surface  ${entries.map(([u, v]) => `${short(u)}=${v.surface}`).join(', ')} (${how})`);
 }
 
+/**
+ * The header carries no bar of its own.
+ *
+ * It used to draw one 24 cells wide while the axes below drew theirs at 14, and
+ * since the headline *is* the worse axis, that was the same number rendered at
+ * two lengths — an encoding that invites the eye to compare them and get it
+ * wrong. The rows below do the measuring. This line says which page you are
+ * looking at and what the verdict is.
+ */
 function scoreLine(value: number, slop: number, quality: number): string {
-  const label = verdict(slop, quality);
-  const num = colorScore(value);
-  const bar = meter(value);
-  return `  ${pc.bold('redpen')}  ${num}  ${bar}  ${pc.dim(label)}`;
+  return `  ${pc.bold('redpen')}  ${colorScore(value)}${pc.dim('/100')}  ${pc.dim(verdict(slop, quality))}`;
 }
+
+/**
+ * One band table for the number and the bar.
+ *
+ * They used to carry their own: the number had four bands and the bar had
+ * three, so a 70 got a bold-yellow number beside a yellow bar and an 80 got a
+ * plain-yellow number beside the same yellow bar. Two encodings of one quantity
+ * that disagree about where the lines are is the same defect as a header whose
+ * word and number came from different sums — smaller, and no more defensible.
+ *
+ * The floors are the grade floors, so the colour changes exactly where the word
+ * does.
+ */
+const BANDS: Array<{ floor: number; paint: (s: string) => string }> = [
+  { floor: 90, paint: (s) => pc.green(s) },
+  { floor: 75, paint: (s) => pc.yellow(s) },
+  { floor: 55, paint: (s) => pc.yellow(s) },
+  { floor: 35, paint: (s) => pc.red(s) },
+  { floor: 0, paint: (s) => pc.red(s) },
+];
+
+const band = (value: number) => BANDS.find((b) => value >= b.floor)!;
 
 function colorScore(value: number): string {
-  const s = String(value).padStart(3, ' ');
-  if (value >= 90) return pc.green(pc.bold(s));
-  if (value >= 75) return pc.yellow(s);
-  if (value >= 55) return pc.yellow(pc.bold(s));
-  return pc.red(pc.bold(s));
+  return band(value).paint(pc.bold(String(value).padStart(3, ' ')));
 }
 
-function meter(value: number): string {
-  const filled = Math.round((value / 100) * 24);
-  const bar = '█'.repeat(filled) + pc.dim('░'.repeat(24 - filled));
-  if (value >= 90) return pc.green(bar);
-  if (value >= 55) return pc.yellow(bar);
-  return pc.red(bar);
+function meter(value: number, width = 24): string {
+  const filled = Math.round((value / 100) * width);
+  return band(value).paint('█'.repeat(filled)) + pc.dim('░'.repeat(width - filled));
 }
 
 function group(findings: Finding[]): Map<Confidence, Finding[]> {
