@@ -82,6 +82,28 @@ interface PageLike {
   close(): Promise<void>;
 }
 
+/**
+ * One line per distinct failure, with the contexts it happened in.
+ *
+ * A dev server that is not running fails identically at every viewport, and
+ * joining the raw list put the same sentence on screen three times. The reader
+ * needs to know what went wrong once, and where it went wrong in full.
+ */
+export function summariseErrors(errors: string[]): string {
+  const byMessage = new Map<string, string[]>();
+  for (const e of errors) {
+    const at = e.indexOf(': ');
+    const where = at > 0 ? e.slice(0, at) : '';
+    const what = at > 0 ? e.slice(at + 2) : e;
+    const list = byMessage.get(what) ?? [];
+    if (where) list.push(where);
+    byMessage.set(what, list);
+  }
+  return [...byMessage]
+    .map(([what, wheres]) => (wheres.length ? `${what} (${wheres.join(', ')})` : what))
+    .join('; ');
+}
+
 async function loadPlaywright(): Promise<PlaywrightModule | null> {
   try {
     // Indirect specifier so the compiler does not require playwright to be
@@ -244,7 +266,13 @@ export async function scanRender(opts: RenderOptions): Promise<RenderResult> {
           try {
             await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 15_000 });
           } catch (err) {
-            detectorErrors.push(`${url} @${width}px ${scheme}: ${err instanceof Error ? err.message : err}`);
+            // Playwright's navigation errors carry a multi-line call log, and
+            // one dev server that is not running produces the same one at every
+            // viewport. Printed whole that is a dozen lines of noise around the
+            // one fact that matters, so keep the first line and let the
+            // deduplication below collapse the repeats.
+            const detail = (err instanceof Error ? err.message : String(err)).split('\n')[0]!.trim();
+            detectorErrors.push(`${url} @${width}px ${scheme}: ${detail}`);
             await context.close();
             continue;
           }
@@ -337,7 +365,7 @@ export async function scanRender(opts: RenderOptions): Promise<RenderResult> {
     fingerprints,
     screenshots,
     detectedSurfaces,
-    unavailable: detectorErrors.length ? detectorErrors.join('; ') : null,
+    unavailable: detectorErrors.length ? summariseErrors(detectorErrors) : null,
   };
 }
 

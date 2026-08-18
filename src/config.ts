@@ -152,7 +152,7 @@ export function loadConfig(root: string): RedpenConfig {
       product: { ...DEFAULT_CONFIG.product, ...(parsed.product ?? {}) },
     };
   } catch (err) {
-    throw new Error(`redpen: ${file} is not valid JSON — ${err}`);
+    throw new Error(`${file} is not valid JSON — ${err}`);
   }
 }
 
@@ -224,7 +224,7 @@ export function configIgnores(config: RedpenConfig): Map<string, ResolvedIgnore>
     const rule: IgnoreRule = typeof entry === 'string' ? { reason: entry } : entry;
     if (!rule?.reason || !rule.reason.trim()) {
       throw new Error(
-        `redpen: ignore for "${ruleId}" has no reason — an ignore without a reason is how a rule set stops meaning anything`,
+        `ignore for "${ruleId}" has no reason — an ignore without a reason is how a rule set stops meaning anything`,
       );
     }
     map.set(ruleId, {

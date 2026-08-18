@@ -439,7 +439,7 @@ dashboard: `default-sans`, `monotonous-spacing`, `ghost-cards`, `over-rounding`,
 
 ## What this has and has not been proven against
 
-v0.1.0. The corpus is 119 rules across 13 categories, the suite is 151 tests,
+v0.1.0. The corpus is 119 rules across 13 categories, the suite is 154 tests,
 and the whole thing has been run end to end against exactly **one** real
 project — a ten-route Go dashboard — plus its own fixtures. That run found six
 defects in the dashboard and six in redpen itself. Auditing redpen's own output
