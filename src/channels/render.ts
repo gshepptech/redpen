@@ -4,6 +4,9 @@ import { fingerprintSource, type RawFingerprint } from '../fingerprint/extract.j
 import { surfaceSource, classify, type SurfaceSignals } from './surface.js';
 import type { SurfaceVerdict } from './surface.js';
 import type { RawFinding, Evidence, Fingerprint } from '../types.js';
+import { createRequire } from 'node:module';
+import { join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 /**
  * The render channel: drive the real page and read computed styles.
@@ -16,6 +19,15 @@ import type { RawFinding, Evidence, Fingerprint } from '../types.js';
 
 export interface RenderOptions {
   urls: string[];
+  /**
+   * The project being scanned, so playwright can be resolved from it.
+   *
+   * A plugin install is one bundled file with no node_modules of its own, so a
+   * bare import finds nothing and the render channel — the whole reason redpen
+   * cross-confirms anything — silently never runs. The project being scanned is
+   * a web project, and usually already has playwright.
+   */
+  root?: string;
   viewports: number[];
   /** Milliseconds to wait after load for hydration and entrance animations. */
   settleMs?: number;
@@ -104,15 +116,32 @@ export function summariseErrors(errors: string[]): string {
     .join('; ');
 }
 
-async function loadPlaywright(): Promise<PlaywrightModule | null> {
+async function loadPlaywright(root?: string): Promise<PlaywrightModule | null> {
+  // Indirect specifier so the compiler does not require playwright to be
+  // installed — it is an optional peer dependency, and a source-only scan must
+  // keep working without a browser on the machine.
+  const specifier = 'playwright';
   try {
-    // Indirect specifier so the compiler does not require playwright to be
-    // installed — it is an optional peer dependency, and a source-only scan
-    // must keep working without a browser on the machine.
-    const specifier = 'playwright';
     return (await import(specifier)) as unknown as PlaywrightModule;
   } catch {
-    return null;
+    // Nothing beside redpen. Look in the project being scanned, which is a web
+    // project and has one more often than not. Without this a plugin install —
+    // one bundled file, no node_modules — can never render anything, and every
+    // source finding stays capped at "possible" forever.
+    if (!root) return null;
+    try {
+      const require = createRequire(join(resolve(root), 'noop.js'));
+      const entry = require.resolve(specifier);
+      const mod = (await import(pathToFileURL(entry).href)) as Record<string, unknown>;
+      // playwright's entry is CommonJS, and importing CJS from ESM puts the
+      // whole module object on `default`. Resolved but unusable is worse than
+      // not found: the first version of this got as far as "could not launch
+      // chromium: Cannot read properties of undefined".
+      const ns = ('chromium' in mod ? mod : mod.default) as unknown;
+      return ns as PlaywrightModule;
+    } catch {
+      return null;
+    }
   }
 }
 
@@ -152,12 +181,13 @@ export async function scanRender(opts: RenderOptions): Promise<RenderResult> {
 
   if (opts.urls.length === 0) return empty;
 
-  const pw = await loadPlaywright();
+  const pw = await loadPlaywright(opts.root);
   if (!pw) {
     return {
       ...empty,
       unavailable:
-        'playwright is not installed — run `npm i -D playwright && npx playwright install chromium` to enable the render channel',
+        'playwright is not installed — run `npm i -D playwright && npx playwright install chromium` ' +
+        'in the project being scanned, or beside redpen, to enable the render channel',
     };
   }
 

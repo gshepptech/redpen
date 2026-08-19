@@ -7444,10 +7444,10 @@ var require_dist = __commonJS({
 // src/cli.ts
 var import_picocolors2 = __toESM(require_picocolors(), 1);
 import { writeFileSync as writeFileSync4, readFileSync as readFileSync6, existsSync as existsSync4 } from "node:fs";
-import { resolve as resolve3, join as join6 } from "node:path";
+import { resolve as resolve4, join as join7 } from "node:path";
 
 // src/scan.ts
-import { resolve as resolve2, join as join5 } from "node:path";
+import { resolve as resolve3, join as join6 } from "node:path";
 import { mkdirSync as mkdirSync4, existsSync as existsSync3 } from "node:fs";
 
 // src/channels/source.ts
@@ -10873,6 +10873,9 @@ function classify(s) {
 var MIN_SURFACE_CONFIDENCE = 0.6;
 
 // src/channels/render.ts
+import { createRequire } from "node:module";
+import { join as join3, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 function summariseErrors(errors) {
   const byMessage = /* @__PURE__ */ new Map();
   for (const e of errors) {
@@ -10885,12 +10888,21 @@ function summariseErrors(errors) {
   }
   return [...byMessage].map(([what, wheres]) => wheres.length ? `${what} (${wheres.join(", ")})` : what).join("; ");
 }
-async function loadPlaywright() {
+async function loadPlaywright(root) {
+  const specifier = "playwright";
   try {
-    const specifier = "playwright";
     return await import(specifier);
   } catch {
-    return null;
+    if (!root) return null;
+    try {
+      const require2 = createRequire(join3(resolve(root), "noop.js"));
+      const entry = require2.resolve(specifier);
+      const mod = await import(pathToFileURL(entry).href);
+      const ns = "chromium" in mod ? mod : mod.default;
+      return ns;
+    } catch {
+      return null;
+    }
   }
 }
 var ERROR_TRAP = `
@@ -10919,11 +10931,11 @@ async function scanRender(opts) {
     unavailable: null
   };
   if (opts.urls.length === 0) return empty;
-  const pw = await loadPlaywright();
+  const pw = await loadPlaywright(opts.root);
   if (!pw) {
     return {
       ...empty,
-      unavailable: "playwright is not installed \u2014 run `npm i -D playwright && npx playwright install chromium` to enable the render channel"
+      unavailable: "playwright is not installed \u2014 run `npm i -D playwright && npx playwright install chromium` in the project being scanned, or beside redpen, to enable the render channel"
     };
   }
   const specs = buildSpecs();
@@ -11534,11 +11546,11 @@ function fingerprintFindings(prints, clashes, operatePages) {
 
 // src/fingerprint/store.ts
 import { readFileSync as readFileSync5, writeFileSync as writeFileSync3, mkdirSync as mkdirSync3, existsSync as existsSync2 } from "node:fs";
-import { join as join4 } from "node:path";
+import { join as join5 } from "node:path";
 
 // src/config.ts
 import { readFileSync as readFileSync4, writeFileSync as writeFileSync2, mkdirSync as mkdirSync2, existsSync } from "node:fs";
-import { join as join3, resolve, dirname as dirname3, basename } from "node:path";
+import { join as join4, resolve as resolve2, dirname as dirname3, basename } from "node:path";
 import { homedir } from "node:os";
 var DEFAULT_CONFIG = {
   urls: [],
@@ -11558,12 +11570,12 @@ var CONFIG_FILE = "config.json";
 var BASELINE_FILE = "baseline.json";
 function stateRoot(scanRoot) {
   const markers = [".git", "package.json", "go.mod", "Cargo.toml", "pyproject.toml", "deno.json"];
-  const home = resolve(homedir());
-  const start = resolve(scanRoot);
+  const home = resolve2(homedir());
+  const start = resolve2(scanRoot);
   let dir = start;
   for (let i = 0; i < 12; i++) {
     const usable = dir === start || dir !== home && !dir.startsWith(`${home}/.`) && !basename(dir).startsWith(".");
-    if (usable && markers.some((m) => existsSync(join3(dir, m)))) return dir;
+    if (usable && markers.some((m) => existsSync(join4(dir, m)))) return dir;
     const parent = dirname3(dir);
     if (parent === dir || dir === home) break;
     dir = parent;
@@ -11571,7 +11583,7 @@ function stateRoot(scanRoot) {
   return start;
 }
 function loadConfig(root) {
-  const file = join3(stateRoot(root), DIR, CONFIG_FILE);
+  const file = join4(stateRoot(root), DIR, CONFIG_FILE);
   if (!existsSync(file)) return { ...DEFAULT_CONFIG };
   try {
     const parsed = JSON.parse(readFileSync4(file, "utf8"));
@@ -11586,15 +11598,15 @@ function loadConfig(root) {
   }
 }
 function saveConfig(root, config) {
-  mkdirSync2(join3(stateRoot(root), DIR), { recursive: true });
+  mkdirSync2(join4(stateRoot(root), DIR), { recursive: true });
   writeFileSync2(
-    join3(stateRoot(root), DIR, CONFIG_FILE),
+    join4(stateRoot(root), DIR, CONFIG_FILE),
     JSON.stringify(config, null, 2) + "\n",
     "utf8"
   );
 }
 function loadBaseline(root) {
-  const file = join3(stateRoot(root), DIR, BASELINE_FILE);
+  const file = join4(stateRoot(root), DIR, BASELINE_FILE);
   if (!existsSync(file)) return null;
   try {
     return JSON.parse(readFileSync4(file, "utf8"));
@@ -11603,9 +11615,9 @@ function loadBaseline(root) {
   }
 }
 function saveBaseline(root, baseline) {
-  mkdirSync2(join3(stateRoot(root), DIR), { recursive: true });
+  mkdirSync2(join4(stateRoot(root), DIR), { recursive: true });
   writeFileSync2(
-    join3(stateRoot(root), DIR, BASELINE_FILE),
+    join4(stateRoot(root), DIR, BASELINE_FILE),
     JSON.stringify(baseline, null, 2) + "\n",
     "utf8"
   );
@@ -11633,7 +11645,7 @@ function configIgnores(config) {
 var DIR2 = ".redpen";
 var FILE = "fingerprints.json";
 function path(root) {
-  return join4(stateRoot(root), DIR2, FILE);
+  return join5(stateRoot(root), DIR2, FILE);
 }
 function load(root) {
   const file = path(root);
@@ -11660,7 +11672,7 @@ function pageId(url) {
 }
 function save(root, prints) {
   if (!prints.length) return;
-  const dir = join4(stateRoot(root), DIR2);
+  const dir = join5(stateRoot(root), DIR2);
   mkdirSync3(dir, { recursive: true });
   const existing = load(root);
   const pages = {};
@@ -11764,13 +11776,13 @@ function headline(slop, quality) {
 
 // src/scan.ts
 async function runScan(opts) {
-  const root = resolve2(opts.root);
+  const root = resolve3(opts.root);
   const config = loadConfig(root);
   const urls = opts.urls?.length ? opts.urls : config.urls;
   const viewports = opts.viewports?.length ? opts.viewports : config.viewports;
   const warnings = [];
   const state = stateRoot(root);
-  if (!existsSync3(join5(state, ".redpen", "config.json"))) {
+  if (!existsSync3(join6(state, ".redpen", "config.json"))) {
     warnings.push(
       `no .redpen/config.json found (looked in ${state}) \u2014 running with defaults, so every capability is assumed available and no surface is declared`
     );
@@ -11801,9 +11813,10 @@ async function runScan(opts) {
     opts.onProgress?.(`rendering ${urls.length} url(s) at ${viewports.join(", ")}px`);
     const t1 = Date.now();
     const wantShots = opts.screenshots || opts.vision;
-    const screenshotDir = wantShots ? resolve2(stateRoot(root), ".redpen", "screenshots") : null;
+    const screenshotDir = wantShots ? resolve3(stateRoot(root), ".redpen", "screenshots") : null;
     if (screenshotDir) mkdirSync4(screenshotDir, { recursive: true });
     const render = await scanRender({
+      root,
       urls,
       viewports,
       screenshotDir,
@@ -11920,7 +11933,7 @@ async function runScan(opts) {
       );
     }
     if (brief) {
-      briefPath = resolve2(stateRoot(root), ".redpen", "vision-brief.json");
+      briefPath = resolve3(stateRoot(root), ".redpen", "vision-brief.json");
       writeBrief(briefPath, brief);
       opts.onProgress?.(
         `vision: wrote a brief with ${brief.questions.length} question(s) over ${screenshots.size} screenshot(s)`
@@ -12525,7 +12538,7 @@ async function main() {
     return;
   }
   const TAKES_A_PATH = /* @__PURE__ */ new Set(["scan", "check", "baseline", "fingerprints", "brief", "init", "why-score"]);
-  const root = resolve3(TAKES_A_PATH.has(args.command) ? args.positional[0] ?? "." : ".");
+  const root = resolve4(TAKES_A_PATH.has(args.command) ? args.positional[0] ?? "." : ".");
   if (TAKES_A_PATH.has(args.command) && args.positional[0] && !existsSync4(root)) {
     fail(`no such directory: ${args.positional[0]}`);
   }
@@ -12914,7 +12927,7 @@ function cmdFingerprints(root) {
   }
 }
 function cmdBrief(root) {
-  const file = join6(stateRoot(root), ".redpen", "vision-brief.json");
+  const file = join7(stateRoot(root), ".redpen", "vision-brief.json");
   if (!existsSync4(file)) {
     fail(`no brief at ${file} \u2014 run \`redpen scan <path> --url <url> --vision\` first`);
   }
@@ -12974,7 +12987,7 @@ function cmdInit(root) {
   saveConfig(root, { ...DEFAULT_CONFIG, ...existing });
   process.stdout.write(
     `
-  wrote ${import_picocolors2.default.bold(join6(stateRoot(root), ".redpen", "config.json"))}
+  wrote ${import_picocolors2.default.bold(join7(stateRoot(root), ".redpen", "config.json"))}
 
 ` + import_picocolors2.default.dim("  Two fields are worth filling in before anything else:\n\n") + import_picocolors2.default.dim('    "urls"    \u2014 without one the browser pass never runs and every\n') + import_picocolors2.default.dim('                finding it could confirm is capped at "possible".\n') + import_picocolors2.default.dim('    "product" \u2014 name, purpose, audience. The vision brief is meant to\n') + import_picocolors2.default.dim("                be answerable by someone who has not seen the project,\n") + import_picocolors2.default.dim("                and several questions are unfair without it.\n\n") + import_picocolors2.default.dim('  "schemes" defaults to "auto": redpen probes the first page for a dark\n') + import_picocolors2.default.dim('  theme and scans it too if there is one. Set ["light"] to skip that.\n\n')
   );

@@ -95,6 +95,7 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
     if (screenshotDir) mkdirSync(screenshotDir, { recursive: true });
 
     const render = await scanRender({
+      root,
       urls,
       viewports,
       screenshotDir,
