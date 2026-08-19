@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Six criteria, one page</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main id="main">
+    <h1>Stand register</h1>
+
+    <!-- 4.1.2: icons with no accessible name -->
+    <div class="toolbar">
+      <button class="icon"><svg viewBox="0 0 16 16" width="14" height="14"><path d="M2 8h12" stroke="currentColor" stroke-width="2"/></svg></button>
+      <button class="icon"><svg viewBox="0 0 16 16" width="14" height="14"><path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="2"/></svg></button>
+    </div>
+
+    <!-- 2.5.8: below the 24x24 minimum, and not spaced clear of a neighbour.
+         A lone small control passes the criterion on the spacing exemption, so
+         a fixture with one proves nothing — the failing shape is a row of
+         cramped controls, which is also the shape that actually ships. -->
+    <p class="row">
+      <span>Stand 14</span>
+      <button class="tiny" aria-label="Decrease acres">-</button>
+      <button class="tiny" aria-label="Increase acres">+</button>
+      <button class="tiny" aria-label="Remove stand">x</button>
+    </p>
+
+    <!-- 4.1.2 / 2.4.3: focusable inside aria-hidden -->
+    <div class="panel" aria-hidden="true">
+      <a href="/archive">Archived stands</a>
+    </div>
+
+    <!-- 2.4.3: positive tabindex -->
+    <button class="btn" tabindex="3">Save register</button>
+
+    <!-- 4.1.1: the same id twice -->
+    <label for="acres">Acres</label>
+    <input id="acres" name="acres" type="text">
+    <label for="acres">Acres, second block</label>
+    <input id="acres" name="acres2" type="text">
+
+    <!-- 3.2.5: a new tab with no warning -->
+    <p><a class="link" href="https://example.test/spec" target="_blank" rel="noopener">Read the survey spec</a></p>
+  </main>
+</body>
+</html>

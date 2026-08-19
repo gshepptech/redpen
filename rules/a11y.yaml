@@ -140,3 +140,133 @@
   fix: >-
     Read the stack, fix the error. A page that throws is not ready to be
     reviewed for taste.
+
+- id: control-no-accessible-name
+  kind: quality
+  title: A control announced as "button" and nothing else
+  category: a11y
+  severity: high
+  weight: 82
+  evidenceRank: null
+  sources:
+    - { origin: heuristics, ref: "wcag:4.1.2-name-role-value" }
+    - { origin: heuristics, ref: "heuristic:13-accessibility" }
+  channels: [render]
+  render:
+    check: control-no-accessible-name
+  why: >-
+    An icon with no text, no `aria-label` and no `title` is announced as
+    "button" and nothing more. It is the most common failure on a toolbar and
+    the least visible, because on screen it looks finished — the icon is doing
+    all the work and the icon is exactly what a screen reader cannot see.
+  fix: >-
+    `aria-label` naming the action, not the icon: "Delete row", never "trash".
+    If the control has visible text elsewhere, point at it with
+    `aria-labelledby` so the two can never drift apart.
+
+- id: target-size-minimum
+  kind: quality
+  title: A control smaller than a fingertip
+  category: a11y
+  severity: high
+  weight: 74
+  evidenceRank: null
+  sources:
+    - { origin: heuristics, ref: "wcag:2.5.8-target-size-minimum" }
+  channels: [render]
+  render:
+    check: target-size-minimum
+    params:
+      minPx: 24
+  why: >-
+    WCAG 2.2 puts the floor at 24 by 24 CSS pixels, and a fingertip is nearer
+    44. Below it people miss, hit the neighbour, and undo — which costs more
+    than the space the control was saving. A link sitting inside a sentence is
+    exempt, because there the line is the target.
+  fix: >-
+    Grow the hit area rather than the icon: padding, or a pseudo-element
+    stretched over the control. The glyph can stay small.
+
+- id: aria-hidden-focusable
+  kind: quality
+  title: Focusable, and hidden from the people who need it
+  category: a11y
+  severity: high
+  weight: 76
+  evidenceRank: null
+  sources:
+    - { origin: heuristics, ref: "wcag:4.1.2-name-role-value" }
+    - { origin: heuristics, ref: "wcag:2.4.3-focus-order" }
+  channels: [render]
+  render:
+    check: aria-hidden-focusable
+  why: >-
+    A control inside `aria-hidden="true"` is still reachable by tab. Focus
+    lands on something that announces nothing, so a screen-reader user tabs
+    into silence and cannot tell where they are or how to get out.
+  fix: >-
+    Decide which one is true. If it is decorative, add `tabindex="-1"` or
+    `inert` so it leaves the tab order with the accessibility tree. If it is
+    real, drop the `aria-hidden`.
+
+- id: positive-tabindex
+  kind: quality
+  title: Tab order detached from the page
+  category: a11y
+  severity: medium
+  weight: 64
+  evidenceRank: null
+  sources:
+    - { origin: heuristics, ref: "wcag:2.4.3-focus-order" }
+  channels: [render]
+  render:
+    check: positive-tabindex
+  why: >-
+    Any positive `tabindex` jumps ahead of every element that has none, so one
+    of them reorders the whole document. The tab order stops matching what is
+    on screen, and it does so for everybody rather than just the element that
+    set it.
+  fix: >-
+    `tabindex="0"` to make something focusable, `-1` to take it out, and never
+    a positive number. If the order is wrong, move the markup.
+
+- id: duplicate-id
+  kind: quality
+  title: The same id on more than one element
+  category: a11y
+  severity: medium
+  weight: 61
+  evidenceRank: null
+  sources:
+    - { origin: heuristics, ref: "wcag:4.1.1-parsing" }
+  channels: [render]
+  render:
+    check: duplicate-id
+  why: >-
+    Every `label for`, `aria-labelledby` and `aria-controls` pointing at a
+    repeated id resolves to the first one. The second control silently loses
+    its label, and nothing in the markup looks wrong — which is why this
+    survives review and ships.
+  fix: >-
+    Make ids unique. Where a component repeats, derive the id from the
+    component's own key rather than hard-coding it in the template.
+
+- id: new-window-no-warning
+  kind: quality
+  title: A link that opens elsewhere without saying so
+  category: a11y
+  severity: low
+  weight: 49
+  evidenceRank: null
+  sources:
+    - { origin: heuristics, ref: "wcag:3.2.5-change-on-request" }
+  channels: [render]
+  render:
+    check: new-window-no-warning
+  why: >-
+    `target="_blank"` replaces the context with no announcement. A sighted
+    person sees the new tab appear; a screen-reader user finds the back button
+    stops working and has no way to know why.
+  fix: >-
+    Say so in the accessible name — "Read the spec (opens in a new tab)" — or
+    drop the target and let people choose. Keep `rel="noopener"` either way.

@@ -710,3 +710,44 @@ test('no copy or marketing tell fires on a page written without them', opts, asy
     assert.ok(!fired.includes(id), `${id} fired on a page that does not have it`);
   }
 });
+
+const WCAG_RULES = [
+  'control-no-accessible-name',
+  'target-size-minimum',
+  'aria-hidden-focusable',
+  'positive-tabindex',
+  'duplicate-id',
+  'new-window-no-warning',
+];
+
+test('each WCAG criterion fires on the failure it describes', opts, async () => {
+  const url = await serve(join(HERE, 'fixtures', 'wcag'));
+  const result = await runScan({
+    root: join(HERE, 'fixtures', 'wcag'),
+    urls: [url],
+    viewports: [375],
+    ephemeral: true,
+  });
+  const fired = new Set(result.findings.map((f) => f.ruleId));
+  for (const id of WCAG_RULES) {
+    assert.ok(fired.has(id), `${id} did not fire on the failure it describes`);
+  }
+});
+
+test('a page that meets the criteria is not told otherwise', opts, async () => {
+  // target-size-minimum is the one that needed this. WCAG 2.5.8 exempts an
+  // undersized target that is spaced clear of every other target, and without
+  // that half the rule failed a 23px nav link on a page with nothing wrong —
+  // one pixel under, with room all round it.
+  const url = await serve(join(HERE, 'fixtures', 'clean'));
+  const result = await runScan({
+    root: join(HERE, 'fixtures', 'clean'),
+    urls: [url],
+    viewports: [375],
+    ephemeral: true,
+  });
+  const fired = result.findings.map((f) => f.ruleId);
+  for (const id of WCAG_RULES) {
+    assert.ok(!fired.includes(id), `${id} fired on a page that meets it`);
+  }
+});
