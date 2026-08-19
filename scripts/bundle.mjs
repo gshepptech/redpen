@@ -1,0 +1,40 @@
+import { build } from 'esbuild';
+
+/**
+ * One file, no dependencies.
+ *
+ * A Claude Code plugin installs from git: it gets what is tracked and no
+ * node_modules. The tsc build in dist/ cannot run there — it resolves
+ * picocolors and yaml at import time and neither is present — so what ships is
+ * this bundle, with its dependencies inlined.
+ *
+ * playwright stays external on purpose. It is an optional peer dependency, the
+ * render channel already handles its absence with a message, and inlining a
+ * browser driver into a CLI would be absurd.
+ */
+
+const BANNER = [
+  '// Built by scripts/bundle.mjs. Edit src/, not this file.',
+  '//',
+  "// yaml ships CommonJS that calls require('process'). An ESM bundle has no",
+  '// require, and esbuild\'s fallback shim throws rather than guessing, so one is',
+  '// made here. Builtins resolve through it with no node_modules present.',
+  "import { createRequire as __createRequire } from 'node:module';",
+  'const require = __createRequire(import.meta.url);',
+].join('\n');
+
+const result = await build({
+  entryPoints: ['src/cli.ts'],
+  outfile: 'bundle/redpen.mjs',
+  bundle: true,
+  platform: 'node',
+  format: 'esm',
+  target: 'node20',
+  external: ['playwright'],
+  banner: { js: BANNER },
+  logLevel: 'info',
+  metafile: true,
+});
+
+const bytes = Object.values(result.metafile.outputs)[0]?.bytes ?? 0;
+process.stdout.write(`  bundle/redpen.mjs  ${(bytes / 1024).toFixed(0)}kb, no dependencies\n`);

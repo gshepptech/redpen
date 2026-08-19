@@ -7,9 +7,14 @@ allowed-tools: Bash
 ## Running redpen
 
 ```bash
-REDPEN="${CLAUDE_PLUGIN_ROOT:-$(npm root -g)/@gshepptech/redpen}/dist/cli.js"
-node "$REDPEN" --help >/dev/null || REDPEN=""   # falls back to the global binary
-run() { if [ -n "$REDPEN" ]; then node "$REDPEN" "$@"; else redpen "$@"; fi; }
+REDPEN="${CLAUDE_PLUGIN_ROOT:-$(npm root -g)/@gshepptech/redpen}"
+# The bundle is one dependency-free file and is what a plugin install carries;
+# dist/ is the tsc build and only exists in a checkout. Fall through to a
+# global binary last.
+if   [ -f "$REDPEN/bundle/redpen.mjs" ]; then run() { node "$REDPEN/bundle/redpen.mjs" "$@"; }
+elif [ -f "$REDPEN/dist/cli.js" ];      then run() { node "$REDPEN/dist/cli.js" "$@"; }
+else                                         run() { redpen "$@"; }
+fi
 ```
 
 If neither resolves, the plugin is not installed and `redpen` is not on PATH —

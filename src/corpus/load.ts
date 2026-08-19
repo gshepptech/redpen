@@ -7,22 +7,33 @@ import type { Rule, Category, Channel, Kind, Surface } from '../types.js';
 const HERE = dirname(fileURLToPath(import.meta.url));
 
 /**
- * The corpus ships beside the compiled code in the published package and two
- * levels up in the repo, so resolve both without caring which one we're in.
+ * Where the corpus is, from wherever this module ended up.
+ *
+ * Three shapes ship: dist/corpus/load.js in a checkout and in the npm package,
+ * and bundle/redpen.mjs in a plugin install, which is one level shallower. The
+ * bundle found nothing and refused to start, which is a poor way to learn that
+ * the search was written against two of the three.
+ *
+ * Walking up rather than listing depths, so the next output shape does not
+ * break it again.
  */
 function rulesDir(): string {
-  for (const candidate of [
-    join(HERE, '..', '..', 'rules'),
-    join(HERE, '..', '..', '..', 'rules'),
-  ]) {
+  let dir = HERE;
+  for (let up = 0; up < 6; up++) {
+    const candidate = join(dir, 'rules');
     try {
       readdirSync(candidate);
       return candidate;
     } catch {
-      continue;
+      const parent = dirname(dir);
+      if (parent === dir) break;
+      dir = parent;
     }
   }
-  throw new Error('redpen: could not locate the rules/ directory');
+  throw new Error(
+    `could not locate the rules/ directory — looked upward from ${HERE}. ` +
+      'A checkout keeps it at the repo root; a plugin install keeps it beside bundle/.',
+  );
 }
 
 const VALID_CATEGORIES: ReadonlySet<string> = new Set<Category>([

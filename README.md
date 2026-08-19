@@ -109,10 +109,9 @@ variety; the metric is weighted so that it barely moves.
 ## Install
 
 > **Not released yet.** @gshepptech/redpen is not on npm and this repository is
-> private, so every command in this section will fail today. The working path
-> is a clone: `git clone`, `npm install`, `npm run build`, then `node dist/cli.js
-> scan .` — or `npm link` to get `redpen` on your PATH. The instructions below
-> are what will work once it ships.
+> private, so `npx` will fail today. The plugin path does work from a clone or a
+> git install — `bundle/redpen.mjs` is tracked, carries its dependencies inlined,
+> and needs no build step or `npm install` on the machine that runs it.
 
 **As a Claude Code plugin** — gives you `/redpen:audit`, `/redpen:why`,
 `/redpen:gate`, and a skill that fires whenever you build or review UI:
@@ -444,7 +443,7 @@ dashboard: `default-sans`, `monotonous-spacing`, `ghost-cards`, `over-rounding`,
 
 ## What this has and has not been proven against
 
-v0.1.0. The corpus is 142 rules across 13 categories, the suite is 165 tests,
+v0.1.0. The corpus is 142 rules across 13 categories, the suite is 169 tests,
 and the whole thing has been run end to end against exactly **one** real
 project — a ten-route Go dashboard — plus its own fixtures. That run found six
 defects in the dashboard and six in redpen itself. Auditing redpen's own output
