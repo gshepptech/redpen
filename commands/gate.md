@@ -22,8 +22,7 @@ say so rather than guessing. **Never `npx redpen`**: that name belongs to an
 unrelated package.
 
 ```bash
-REDPEN="${CLAUDE_PLUGIN_ROOT:-$(npm root -g)/@gshepptech/redpen}/dist/cli.js"
-node "$REDPEN" --help    # confirm it resolved before doing anything else
+run --help    # confirm the binary resolved before doing anything else
 ```
 
 If that path does not exist, the plugin is not installed; fall back to

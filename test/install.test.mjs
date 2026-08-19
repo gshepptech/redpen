@@ -103,19 +103,27 @@ test('the committed build is the build the source produces', () => {
   );
 });
 
-test('every command file resolves the binary the same way', () => {
-  // Eight files carry the same preamble by hand. One drifting is one command
-  // that works everywhere except where it matters.
+test('no command file tells anyone to run a path that may not be there', () => {
+  // Eight files carry the same preamble by hand, and the check that reads only
+  // the first bash block passed while three of them still carried a second one
+  // pointing straight at dist/cli.js — a path a plugin install does not have.
+  // Every block, not the first.
   const commands = execFileSync('ls', [join(ROOT, 'commands')], { encoding: 'utf8' })
     .split('\n')
     .filter((f) => f.endsWith('.md'));
   assert.ok(commands.length >= 8, `expected the full command set, saw ${commands.length}`);
+
   for (const file of commands) {
     const body = readFileSync(join(ROOT, 'commands', file), 'utf8');
-    assert.match(
-      body,
-      /CLAUDE_PLUGIN_ROOT/,
-      `${file} does not resolve the binary through CLAUDE_PLUGIN_ROOT`,
-    );
+    assert.match(body, /CLAUDE_PLUGIN_ROOT/, `${file} does not resolve through CLAUDE_PLUGIN_ROOT`);
+
+    for (const block of body.match(/```bash\n[\s\S]*?```/g) ?? []) {
+      // The resolver itself names dist as its second choice, which is correct.
+      // Anything else invoking it directly is a stale copy.
+      const direct = block
+        .split('\n')
+        .filter((l) => l.includes('dist/cli.js') && !l.trimStart().startsWith('elif'));
+      assert.deepEqual(direct, [], `${file} invokes dist/cli.js directly:\n${direct.join('\n')}`);
+    }
   }
 });
