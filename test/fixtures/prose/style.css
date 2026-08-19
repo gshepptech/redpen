@@ -1,0 +1,53 @@
+:root { --ink: #21201c; --paper: #f6f4ee; }
+body {
+  margin: 0; padding: 48px 32px; background: var(--paper); color: var(--ink);
+  font-family: "Iowan Old Style", Georgia, serif; font-size: 18px; line-height: 1.7;
+}
+main { max-width: 60ch; display: flex; flex-direction: column; gap: 20px; }
+h1 { font-size: 40px; line-height: 1.15; margin: 0; font-family: Futura, "Gill Sans", sans-serif; }
+p { margin: 0; }
+.features { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 6px; }
+
+.hero { min-height: 62vh; display: flex; flex-direction: column; justify-content: center; gap: 16px; }
+.lede { font-size: 21px; max-width: 52ch; }
+h2 { font-size: 27px; line-height: 1.25; margin: 0 0 8px; font-family: Futura, "Gill Sans", sans-serif; }
+section { display: flex; flex-direction: column; gap: 12px; }
+.cta {
+  display: inline-block; background: #21201c; color: #f6f4ee; text-decoration: none;
+  padding: 13px 22px; border-radius: 5px; min-height: 44px; font-size: 16px;
+}
+.cta:hover { background: #3a3830; }
+.cta:focus-visible { outline: 2px solid #b4472c; outline-offset: 3px; }
+.cta:active { background: #14130f; }
+
+/* gate 42 — the default bar */
+.banner { justify-content: space-between; }
+.bar { display: flex; align-items: center; gap: 18px; }
+.bar a { color: var(--ink); text-decoration: none; font-size: 15px; }
+.bar .btn { background: var(--ink); color: var(--paper); padding: 8px 14px; border-radius: 5px; }
+
+/* gate 45 — ornament with no anchor */
+.blob {
+  width: 160px; height: 160px; border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #b9a97e, #7d6f4a);
+  opacity: 0.5;
+}
+
+/* gate 43 — four columns of links */
+.foot {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px; padding: 28px 24px; border-top: 1px solid var(--line);
+}
+.foot ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.foot a { color: var(--ink); font-size: 14px; }
+
+
+.art { display: block; }
+
+.banner {
+  position: sticky; top: 0; display: flex; align-items: center;
+  justify-content: space-between; padding: 0 24px; height: 56px;
+  background: var(--paper); border-bottom: 1px solid #cfc9ba;
+}
+.mark { font-weight: 700; }
+.art { display: block; }

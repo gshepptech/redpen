@@ -189,3 +189,26 @@
     Make the two vocabularies distinct and keep them apart: whatever says
     "clickable" — fill, border, elevation, underline — appears on controls and
     nowhere else.
+
+- id: decorative-no-anchor
+  kind: slop
+  surfaces: [persuade]
+  title: Ornament with nothing behind it
+  category: composition
+  severity: low
+  weight: 47
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "slop-gate:45" }
+  channels: [render]
+  render:
+    check: decorative-no-anchor
+  why: >-
+    A gradient blob, a floating cursor, a sticker, a stray numeral in the
+    corner. Decoration earns its place by meaning something — a cursor inside a
+    typed command, a numeral that names an edition. Without an anchor in the
+    content it is filler, and filler in the opening screen is the first thing
+    that reads as generated.
+  fix: >-
+    Cut it, or give it a job. If the shape is carrying brand rather than
+    meaning, say so in the design notes and keep one, not five.

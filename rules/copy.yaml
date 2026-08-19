@@ -204,3 +204,180 @@
   fix: >-
     Curly quotes and apostrophes, a real en or em dash, a real ellipsis
     character.
+
+- id: tricolon-cadence
+  kind: slop
+  surfaces: [persuade, read]
+  title: Everything arrives in threes
+  category: copy
+  severity: low
+  weight: 46
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "copy:tricolon" }
+  channels: [source]
+  source:
+    patterns:
+      - '\b(fast|simple|reliable|secure|powerful|flexible|modern|clean|smart|scalable), (fast|simple|reliable|secure|powerful|flexible|modern|clean|smart|scalable),? and (fast|simple|reliable|secure|powerful|flexible|modern|clean|smart|scalable)\b'
+      - '\b(plan|design|build|ship|develop|deploy|create|launch|track|measure), (plan|design|build|ship|develop|deploy|create|launch|track|measure),? and (plan|design|build|ship|develop|deploy|create|launch|track|measure)\b'
+      - '\b(\w+), (\w+),? and (\w+)\.\s*(?:</|$)'
+  why: >-
+    Three items are rhythmically satisfying and cost nothing to produce, so they
+    turn up everywhere. One tricolon on a page is a device; the fourth is a tic,
+    and by then the reader is hearing the rhythm instead of the claim.
+  fix: >-
+    Use one item where one is true. Vary the count. If three things genuinely
+    belong together, keep the set and break the parallel grammar.
+
+- id: hedged-claim
+  kind: slop
+  surfaces: [persuade, read]
+  title: A claim with the claim hedged out of it
+  category: copy
+  severity: medium
+  weight: 52
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "copy:hedging" }
+    - { origin: catalogue, ref: "writing:hedge-stacked-predictions" }
+  channels: [source]
+  source:
+    patterns:
+      - '\bis designed to (help|improve|reduce|increase|make|ensure|enable)\b'
+      - '\b(may|might|could) (potentially|eventually|ultimately|significantly) \w+'
+      - '\b(aims to|seeks to|strives to|helps you to)\b'
+      - '\bcan (help|potentially) (you )?(reduce|improve|increase|save|boost)\b'
+  why: >-
+    "Designed to improve accuracy" tells the reader you are not sure it does.
+    Stacking a modal on a hedge adverb — "could potentially", "may eventually" —
+    is the same move twice: each word cancels the next, and the sentence asserts
+    nothing while sounding careful.
+  fix: >-
+    Claim it or drop it. If you are not certain, say what you did measure and
+    under what conditions.
+
+- id: false-breadth
+  kind: slop
+  surfaces: [persuade]
+  title: An audience defined so widely it names nobody
+  category: copy
+  severity: medium
+  weight: 50
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "copy:problem-paragraph" }
+    - { origin: catalogue, ref: "writing:template-phrases" }
+  channels: [source]
+  source:
+    patterns:
+      - '\bwhether (you''re|you are|your team is|it''s) [^<.]{3,60}\bor\b'
+      - '\bfrom (startups|solo founders|individuals|small teams) to (enterprises|large organi[sz]ations|global teams)\b'
+      - '\bfor (teams|businesses|creators|developers) of (all|any) (sizes?|kinds?)\b'
+  why: >-
+    "Whether you are a solo founder or part of a growing team" is a shape that
+    means everyone, which means nobody recognises themselves in it. Naming two
+    ends of a spectrum is how a page avoids choosing an audience.
+  fix: >-
+    Name the one audience the page is for. The people outside it will work out
+    that it is not for them, and the people inside it will know it is.
+
+- id: transition-filler
+  kind: slop
+  surfaces: [persuade, read]
+  title: Connectives doing no connecting
+  category: copy
+  severity: low
+  weight: 42
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "writing:transition-phrases" }
+  channels: [source]
+  source:
+    patterns:
+      - '(^|>|\s)(moreover|furthermore|additionally|in conclusion|in summary|to summari[sz]e)\b'
+      - '\b(it''s|it is) worth noting that\b'
+      - '\bin (today''s|an era where|a world where)\b'
+      - '\bhere''s what (caught my eye|stood out|makes it interesting)\b'
+  why: >-
+    "Moreover" and "Furthermore" mark a connection the sentences do not have;
+    "In today's fast-moving landscape" sets a scene nobody needed. They are the
+    joins of an outline that was filled in rather than written.
+  fix: >-
+    Cut them and see whether the paragraph still reads. It almost always does,
+    and where it does not, the fix is the order of the sentences.
+
+- id: significance-inflation
+  kind: slop
+  surfaces: [persuade, read]
+  title: A routine thing described as history
+  category: copy
+  severity: low
+  weight: 45
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "writing:significance-inflation" }
+    - { origin: catalogue, ref: "writing:future-narrative-closers" }
+  channels: [source]
+  source:
+    patterns:
+      - '\b(pivotal|watershed|defining|landmark|seminal) (moment|shift|change)\b'
+      - '\bmark(s|ing)? a new (era|chapter|age)\b'
+      - '\b(may|could|will|is poised to) become one of the most \w+ (narratives?|trends?|stories|chapters?|themes?)\b'
+      - '\bthe (evolution|future) of \w+ (is|has) (here|arrived|begun)\b'
+  why: >-
+    "Marking a pivotal moment in the evolution of" inflates a release into an
+    epoch. The closing prediction is the same move: grammatically a forecast,
+    with nothing in it anyone could later check.
+  fix: >-
+    Say what happened and let the reader decide what it means. If the sentence
+    still works with the inflation deleted, delete it.
+
+- id: copula-avoidance
+  kind: slop
+  surfaces: [persuade, read]
+  title: Press-release verbs standing in for "is"
+  category: copy
+  severity: low
+  weight: 41
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "writing:copula-avoidance" }
+  channels: [source]
+  source:
+    patterns:
+      - '\b(serves as|stands as|represents a|boasts (a|an|over|more than)|is poised to)\b'
+      - '\b(leverages?|utili[sz]es?) (the power of|cutting-edge|advanced)\b'
+      - '\bdelivers (unparalleled|unmatched|best-in-class)\b'
+  why: >-
+    "Serves as", "boasts", "represents" — fancier verbs standing in for "is" and
+    "has". Individually harmless; together they are the register of a press
+    release rather than a person explaining something.
+  fix: >-
+    Use "is" and "has" unless a more specific verb earns its place by adding
+    meaning.
+
+- id: bare-noun-bullets
+  kind: slop
+  surfaces: [persuade, read]
+  title: A list where no item says anything
+  category: copy
+  severity: medium
+  weight: 48
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "writing:bare-noun-bullets" }
+    - { origin: catalogue, ref: "copy:feature-list-nobody-counted" }
+  channels: [render]
+  render:
+    check: bare-noun-bullets
+    params:
+      minItems: 5
+  why: >-
+    Five or more list items in a row, each an adjective plus a noun, none of
+    them asserting anything a reader could check. The tell is the symmetry: a
+    real list has items of different lengths and at least one that does not fit
+    the pattern.
+  fix: >-
+    Rewrite each item as a claim — "failed shares stayed under 1% across a
+    twelve-hour run" beats "low failed share rates" — or turn the list into a
+    paragraph. Where a bare list is genuinely right, vary the items.

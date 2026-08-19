@@ -179,3 +179,24 @@
   fix: >-
     Define a small named scale — base, dropdown, sticky, overlay, toast — and
     reference it.
+
+- id: shadcn-default-card
+  kind: slop
+  title: Starter cards nobody opened
+  category: depth
+  severity: medium
+  weight: 55
+  evidenceRank: null
+  sources:
+    - { origin: study, ref: shadcn-default-card }
+  channels: [render]
+  render:
+    check: shadcn-default-card
+  why: >-
+    A one-pixel hairline, the default half-rem radius and the stock shadow,
+    repeated across a grid. The component library is not the tell; leaving its
+    defaults untouched is, because it says nobody opened the file.
+  fix: >-
+    Decide the card's own treatment. Drop the border and keep the ground, or
+    keep the border and drop the shadow — two of the three signals is usually
+    one too many.

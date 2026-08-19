@@ -178,3 +178,24 @@
   fix: >-
     Describe the content for meaningful images; `alt=""` for decorative ones.
     An empty alt is a decision; a missing alt is an omission.
+
+- id: stock-illustration
+  kind: slop
+  surfaces: [persuade, read]
+  title: Artwork from the free illustration sets
+  category: iconography
+  severity: medium
+  weight: 58
+  evidenceRank: null
+  sources:
+    - { origin: study, ref: stock-illustration }
+  channels: [render]
+  render:
+    check: stock-illustration
+  why: >-
+    unDraw, Storyset, Humaaans. Everyone reaching for the same free set means
+    every page wearing it looks like the others, and the flat limb-less figures
+    are recognisable across a room.
+  fix: >-
+    Drop the illustration and use the space, or commission one, or use a real
+    screenshot of the thing you are describing.

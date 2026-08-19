@@ -158,3 +158,48 @@
   fix: >-
     A real screenshot in a `<figure>`, with a hairline border at most. Or no
     frame at all: the content does not need a fake window to look like software.
+
+- id: nav-fingerprint
+  kind: slop
+  surfaces: [persuade, read]
+  title: The default navigation bar
+  category: chrome
+  severity: medium
+  weight: 60
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "slop-gate:42" }
+  channels: [render]
+  render:
+    check: nav-fingerprint
+  why: >-
+    Wordmark left, four or five inline links, a button right, one hairline
+    underneath, full width. It is the arrangement a model produces when the
+    brief did not describe a navigation, and it is recognisable before anyone
+    reads a word of it.
+  fix: >-
+    Pick a different arrangement the content justifies — a stacked index, a
+    sidebar, a single destination, a menu that opens. If the bar is right, at
+    least stop it announcing itself: drop the hairline, or let the wordmark and
+    the links share a column.
+
+- id: footer-fingerprint
+  kind: slop
+  surfaces: [persuade, read]
+  title: The four-column link footer
+  category: chrome
+  severity: low
+  weight: 48
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "slop-gate:43" }
+  channels: [render]
+  render:
+    check: footer-fingerprint
+  why: >-
+    Product, Company, Resources, Legal — four columns of links in a row above a
+    small copyright. On a site with twelve pages it is a directory of a site
+    that does not exist.
+  fix: >-
+    List what is actually there. Most projects need one row of four links and
+    the licence, not a matrix.

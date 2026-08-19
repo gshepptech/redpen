@@ -637,3 +637,65 @@ test('none of the new tells fire on a page that does not have them', opts, async
     assert.ok(!fired.includes(id), `${id} fired on a page that does not have it`);
   }
 });
+
+test('every copy and marketing tell fires on the page it describes', opts, async () => {
+  // The fixture is a marketing page on purpose. These rules are scoped to
+  // persuade and read, and the first cut of this fixture classified as an app —
+  // so all seven copy rules were gated off and the test passed having measured
+  // nothing, which is exactly what test/POLICY.md warns about.
+  const url = await serve(join(HERE, 'fixtures', 'prose'));
+  const result = await runScan({
+    root: join(HERE, 'fixtures', 'prose'),
+    urls: [url],
+    viewports: [1440],
+    ephemeral: true,
+  });
+  assert.ok(
+    Object.values(result.surfaces).every((v) => v.surface === 'persuade'),
+    `the fixture must land on persuade or the rules under test are switched off: ${JSON.stringify(result.surfaces)}`,
+  );
+
+  const fired = new Set(result.findings.map((f) => f.ruleId));
+  for (const id of [
+    'tricolon-cadence',
+    'hedged-claim',
+    'false-breadth',
+    'transition-filler',
+    'significance-inflation',
+    'copula-avoidance',
+    'bare-noun-bullets',
+    'stock-illustration',
+    'nav-fingerprint',
+    'footer-fingerprint',
+    'decorative-no-anchor',
+  ]) {
+    assert.ok(fired.has(id), `${id} did not fire on the page it describes`);
+  }
+});
+
+test('no copy or marketing tell fires on a page written without them', opts, async () => {
+  const url = await serve(join(HERE, 'fixtures', 'clean'));
+  const result = await runScan({
+    root: join(HERE, 'fixtures', 'clean'),
+    urls: [url],
+    viewports: [1440],
+    ephemeral: true,
+  });
+  const fired = result.findings.map((f) => f.ruleId);
+  for (const id of [
+    'tricolon-cadence',
+    'hedged-claim',
+    'false-breadth',
+    'transition-filler',
+    'significance-inflation',
+    'copula-avoidance',
+    'bare-noun-bullets',
+    'stock-illustration',
+    'nav-fingerprint',
+    'footer-fingerprint',
+    'decorative-no-anchor',
+    'shadcn-default-card',
+  ]) {
+    assert.ok(!fired.includes(id), `${id} fired on a page that does not have it`);
+  }
+});
