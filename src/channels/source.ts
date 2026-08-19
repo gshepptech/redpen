@@ -27,8 +27,16 @@ const SKIP_DIRS = new Set([
   'testdata', '__snapshots__', '__fixtures__', 'fixtures', '__mocks__',
 ]);
 
-/** Snapshot and golden files, wherever they live. */
-const SKIP_FILE = /\.(golden|snap|snapshot)\.|\.golden$|\.snap$/i;
+/**
+ * Test material, wherever it lives.
+ *
+ * SKIP_DIRS already covers testdata and __snapshots__, on the principle that a
+ * test is not shipped UI. Co-located tests are the same material and were not
+ * covered: on the first project with them, a copy rule cited
+ * `page.test.tsx:222 it("exports the flag in SUMMARY...")` — matching "in
+ * summary" inside an assertion about a CSV column.
+ */
+const SKIP_FILE = /\.(golden|snap|snapshot)\.|\.golden$|\.snap$|\.(test|spec)\.[jt]sx?$/i;
 
 /** Files above this size are almost always bundles, minified, or vendored. */
 const MAX_FILE_BYTES = 512 * 1024;

@@ -1883,34 +1883,34 @@ const CHECKS_LIB = `
   // most specific and most recent ones live.
 
   CHECKS['grid-track-bare-fr'] = function () {
-    // A bare 1fr track is minmax(auto, 1fr), and auto's minimum is the widest
-    // content in it. Put a 1024px image in one and the track cannot go below
-    // 1024px, so the page runs off a phone. redpen already reports the symptom
-    // as horizontal-overflow; this names the declaration that causes it, which
-    // is the thing you can change.
-    var hasGridImage = all('img, picture, svg, video').some(function (el) {
-      var pnt = el.parentElement;
-      for (var d = 0; pnt && d < 3; d++) {
-        if (getComputedStyle(pnt).display.indexOf('grid') !== -1) return true;
-        pnt = pnt.parentElement;
-      }
-      return false;
-    });
-    if (!hasGridImage) return [];
-
+    // Measured, not inferred.
+    //
+    // The first cut read grid-template-columns out of the stylesheet and
+    // reported any bare fr beside an image somewhere on the page. On the first
+    // real project it cited three Tailwind classes that only apply above the lg
+    // breakpoint, at a viewport where they do not apply, on a page with no
+    // overflow at all. A stylesheet rule is not a fact about the page.
+    //
+    // What is a fact: a grid whose content is wider than the grid, holding an
+    // image whose own natural width is what makes it so. That is the defect,
+    // and it is visible from the element.
     var out = [];
-    eachRule(function (r) {
-      if (!r.style || !r.selectorText) return;
-      ['grid-template-columns', 'grid-template-rows', 'grid-template'].forEach(function (prop) {
-        var v = r.style.getPropertyValue(prop);
-        if (!v) return;
-        // Strip every minmax(...) first; whatever fr survives is a bare one.
-        var bare = v.replace(/minmax\\([^)]*\\)/g, '');
-        if (!/\\d*\\.?\\d*fr/.test(bare)) return;
-        if (out.length < 6) {
-          out.push({ selector: r.selectorText, excerpt: prop + ': ' + v.trim() + ' — an image in this track cannot shrink below its own width' });
-        }
+    all('*').forEach(function (el) {
+      if (out.length >= 5) return;
+      var s = getComputedStyle(el);
+      if (s.display.indexOf('grid') === -1) return;
+      if (el.scrollWidth <= el.clientWidth + 1) return;
+      var imgs = Array.prototype.slice.call(el.querySelectorAll('img, picture img, video')).filter(function (im) {
+        // Not "rendered smaller than natural" — when the track cannot shrink the
+        // image is rendered AT its natural width, which is the defect. What
+        // matters is that its own width is what the grid cannot fit.
+        var natural = im.naturalWidth || im.videoWidth || 0;
+        return natural > 0 && natural > el.clientWidth;
       });
+      if (!imgs.length) return;
+      var im = imgs[0];
+      out.push(hit(el, 'grid overflows by ' + Math.round(el.scrollWidth - el.clientWidth) +
+        'px around a ' + (im.naturalWidth || im.videoWidth) + 'px image — the track has no minmax(0, ...) to shrink into'));
     });
     return out;
   };

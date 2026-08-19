@@ -62,7 +62,11 @@ main { padding: 24px; display: flex; flex-direction: column; gap: 26px; }
   gap: 18px;
 }
 .plates figure { margin: 0; }
-.plates img { width: 100%; height: auto; display: block; border-radius: 4px; }
+/* No width on the image, which is the whole point: a bare 1fr track is
+   minmax(auto, 1fr), and auto's minimum is the image's own 1200px. Give the
+   image a CSS width and the minimum disappears along with the defect — which is
+   how the first version of this fixture came to have no bug in it at all. */
+.plates img { display: block; border-radius: 4px; }
 
 /* gate 47 — a window frame drawn by hand */
 .fake-window {

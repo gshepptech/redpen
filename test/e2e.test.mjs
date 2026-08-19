@@ -19,7 +19,18 @@ import { runScan } from '../dist/scan.js';
  */
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const MIME = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript' };
+// An unlisted type fell through to text/plain, so an <img src="*.svg"> never
+// decoded and naturalWidth stayed 0 — which silently disabled every rule that
+// reasons about image size. The fixture had the defect; the harness hid it.
+const MIME = {
+  '.html': 'text/html',
+  '.css': 'text/css',
+  '.js': 'text/javascript',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.webp': 'image/webp',
+};
 
 let servers = [];
 
