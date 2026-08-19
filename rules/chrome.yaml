@@ -137,3 +137,24 @@
     only reason it is a column.
   fix: >-
     `font-variant-numeric: tabular-nums` on the numeric cells, or on the table.
+
+- id: redrawn-chrome
+  kind: slop
+  title: A hand-drawn browser or terminal window
+  category: chrome
+  severity: high
+  weight: 76
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "slop-gate:47" }
+  channels: [render]
+  render:
+    check: redrawn-chrome
+  why: >-
+    A URL pill and three traffic-light dots built out of divs, or a mock title
+    bar wrapped around a code block. The model drew a window the reader's own
+    machine already provides, and it never quite matches any real one — which is
+    why it reads as generated on sight.
+  fix: >-
+    A real screenshot in a `<figure>`, with a hairline border at most. Or no
+    frame at all: the content does not need a fake window to look like software.

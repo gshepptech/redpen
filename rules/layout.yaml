@@ -432,3 +432,47 @@
     Use `100dvh` for the height that follows the bar, or `100svh` for the
     smallest guaranteed viewport when you need no jump at all. Keep `100vh` as
     a fallback underneath if you support browsers without the dynamic units.
+
+- id: grid-track-bare-fr
+  kind: quality
+  title: An image in a grid track that cannot shrink
+  category: layout
+  severity: high
+  weight: 71
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "slop-gate:50" }
+  channels: [render]
+  render:
+    check: grid-track-bare-fr
+  why: >-
+    A bare `1fr` track is `minmax(auto, 1fr)`, and `auto`'s minimum is the
+    widest thing inside it. Put a 1024px image in one and the track can never go
+    below 1024px, so the layout runs off the side of a phone. redpen already
+    reports the result as a page that scrolls sideways; this names the
+    declaration that caused it.
+  fix: >-
+    `minmax(0, 1fr)` on every track that holds an image. One character per
+    track, and it is the whole fix.
+
+- id: double-sticky-top
+  kind: quality
+  title: Two elements stuck to the top of the viewport
+  category: layout
+  severity: medium
+  weight: 58
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "slop-gate:56" }
+  channels: [render]
+  render:
+    check: double-sticky-top
+  why: >-
+    A sticky section header and a sticky page banner both pinned at `top: 0`
+    occupy the same strip of screen, and the one deeper in the document paints
+    over the nav. It reads as a rendering glitch and only appears once someone
+    scrolls, which is why it survives review.
+  fix: >-
+    Give the banner a height token and offset every other sticky element to
+    `top: var(--banner-height)` so it docks underneath. Put the nav on a higher
+    z-index than in-page sticky boxes for the moment they overlap.

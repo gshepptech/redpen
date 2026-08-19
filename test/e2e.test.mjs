@@ -588,3 +588,52 @@ test('a --only filter that matches no category says so rather than reporting cle
     'a real category should not warn',
   );
 });
+
+test('the tells above gate forty each fire on the shape they describe', opts, async () => {
+  // redpen cited its upstream catalogue densely up to gate 40 and not once
+  // above it, which is where the most specific tells live. These five are that
+  // block: a grid track that cannot shrink, display type with no break
+  // opportunity, uppercase set tighter than its own cap height, two elements
+  // stuck to the same strip of viewport, and a window frame drawn out of divs.
+  const url = await serve(join(HERE, 'fixtures', 'gates'));
+  const result = await runScan({
+    root: join(HERE, 'fixtures', 'gates'),
+    urls: [url],
+    viewports: [375, 1440],
+    ephemeral: true,
+  });
+  const fired = new Set(result.findings.map((f) => f.ruleId));
+  for (const id of [
+    'grid-track-bare-fr',
+    'display-no-word-wrap',
+    'caps-tight-leading',
+    'double-sticky-top',
+    'redrawn-chrome',
+  ]) {
+    assert.ok(fired.has(id), `${id} did not fire on the shape it describes`);
+  }
+});
+
+test('none of the new tells fire on a page that does not have them', opts, async () => {
+  // The half that matters. A rule that fires on everything is worse than no
+  // rule, and the first cut of display-no-word-wrap fired on every heading in
+  // the clean fixture — it was splitting on the letter "s", because a single
+  // backslash does not survive a TypeScript template literal.
+  const url = await serve(join(HERE, 'fixtures', 'clean'));
+  const result = await runScan({
+    root: join(HERE, 'fixtures', 'clean'),
+    urls: [url],
+    viewports: [375, 1440],
+    ephemeral: true,
+  });
+  const fired = result.findings.map((f) => f.ruleId);
+  for (const id of [
+    'grid-track-bare-fr',
+    'display-no-word-wrap',
+    'caps-tight-leading',
+    'double-sticky-top',
+    'redrawn-chrome',
+  ]) {
+    assert.ok(!fired.includes(id), `${id} fired on a page that does not have it`);
+  }
+});

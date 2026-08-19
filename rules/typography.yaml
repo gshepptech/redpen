@@ -327,3 +327,49 @@
   fix: >-
     Keep the device for two or three sections that genuinely form a sequence, or
     drop it entirely.
+
+- id: display-no-word-wrap
+  kind: quality
+  title: Display heading with no way to break a long word
+  category: typography
+  severity: medium
+  weight: 57
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "slop-gate:51" }
+  channels: [render]
+  render:
+    check: display-no-word-wrap
+    params:
+      minSizePx: 28
+  why: >-
+    At display sizes a single long word is wider than a phone. The only break
+    opportunity in "AI-generated" or a compound brand name is the hyphen, and
+    without one there is none at all, so the word pushes the page sideways.
+  fix: >-
+    `overflow-wrap: anywhere; min-width: 0` on display type. It only takes
+    effect when there is no better break, so it costs nothing on wide screens.
+
+- id: caps-tight-leading
+  kind: quality
+  title: Uppercase display set tighter than its own cap height
+  category: typography
+  severity: medium
+  weight: 54
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "slop-gate:55" }
+  channels: [render]
+  render:
+    check: caps-tight-leading
+    params:
+      minSizePx: 22
+  why: >-
+    Uppercase has no descenders, so its cap-tops sit at the very top of the line
+    box. Below a line-height of 1.0 the caps of the second line collide with the
+    baseline and commas of the first, and a trailing comma fuses into the letter
+    beneath it. It only shows once a heading wraps, which is never at the width
+    the author used.
+  fix: >-
+    A floor of 1.0 for all-caps display, 1.02 to 1.08 in practice. Or drop the
+    uppercase and set the heading in its own case.

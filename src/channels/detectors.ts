@@ -1878,6 +1878,124 @@ const CHECKS_LIB = `
       'face(s) not in the declared type system: ' + off.slice(0, 4).join(', '))];
   };
 
+  // ---- the tells the upstream catalogues name above their fortieth gate ----
+  // Cited densely up to gate 40 and not at all above it, which is where the
+  // most specific and most recent ones live.
+
+  CHECKS['grid-track-bare-fr'] = function () {
+    // A bare 1fr track is minmax(auto, 1fr), and auto's minimum is the widest
+    // content in it. Put a 1024px image in one and the track cannot go below
+    // 1024px, so the page runs off a phone. redpen already reports the symptom
+    // as horizontal-overflow; this names the declaration that causes it, which
+    // is the thing you can change.
+    var hasGridImage = all('img, picture, svg, video').some(function (el) {
+      var pnt = el.parentElement;
+      for (var d = 0; pnt && d < 3; d++) {
+        if (getComputedStyle(pnt).display.indexOf('grid') !== -1) return true;
+        pnt = pnt.parentElement;
+      }
+      return false;
+    });
+    if (!hasGridImage) return [];
+
+    var out = [];
+    eachRule(function (r) {
+      if (!r.style || !r.selectorText) return;
+      ['grid-template-columns', 'grid-template-rows', 'grid-template'].forEach(function (prop) {
+        var v = r.style.getPropertyValue(prop);
+        if (!v) return;
+        // Strip every minmax(...) first; whatever fr survives is a bare one.
+        var bare = v.replace(/minmax\\([^)]*\\)/g, '');
+        if (!/\\d*\\.?\\d*fr/.test(bare)) return;
+        if (out.length < 6) {
+          out.push({ selector: r.selectorText, excerpt: prop + ': ' + v.trim() + ' — an image in this track cannot shrink below its own width' });
+        }
+      });
+    });
+    return out;
+  };
+
+  CHECKS['display-no-word-wrap'] = function (p) {
+    var minPx = p.minSizePx || 28;
+    return all('h1, h2, h3, [class*="display"], [class*="hero"]').filter(function (el) {
+      var s = getComputedStyle(el);
+      if (parseFloat(s.fontSize) < minPx) return false;
+      var wrap = (s.overflowWrap || '') + ' ' + (s.wordBreak || '');
+      if (/anywhere|break-word|break-all/.test(wrap)) return false;
+      // Only where the risk is real: a token long enough to overflow a phone at
+      // this size, whose only break opportunity is a hyphen or nothing at all.
+      var longest = textOf(el).split(/\\s+/).reduce(function (a, w) { return w.length > a.length ? w : a; }, '');
+      return longest.length >= 12;
+    }).slice(0, 5).map(function (el) {
+      var longest = textOf(el).split(/\\s+/).reduce(function (a, w) { return w.length > a.length ? w : a; }, '');
+      return hit(el, 'display type with no overflow-wrap and an unbreakable ' + longest.length + '-character word: ' + longest);
+    });
+  };
+
+  CHECKS['caps-tight-leading'] = function (p) {
+    var minPx = p.minSizePx || 22;
+    return all('*').filter(function (el) {
+      if (!textOf(el) || el.children.length) return false;
+      var s = getComputedStyle(el);
+      if (s.textTransform !== 'uppercase') return false;
+      var size = parseFloat(s.fontSize);
+      if (size < minPx) return false;
+      var lh = parseFloat(s.lineHeight);
+      if (!lh || isNaN(lh)) return false;
+      return lh / size < 1.0;
+    }).slice(0, 5).map(function (el) {
+      var s = getComputedStyle(el);
+      var ratio = (parseFloat(s.lineHeight) / parseFloat(s.fontSize)).toFixed(2);
+      return hit(el, 'uppercase display at line-height ' + ratio + ' — cap-tops collide with the line above when it wraps');
+    });
+  };
+
+  CHECKS['double-sticky-top'] = function () {
+    var stuck = all('*').filter(function (el) {
+      var s = getComputedStyle(el);
+      return s.position === 'sticky' && parseFloat(s.top) === 0;
+    });
+    if (stuck.length < 2) return [];
+    // Only a defect when one of them is the page banner, which is what the
+    // others would paint over.
+    var banner = stuck.filter(function (el) {
+      return /^(HEADER|NAV)$/.test(el.tagName) || el.getAttribute('role') === 'banner' ||
+             /nav|header|banner/i.test(el.className || '');
+    });
+    if (!banner.length) return [];
+    return stuck.filter(function (el) { return banner.indexOf(el) === -1; }).slice(0, 4).map(function (el) {
+      return hit(el, 'a second element stuck at top: 0 under a sticky banner — they overlap on scroll');
+    });
+  };
+
+  CHECKS['redrawn-chrome'] = function () {
+    // Three small circles in a row at the top of a bordered box is a hand-built
+    // browser or terminal window. The model drew a UI the reader's own machine
+    // already provides, which is among the strongest tells there is.
+    var out = [];
+    all('*').forEach(function (parent) {
+      if (out.length >= 4) return;
+      var kids = Array.prototype.slice.call(parent.children);
+      if (kids.length < 3) return;
+      var dots = kids.filter(function (k) {
+        var r = k.getBoundingClientRect();
+        var s = getComputedStyle(k);
+        if (r.width < 6 || r.width > 18) return false;
+        if (Math.abs(r.width - r.height) > 2) return false;
+        if (parseFloat(s.borderRadius) < r.width * 0.4) return false;
+        var bg = parseColor(s.backgroundColor);
+        return bg && bg.a > 0.2;
+      });
+      if (dots.length < 3) return;
+      // On one row, not a scattered set of indicators.
+      var tops = {};
+      dots.forEach(function (d) { tops[Math.round(d.getBoundingClientRect().top)] = 1; });
+      if (Object.keys(tops).length > 1) return;
+      out.push(hit(parent, dots.length + ' traffic-light dots in a row — a hand-drawn window frame'));
+    });
+    return out;
+  };
+
   CHECKS['console-errors'] = function () {
     var errs = window.__redpenErrors || [];
     return errs.slice(0, 8).map(function (e) { return { selector: 'window', excerpt: e }; });
