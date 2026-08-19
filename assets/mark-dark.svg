@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 132 112" width="132" height="112" role="img" aria-label="redpen">
+  <title>redpen</title>
+  <!--
+    The mark: a nib held between two chevrons.
+
+    Geometry only, no text — the wordmark is set beside it in the page, so the
+    lockup never depends on a font file being present. Drawn on a 132x112 grid
+    with the nib centred on x=66, so the chevrons are exact mirrors.
+
+    The vent hole and the slit are a mask rather than white shapes. Painted
+    white they only worked on a white page; as a knockout the ground shows
+    through and the mark sits on anything.
+  -->
+  <defs>
+    <mask id="nib-cut">
+      <rect x="0" y="0" width="132" height="112" fill="#fff" />
+      <circle cx="66" cy="55" r="9" fill="#000" />
+      <path d="M66 55 L66 104" stroke="#000" stroke-width="3.5" stroke-linecap="round" />
+    </mask>
+  </defs>
+
+  <g fill="none" stroke="#E9E9EC" stroke-width="11" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M25 30 L6 56 L25 82" />
+    <path d="M107 30 L126 56 L107 82" />
+  </g>
+
+  <g fill="#ED2C25" mask="url(#nib-cut)">
+    <rect x="45" y="4" width="42" height="12" rx="6" />
+    <path d="M52 22 h28 a4 4 0 0 1 3.6 2.3 l14.4 30.9 a5 5 0 0 1 -0.7 5.4 L66 104 L34.7 60.6 a5 5 0 0 1 -0.7 -5.4 l14.4 -30.9 A4 4 0 0 1 52 22 Z" />
+  </g>
+</svg>
