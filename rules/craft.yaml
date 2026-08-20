@@ -70,9 +70,14 @@
   channels: [source]
   source:
     patterns:
-      - '/\*\*\s*\n\s*\*\s*(Gets?|Sets?|Returns?|Creates?|Handles?|Processes?) the \w+\.?\s*\n\s*\*\s*@(returns?|param)'
-      - '(//|\*)\s*@param\s+\{?\w+\}?\s+(\w+)\s+(The|the)\s+\2\b'
-      - '(//|\*)\s*@returns?\s+(The|the)\s+(result|value|output)\.?\s*$'
+      - '/\*\*\s*\n\s*\*\s*(Gets?|Sets?|Returns?|Creates?|Handles?|Processes?|Exports?|Imports?|Updates?|Deletes?|Fetches|Builds?|Runs?|Sends?|Loads?|Saves?) the \w+\.?\s*\n\s*\*\s*@(returns?|param)'
+      # Two shapes of the same line. JSDoc with a type — `@param {string} format
+      # The format` — and without one, which is what TypeScript writes because
+      # the type is already in the signature. Only the first was matched, so a
+      # TypeScript codebase could not trip this rule at all.
+      - '@param\s+\{\w+\}\s+(\w+)\s+[Tt]he\s+\1\b'
+      - '@param\s+(\w+)\s+[Tt]he\s+\1\b'
+      - '@returns?\s+[Tt]he\s+(result|value|output|data|response)\.?\s*$'
   why: >-
     "Gets the name. @returns the name" costs a reader four lines to learn what
     the signature already told them in one. It is the shape a docstring takes
@@ -131,7 +136,10 @@
       # advice. Same rule as redpen-ignore: the reason is what makes it a
       # decision, and three words is the floor for one.
       - 'catch\s*(\([^)]*\))?\s*\{\s*(//|/\*)\s*(ignore|noop|no-op|nothing|skip|empty|pass|swallow)?d?\s*(\*/)?\s*\n?\s*\}'
-      - 'catch\s*\([^)]*\)\s*\{\s*(console\.(log|debug))\([^)]*\);?\s*\}'
+      # Logging is not handling. The pattern used to need the console call to be
+      # the only statement in the block, so `catch (e) { console.log(e); return
+      # ""; }` — the commonest shape there is — went unreported.
+      - 'catch\s*\([^)]*\)\s*\{\s*console\.(log|debug|info)\([^)]*\);?\s*(\n\s*)?(return[^;\n]*;?\s*)?\}'
     # A reason in the comment above is still a reason. This rule reported
     # `try { await refresh(); } catch {}` on a project where the three lines
     # above it say "Swallow a refresh failure so the error surface below always

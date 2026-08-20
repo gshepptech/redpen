@@ -214,3 +214,26 @@ test('a reason written above the block is still a reason', async () => {
     'an unexplained empty catch stopped being reported',
   );
 });
+
+test('the rules catch code that looks like it shipped, not just the caricature', async () => {
+  // sloppy-code is a caricature: every tell, one per line, unmistakable. This
+  // fixture is what actually gets committed — a plausible service class with
+  // four tells buried in working code — and on the first run the rules found
+  // two of them.
+  //
+  // Both misses had causes. `swallowed-error` needed the console call to be the
+  // only statement in the block, so `catch (e) { console.log(e); return ""; }`
+  // went unreported. And the docstring rule only knew JSDoc that carries a
+  // type, which TypeScript does not write, because the type is in the
+  // signature — so a TypeScript codebase could not trip it at all.
+  const result = await scanCode('realistic-code');
+  const fired = new Set(result.findings.map((f) => f.ruleId));
+  for (const id of [
+    'stub-shipped',
+    'swallowed-error',
+    'edit-narrating-comment',
+    'signature-restating-docstring',
+  ]) {
+    assert.ok(fired.has(id), `${id} missed a tell buried in working code`);
+  }
+});
