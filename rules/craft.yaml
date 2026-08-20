@@ -240,3 +240,34 @@
   fix: >-
     Name it for what it does in this system. If that is genuinely hard to say,
     the difficulty is usually the code rather than the name.
+
+- id: junk-drawer-module
+  kind: slop
+  title: Several modules named after nothing
+  category: craft
+  severity: medium
+  weight: 57
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "code:CODE-05" }
+    - { origin: redpen, ref: naming-residue }
+  channels: [source]
+  source:
+    # Matched on the basename so each drawer counts once. A directory pattern
+    # would count every file inside `utils/` and report one drawer as thirty.
+    paths:
+      - '(^|/)(utils?|helpers?|common|misc|shared|stuff|extras|things|constants)\.(ts|tsx|js|jsx|mjs|cjs|go|py|rb|rs|java|kt|php|cs)$'
+    # One utils.ts is where a project keeps the two functions that fit nowhere,
+    # and that is fine. Three of them is a filing system nobody designed: the
+    # question "where does this go" now has three answers and no reason to
+    # prefer any of them.
+    minHits: 3
+  why: >-
+    A module named for what it is not — not a parser, not a client, not a store —
+    accumulates whatever had nowhere else to go. Several of them means the
+    question "where does this belong" has stopped having an answer, and the next
+    function lands in whichever one the author opened last.
+  fix: >-
+    Name each one for what it actually holds. Most junk drawers turn out to be
+    two or three real modules that were never separated: dates, formatting, and
+    a client wrapper, filed together because they arrived on the same afternoon.

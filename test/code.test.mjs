@@ -168,3 +168,29 @@ test('the naming rules leave ordinary naming alone', async () => {
     'a naming rule fired on ordinary code',
   );
 });
+
+test('one junk drawer is a project, three is a filing system nobody designed', async () => {
+  // The rule counts rather than matches. One utils.ts is where the two
+  // functions that fit nowhere live, and that is fine; three means "where does
+  // this go" has three answers and no reason to prefer any of them.
+  const three = await scanCode('junk-drawers');
+  assert.ok(
+    three.findings.some((f) => f.ruleId === 'junk-drawer-module'),
+    'three drawers did not fire',
+  );
+
+  const two = await scanCode('two-drawers');
+  assert.ok(
+    !two.findings.some((f) => f.ruleId === 'junk-drawer-module'),
+    'two drawers fired, which is a project keeping its odds and ends',
+  );
+});
+
+test('a directory of odds and ends counts once, not once per file', async () => {
+  // Matching a `utils/` directory would count every file inside it and report
+  // one drawer as thirty, which is why the pattern is on the basename.
+  const result = await scanCode('junk-drawers');
+  const drawer = result.findings.find((f) => f.ruleId === 'junk-drawer-module');
+  const locations = new Set(drawer.evidence.map((e) => e.location));
+  assert.equal(locations.size, drawer.evidence.length, 'a file was counted twice');
+});
