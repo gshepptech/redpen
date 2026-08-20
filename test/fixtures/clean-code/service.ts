@@ -37,3 +37,12 @@ export async function save(row: Record<string, unknown>): Promise<void> {
 async function write(row: Record<string, unknown>): Promise<void> {
   await fetch('/api/stands', { method: 'POST', body: JSON.stringify(row) });
 }
+
+export async function refreshAfterPartialWrite(refresh: () => Promise<void>): Promise<void> {
+  // A throw here escapes to the caller and skips the message below, leaving no
+  // feedback on the very outage that failed the write. Swallow a refresh
+  // failure so the error surface always fires.
+  try {
+    await refresh();
+  } catch {}
+}

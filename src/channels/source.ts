@@ -148,6 +148,7 @@ interface CompiledRule {
   patterns: RegExp[];
   paths: RegExp[];
   suppress: RegExp | null;
+  suppressLines: number;
   extensions: Set<string> | null;
   minHits: number;
 }
@@ -164,6 +165,7 @@ function compile(rules: Rule[]): CompiledRule[] {
         patterns: (m.patterns ?? []).map((p) => new RegExp(p, m.caseSensitive ? 'gu' : 'giu')),
         paths: (m.paths ?? []).map((p) => new RegExp(p, m.caseSensitive ? 'u' : 'iu')),
         suppress: m.suppress ? new RegExp(m.suppress, m.caseSensitive ? 'u' : 'iu') : null,
+        suppressLines: m.suppressLines ?? 0,
         /**
          * A rule reads the files its category is about.
          *
@@ -285,7 +287,13 @@ export function scanSource(opts: SourceScanOptions): {
           const line = lines[lineNo - 1] ?? '';
 
           if (line.length > MAX_LINE_LENGTH) continue;
-          if (c.suppress && c.suppress.test(line)) continue;
+          // The line itself, and the few above it when the rule asks — a reason
+          // is written above the code it explains, not beside it.
+          if (c.suppress) {
+            const from = Math.max(0, lineNo - 1 - c.suppressLines);
+            const window = lines.slice(from, lineNo).join('\n');
+            if (c.suppress.test(window)) continue;
+          }
 
           // An ignore on this line or the one above suppresses the hit, and is
           // recorded so `redpen ignores` can list what a project has excused.

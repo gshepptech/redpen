@@ -107,6 +107,16 @@ export interface SourceMatcher {
   /** A same-line match here cancels the hit. Kills the common false positives. */
   suppress?: string;
   /**
+   * Lines above the hit that the suppression also reads.
+   *
+   * Reasons are written above the code they explain, not beside it. A catch
+   * carrying `// Swallow a refresh failure so the error surface below always
+   * fires` three lines up is a decision by any reading, and same-line
+   * suppression cannot see it — it reported that block twice, on two different
+   * projects, as an omission.
+   */
+  suppressLines?: number;
+  /**
    * Match case exactly.
    *
    * Patterns compile case-insensitively because CSS and class names vary in

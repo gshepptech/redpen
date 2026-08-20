@@ -194,3 +194,23 @@ test('a directory of odds and ends counts once, not once per file', async () => 
   const locations = new Set(drawer.evidence.map((e) => e.location));
   assert.equal(locations.size, drawer.evidence.length, 'a file was counted twice');
 });
+
+test('a reason written above the block is still a reason', async () => {
+  // Suppression read only the line the hit was on, and reasons are written
+  // above the code they explain. It reported
+  // `try { await refresh(); } catch {}` on a project whose three lines above it
+  // say "Swallow a refresh failure so the error surface below always fires" —
+  // a better justification than most code carries inside the braces.
+  const result = await scanCode('clean-code');
+  assert.ok(
+    !result.findings.some((f) => f.ruleId === 'swallowed-error'),
+    'a catch whose reason sits above it was reported as an omission',
+  );
+
+  // ...and a block with no reason anywhere near it still is one.
+  const sloppy = await scanCode('sloppy-code');
+  assert.ok(
+    sloppy.findings.some((f) => f.ruleId === 'swallowed-error'),
+    'an unexplained empty catch stopped being reported',
+  );
+});

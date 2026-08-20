@@ -132,6 +132,13 @@
       # decision, and three words is the floor for one.
       - 'catch\s*(\([^)]*\))?\s*\{\s*(//|/\*)\s*(ignore|noop|no-op|nothing|skip|empty|pass|swallow)?d?\s*(\*/)?\s*\n?\s*\}'
       - 'catch\s*\([^)]*\)\s*\{\s*(console\.(log|debug))\([^)]*\);?\s*\}'
+    # A reason in the comment above is still a reason. This rule reported
+    # `try { await refresh(); } catch {}` on a project where the three lines
+    # above it say "Swallow a refresh failure so the error surface below always
+    # fires" — which is a better justification than most code carries inside
+    # the block.
+    suppress: '\b(because|so that|so the|so it|otherwise|expected|deliberate|intentional|on purpose|safe to)\b|\bSwallow\b'
+    suppressLines: 4
   why: >-
     An empty catch turns a failure into silence. The program continues in a
     state nobody designed, and the first sign of it is a wrong number somewhere

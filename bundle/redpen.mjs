@@ -7980,6 +7980,7 @@ function compile(rules) {
       patterns: (m.patterns ?? []).map((p) => new RegExp(p, m.caseSensitive ? "gu" : "giu")),
       paths: (m.paths ?? []).map((p) => new RegExp(p, m.caseSensitive ? "u" : "iu")),
       suppress: m.suppress ? new RegExp(m.suppress, m.caseSensitive ? "u" : "iu") : null,
+      suppressLines: m.suppressLines ?? 0,
       /**
        * A rule reads the files its category is about.
        *
@@ -8054,7 +8055,11 @@ function scanSource(opts) {
           const lineNo = countLines(text, match.index);
           const line = lines[lineNo - 1] ?? "";
           if (line.length > MAX_LINE_LENGTH) continue;
-          if (c.suppress && c.suppress.test(line)) continue;
+          if (c.suppress) {
+            const from = Math.max(0, lineNo - 1 - c.suppressLines);
+            const window = lines.slice(from, lineNo).join("\n");
+            if (c.suppress.test(window)) continue;
+          }
           const directive = parseIgnore(line) ?? parseIgnore(lines[lineNo - 2]);
           if (directive && (directive.ruleId === null || directive.ruleId === c.rule.id)) {
             const list2 = ignored.get(c.rule.id) ?? [];
