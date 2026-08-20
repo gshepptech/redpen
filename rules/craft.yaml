@@ -21,10 +21,33 @@
   channels: [source]
   source:
     patterns:
-      - '(//|#|\*)\s*(Added|Adding|Updated|Updating|Changed|Changing|Removed|Removing|Fixed|Fixing|Refactored|Renamed|Moved|Replaced)\b[^\n]{0,60}\b(here|above|below|this|to (use|be|match|support)|from|for (now|clarity|consistency))\b'
+      # Past tense about the author's own edit. Gerunds are out: "Adding a fifth
+      # advisory means adding a row here" is an instruction to whoever comes
+      # next, not a note about what happened. "Fixed" is out too — it is more
+      # often "fixed order" or "fixed width" than "I fixed it", and it cost this
+      # rule a false positive on `// Fixed, not the marks' insertion order`.
+      - '(//|#|\*)\s*(Added|Updated|Changed|Removed|Refactored|Renamed|Moved|Replaced)\b[^\n]{0,60}\b(here|above|below|this|to (use|be|match|support)|from|for (now|clarity|consistency))\b'
       - '(//|#|\*)\s*(NEW|OLD|WAS|BEFORE|AFTER)\s*[::-]'
       - '(//|#|\*)\s*(As (requested|discussed|per)|Per (the|your) (request|feedback|review))\b'
       - '(//|#|\*)\s*(This (was|has been) (added|updated|changed|refactored))\b'
+    # A clause giving the reason makes it an explanation rather than a diary
+    # entry. `// Added here (before Terra Draw) so it sits beneath the outlines`
+    # narrates an edit and also says why the order matters, and the why is the
+    # part worth keeping.
+    # Two suppressions, both learned from real comments.
+    #
+    # A clause giving the reason makes it an explanation rather than a diary
+    # entry: `// Added here (before Terra Draw) so it sits beneath the outlines`
+    # narrates an edit and also says why the order matters, and the why is the
+    # part worth keeping.
+    #
+    # And a line starting lower-case is the middle of a sentence, not the start
+    # of a note. Patterns compile case-insensitively, so "Whitetail Institute
+    # renamed this product" and "a field added to a type in lib/types.ts" both
+    # matched on their continuation lines — two of the better comments in that
+    # codebase, reported for containing a verb.
+    caseSensitive: true
+    suppress: '\b(because|so that|so it|so the|which is|otherwise|means|in order to|to avoid|to keep)\b|^\s*(//|#|\*)\s*[a-z]'
   why: >-
     "Updated to use the new API" tells the next reader what happened one
     afternoon, not what the code does. The edit it describes is in the history

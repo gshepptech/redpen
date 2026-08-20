@@ -98,6 +98,16 @@ export interface SourceMatcher {
   patterns: string[];
   /** A same-line match here cancels the hit. Kills the common false positives. */
   suppress?: string;
+  /**
+   * Match case exactly.
+   *
+   * Patterns compile case-insensitively because CSS and class names vary in
+   * case. Prose does not: a comment opening with "Added" is a note about an
+   * edit, and the same word lower-case mid-sentence is somebody explaining
+   * that a vendor renamed a product. Case was the only thing telling those
+   * apart, and the `i` flag was quietly discarding it.
+   */
+  caseSensitive?: boolean;
   /** Restrict to these file extensions. Defaults to all scanned extensions. */
   extensions?: string[];
   /**

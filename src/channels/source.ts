@@ -96,9 +96,10 @@ function compile(rules: Rule[]): CompiledRule[] {
       const m = rule.source!;
       return {
         rule,
-        // 'u' for the emoji ranges, 'i' because CSS and class names vary in case.
-        patterns: m.patterns.map((p) => new RegExp(p, 'giu')),
-        suppress: m.suppress ? new RegExp(m.suppress, 'iu') : null,
+        // 'u' for the emoji ranges, 'i' because CSS and class names vary in
+        // case — except where a rule reads prose, where case is the signal.
+        patterns: m.patterns.map((p) => new RegExp(p, m.caseSensitive ? 'gu' : 'giu')),
+        suppress: m.suppress ? new RegExp(m.suppress, m.caseSensitive ? 'u' : 'iu') : null,
         extensions: m.extensions ? new Set(m.extensions) : null,
         minHits: m.minHits ?? 1,
       };
