@@ -1,0 +1,108 @@
+# What the process that built it left behind.
+#
+# Nothing here is about the software. It is about the machinery that produced
+# it still being visible to whoever reads it next: the phase the work belonged
+# to, the ticket it came from, the agent that wrote it. All of it made sense in
+# the run that emitted it and none of it means anything a week later.
+#
+# Source channel only, and outside a UI scan — `redpen code` runs these.
+
+- id: orchestration-marker
+  kind: slop
+  title: A phase or task id left in the source
+  category: residue
+  severity: medium
+  weight: 66
+  evidenceRank: null
+  sources:
+    - { origin: redpen, ref: orchestration-residue }
+  channels: [source]
+  source:
+    patterns:
+      - '(//|#|\*|<!--)\s*\b(L[0-9]{1,2}|P[0-9]{1,2}|M[0-9]{1,2})\s*[-–—:]\s*\S'
+      - '(//|#|\*)\s*\b(phase|milestone|casting|task|ticket|story|epic)\s+[#-]?\d+\b'
+      - '(//|#|\*)[^\n]{0,40}\b(per|from|for)\s+(the\s+)?(phase|milestone|spec|plan|roadmap)\s+(above|below|doc|file|\d)'
+      - '(//|#|\*)\s*(as (required|specified) by|required by)\s+(the\s+)?(phase|spec|plan|milestone)\b'
+  why: >-
+    "L1- we had to add this because the phase required it" is a note to the run
+    that produced it. Whoever reads the file next has no phase, no plan, and no
+    way to look up what L1 was — so the sentence explains the code with a fact
+    they cannot check.
+  fix: >-
+    Say the reason without the reference. If the phase document held the real
+    justification, move that sentence into the comment; if it did not, the
+    comment was never explaining anything.
+
+- id: agent-attribution
+  kind: slop
+  title: The tool that wrote it, named in the code
+  category: residue
+  severity: medium
+  weight: 63
+  evidenceRank: null
+  sources:
+    - { origin: redpen, ref: orchestration-residue }
+  channels: [source]
+  source:
+    patterns:
+      - '(//|#|\*|<!--)[^\n]{0,30}\b(Generated (by|with)|Written by|Authored by|Created by)\s+(an?\s+)?(AI|LLM|Claude|GPT|Copilot|Cursor|Gemini|ChatGPT)\b'
+      - '(//|#|\*)[^\n]{0,20}\bAs an AI\b'
+      - '(//|#|\*)\s*Co-Authored-By:\s*\S'
+      - '(//|#|\*)[^\n]{0,30}\b(this (code|function|file) was (generated|produced|created) (by|using))\b'
+  why: >-
+    A byline in a comment tells the reader who typed it and nothing about what
+    it does. It also outlives its accuracy the first time somebody edits the
+    function underneath it, at which point the file is claiming an author it no
+    longer has.
+  fix: >-
+    Delete it. Authorship lives in the history, where it stays correct as the
+    code changes.
+
+- id: conversation-artifact
+  kind: slop
+  title: Half of a conversation, committed
+  category: residue
+  severity: low
+  weight: 55
+  evidenceRank: null
+  sources:
+    - { origin: redpen, ref: orchestration-residue }
+    - { origin: catalogue, ref: "code:CODE-01" }
+  channels: [source]
+  source:
+    patterns:
+      - '(//|#|\*)\s*(Certainly|Of course|Sure thing|Great question|Happy to help|Let me know if)\b'
+      - '(//|#|\*)\s*(Here''?s|Here is) (the|a|an|your) (updated|revised|corrected|new|complete)\b'
+      - '(//|#|\*)\s*(I''ve|I have) (added|updated|changed|refactored|implemented|created)\b'
+      - '(//|#|\*)\s*(Note|Notice) that (I|we) (have |''ve )?(added|changed|updated|removed)\b'
+  why: >-
+    "Here's the updated function" and "I've added error handling" are replies,
+    written to somebody who asked. Committed, they address a reader who was not
+    in the conversation and cannot see the question.
+  fix: >-
+    Delete them. Nothing is lost: the sentence was answering a question the file
+    does not contain.
+
+- id: dead-scaffold-reference
+  kind: quality
+  title: A pointer to a file that is not there
+  category: residue
+  severity: medium
+  weight: 58
+  evidenceRank: null
+  sources:
+    - { origin: redpen, ref: orchestration-residue }
+  channels: [source]
+  source:
+    patterns:
+      - '(//|#|\*)\s*(See|see|Refer to|refer to)\s+[\w./-]+\.(md|txt|yaml|yml|json)\b[^\n]{0,30}\b(for (details|context|the plan|why))'
+      - '(//|#|\*)[^\n]{0,30}\b(described|documented|specified|planned) in\s+[A-Z_]{3,}\.md\b'
+      - '(//|#|\*)\s*(TODO|NOTE)[^\n]{0,20}\bsee\s+(the\s+)?(plan|spec|roadmap|handoff|brief)\b'
+  why: >-
+    A comment pointing at ROADMAP.md or a handoff note is only as good as the
+    file, and those files are written for a run and deleted after it. The
+    pointer stays, so the code appears to be explained somewhere and is not.
+  fix: >-
+    Bring the sentence into the comment, or drop the pointer. A reference that
+    cannot be followed is worse than no reference, because it stops the reader
+    looking for a real explanation.

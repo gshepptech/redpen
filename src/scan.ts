@@ -20,6 +20,9 @@ import type { ScanResult, RawFinding, Channel, Finding, Surface, Category } from
  * never mistake "we did not look" for "there was nothing there".
  */
 
+/** The categories that describe source rather than the page it renders. */
+export const CODE_CATEGORIES: ReadonlySet<string> = new Set(['craft', 'residue']);
+
 export interface ScanOptions {
   root: string;
   urls?: string[];
@@ -31,6 +34,12 @@ export interface ScanOptions {
   answers?: string | null;
   /** Restrict the report to these categories. Everything else still runs. */
   only?: string[];
+  /**
+   * Report the source categories instead of the page ones. There is no mode
+   * that returns both: a project's code and the UI it serves are answers to
+   * different questions and averaging them into one score says neither.
+   */
+  codeCategories?: boolean;
   /**
    * Neither read nor write the fingerprint store. Used by `redpen check` on
    * throwaway branches and by tests. Skipping only the write was wrong: the run
@@ -310,7 +319,18 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
     warnings.push(`unknown rule ids reported by a channel: ${promoted.unknownRules.join(', ')}`);
   }
 
-  let inScope = promoted.findings.filter((f) => !config.skipCategories.includes(f.category));
+  /**
+   * A UI scan and a code scan are different questions.
+   *
+   * craft and residue are about the source a project is written in, not the
+   * page it serves, and folding them into `scan` would move every score anyone
+   * holds a baseline against — on redpen's own source they fired immediately.
+   * `redpen code` asks for them; `redpen scan` never returns them.
+   */
+  const codeOnly = opts.codeCategories === true;
+  let inScope = promoted.findings
+    .filter((f) => !config.skipCategories.includes(f.category))
+    .filter((f) => (CODE_CATEGORIES.has(f.category) ? codeOnly : !codeOnly));
   // `--only` narrows what is *reported*, never what is measured: every channel
   // still runs, so cross-channel confirmation is unaffected and the scores
   // below still describe the whole page.

@@ -23,6 +23,7 @@ const HELP = `
 ${pc.bold('redpen')} — one verdict on your UI
 
   ${pc.bold('redpen scan')} [path] [url...]  run every available channel and print the report
+  ${pc.bold('redpen code')} [path]        the source it is written in, not the page it serves
   ${pc.bold('redpen check')} [path]       same, but exit non-zero when the score drops
   ${pc.bold('redpen baseline')} [path]    record the current score as the bar to hold
   ${pc.bold('redpen rules')}              list the merged corpus
@@ -121,7 +122,7 @@ export function parseArgs(argv: string[]): Args {
     if (a.startsWith('--')) {
       fail(`unknown option ${a}`);
     }
-    if (first && ['scan', 'check', 'baseline', 'rules', 'why', 'sources', 'fingerprints', 'brief', 'init', 'why-score', 'help'].includes(a)) {
+    if (first && ['scan', 'code', 'check', 'baseline', 'rules', 'why', 'sources', 'fingerprints', 'brief', 'init', 'why-score', 'help'].includes(a)) {
       args.command = a;
       first = false;
       continue;
@@ -154,7 +155,7 @@ async function main(): Promise<void> {
   // the filesystem meant every documented use of either exited 2 with "no such
   // directory: ai-purple" — including the `redpen why <rule-id>` the report
   // itself prints under every folded roster.
-  const TAKES_A_PATH = new Set(['scan', 'check', 'baseline', 'fingerprints', 'brief', 'init', 'why-score']);
+  const TAKES_A_PATH = new Set(['scan', 'code', 'check', 'baseline', 'fingerprints', 'brief', 'init', 'why-score']);
   const root = resolve(TAKES_A_PATH.has(args.command) ? args.positional[0] ?? '.' : '.');
   if (TAKES_A_PATH.has(args.command) && args.positional[0] && !existsSync(root)) {
     fail(`no such directory: ${args.positional[0]}`);
@@ -177,6 +178,8 @@ async function main(): Promise<void> {
       return cmdInit(root);
     case 'baseline':
       return cmdBaseline(root, args);
+    case 'code':
+      return cmdScan(root, args, false, true);
     case 'check':
       return cmdScan(root, args, true);
     default:
@@ -184,7 +187,7 @@ async function main(): Promise<void> {
   }
 }
 
-async function cmdScan(root: string, args: Args, gating: boolean): Promise<void> {
+async function cmdScan(root: string, args: Args, gating: boolean, code = false): Promise<void> {
   const onProgress = args.quiet
     ? undefined
     : (m: string) => process.stderr.write(pc.dim(`  … ${m}\n`));
@@ -197,7 +200,8 @@ async function cmdScan(root: string, args: Args, gating: boolean): Promise<void>
     vision: args.vision,
     answers: args.answers,
     only: args.only,
-    ephemeral: gating,
+    ephemeral: gating || code,
+    codeCategories: code,
     onProgress,
   });
 

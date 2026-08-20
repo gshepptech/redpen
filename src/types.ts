@@ -24,7 +24,22 @@ export type Category =
   /** Drift from the project's own declared tokens. */
   | 'system'
   /** Judgements no measurement reaches: proportion, rhythm, memorability. */
-  | 'composition';
+  | 'composition'
+  /**
+   * Code that reads as machine-written: comments narrating the edit,
+   * docstrings restating the signature, stubs shipped as finished.
+   *
+   * Not part of a UI scan. A page's markup and a project's source are different
+   * questions, and mixing them would change every score anyone has a baseline
+   * for. `redpen code` is where these run.
+   */
+  | 'craft'
+  /**
+   * What the process that built it left behind: phase ids, task-file
+   * references, agent attribution. Nothing about the software — everything
+   * about how it got written, still visible to whoever reads it next.
+   */
+  | 'residue';
 
 export type Channel = 'source' | 'render' | 'vision' | 'fingerprint';
 

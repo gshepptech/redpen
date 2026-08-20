@@ -37,6 +37,8 @@ function rulesDir(): string {
 }
 
 const VALID_CATEGORIES: ReadonlySet<string> = new Set<Category>([
+  'craft',
+  'residue',
   'color',
   'typography',
   'layout',

@@ -74,7 +74,7 @@ Several good catalogues already describe what AI-generated UI looks like, and
 
 Running them together is worse than running one. They use different
 vocabularies, they contradict each other, and concatenating ~200 rules doubles
-the false positives without doubling the truth. redpen merges them into 142 rules
+the false positives without doubling the truth. redpen merges them into 151 rules
 with provenance intact, then does three things none of them does.
 
 **It cross-checks before it reports.** The four catalogues inspect three
@@ -162,6 +162,7 @@ time so the score can attribute the change.
 
 ```
 redpen scan [path]        run every available channel and print the report
+redpen code [path]        the source it is written in, not the page it serves
 redpen check [path]       same, but exit non-zero when the score drops
 redpen baseline [path]    record the current score as the bar to hold
 redpen rules              list the merged corpus
@@ -443,7 +444,7 @@ dashboard: `default-sans`, `monotonous-spacing`, `ghost-cards`, `over-rounding`,
 
 ## What this has and has not been proven against
 
-v0.1.0. The corpus is 142 rules across 13 categories, the suite is 169 tests,
+v0.1.0. The corpus is 151 rules across 15 categories, the suite is 174 tests,
 and it has been run end to end against five real projects plus its own
 fixtures. Nearly everything ever found wrong with redpen was found by pointing
 it at something real rather than by reading it: a first Go dashboard gave up six
@@ -499,7 +500,7 @@ taste. See [NOTICE](NOTICE) for the projects behind each and their licences.
 `redpen sources`:
 
 ```
-  142 rules merged from:
+  151 rules merged from:
      155  catalogue     curated lists of design tells
       50  heuristics    the usability and a11y tradition
       18  study         a tabulation of 3,033 Reddit comments

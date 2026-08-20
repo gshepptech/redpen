@@ -7478,6 +7478,8 @@ function rulesDir() {
   );
 }
 var VALID_CATEGORIES = /* @__PURE__ */ new Set([
+  "craft",
+  "residue",
   "color",
   "typography",
   "layout",
@@ -11775,6 +11777,7 @@ function headline(slop, quality) {
 }
 
 // src/scan.ts
+var CODE_CATEGORIES = /* @__PURE__ */ new Set(["craft", "residue"]);
 async function runScan(opts) {
   const root = resolve3(opts.root);
   const config = loadConfig(root);
@@ -11990,7 +11993,8 @@ async function runScan(opts) {
   if (promoted.unknownRules.length) {
     warnings.push(`unknown rule ids reported by a channel: ${promoted.unknownRules.join(", ")}`);
   }
-  let inScope = promoted.findings.filter((f) => !config.skipCategories.includes(f.category));
+  const codeOnly = opts.codeCategories === true;
+  let inScope = promoted.findings.filter((f) => !config.skipCategories.includes(f.category)).filter((f) => CODE_CATEGORIES.has(f.category) ? codeOnly : !codeOnly);
   if (opts.only?.length) {
     const wanted = new Set(opts.only);
     const known = new Set(loadCorpus().map((r) => r.category));
@@ -12403,6 +12407,7 @@ var HELP = `
 ${import_picocolors2.default.bold("redpen")} \u2014 one verdict on your UI
 
   ${import_picocolors2.default.bold("redpen scan")} [path] [url...]  run every available channel and print the report
+  ${import_picocolors2.default.bold("redpen code")} [path]        the source it is written in, not the page it serves
   ${import_picocolors2.default.bold("redpen check")} [path]       same, but exit non-zero when the score drops
   ${import_picocolors2.default.bold("redpen baseline")} [path]    record the current score as the bar to hold
   ${import_picocolors2.default.bold("redpen rules")}              list the merged corpus
@@ -12512,7 +12517,7 @@ function parseArgs(argv) {
     if (a.startsWith("--")) {
       fail(`unknown option ${a}`);
     }
-    if (first && ["scan", "check", "baseline", "rules", "why", "sources", "fingerprints", "brief", "init", "why-score", "help"].includes(a)) {
+    if (first && ["scan", "code", "check", "baseline", "rules", "why", "sources", "fingerprints", "brief", "init", "why-score", "help"].includes(a)) {
       args.command = a;
       first = false;
       continue;
@@ -12537,7 +12542,7 @@ async function main() {
     process.stdout.write(HELP);
     return;
   }
-  const TAKES_A_PATH = /* @__PURE__ */ new Set(["scan", "check", "baseline", "fingerprints", "brief", "init", "why-score"]);
+  const TAKES_A_PATH = /* @__PURE__ */ new Set(["scan", "code", "check", "baseline", "fingerprints", "brief", "init", "why-score"]);
   const root = resolve4(TAKES_A_PATH.has(args.command) ? args.positional[0] ?? "." : ".");
   if (TAKES_A_PATH.has(args.command) && args.positional[0] && !existsSync4(root)) {
     fail(`no such directory: ${args.positional[0]}`);
@@ -12559,13 +12564,15 @@ async function main() {
       return cmdInit(root);
     case "baseline":
       return cmdBaseline(root, args);
+    case "code":
+      return cmdScan(root, args, false, true);
     case "check":
       return cmdScan(root, args, true);
     default:
       return cmdScan(root, args, false);
   }
 }
-async function cmdScan(root, args, gating) {
+async function cmdScan(root, args, gating, code = false) {
   const onProgress = args.quiet ? void 0 : (m) => process.stderr.write(import_picocolors2.default.dim(`  \u2026 ${m}
 `));
   const result = await runScan({
@@ -12576,7 +12583,8 @@ async function cmdScan(root, args, gating) {
     vision: args.vision,
     answers: args.answers,
     only: args.only,
-    ephemeral: gating,
+    ephemeral: gating || code,
+    codeCategories: code,
     onProgress
   });
   if (args.min) result.config.minConfidence = args.min;

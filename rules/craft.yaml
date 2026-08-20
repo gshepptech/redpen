@@ -1,0 +1,144 @@
+# Code that reads as machine-written.
+#
+# Source channel only, and outside a UI scan on purpose: a page's markup and a
+# project's source are different questions, and folding them together would
+# change every score anyone holds a baseline for. `redpen code` runs these.
+#
+# Every rule here is about the shape of the writing, never about whether the
+# code works. A comment that narrates an edit is not a bug; it is a sentence
+# addressed to whoever was reviewing that afternoon, left in a file that will
+# outlive them.
+
+- id: edit-narrating-comment
+  kind: slop
+  title: A comment addressed to the reviewer, not the reader
+  category: craft
+  severity: medium
+  weight: 68
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "code:CODE-01" }
+  channels: [source]
+  source:
+    patterns:
+      - '(//|#|\*)\s*(Added|Adding|Updated|Updating|Changed|Changing|Removed|Removing|Fixed|Fixing|Refactored|Renamed|Moved|Replaced)\b[^\n]{0,60}\b(here|above|below|this|to (use|be|match|support)|from|for (now|clarity|consistency))\b'
+      - '(//|#|\*)\s*(NEW|OLD|WAS|BEFORE|AFTER)\s*[::-]'
+      - '(//|#|\*)\s*(As (requested|discussed|per)|Per (the|your) (request|feedback|review))\b'
+      - '(//|#|\*)\s*(This (was|has been) (added|updated|changed|refactored))\b'
+  why: >-
+    "Updated to use the new API" tells the next reader what happened one
+    afternoon, not what the code does. The edit it describes is in the history
+    already, and the comment outlives the moment it made sense — six months on
+    it is describing a change against a version nobody remembers.
+  fix: >-
+    Say why the code is the way it is, or delete the line. If the change needs
+    explaining, the commit message is where the explanation belongs and where
+    it stays attached to the diff.
+
+- id: signature-restating-docstring
+  kind: slop
+  title: A docstring that reads the signature back
+  category: craft
+  severity: low
+  weight: 52
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "code:CODE-08" }
+  channels: [source]
+  source:
+    patterns:
+      - '/\*\*\s*\n\s*\*\s*(Gets?|Sets?|Returns?|Creates?|Handles?|Processes?) the \w+\.?\s*\n\s*\*\s*@(returns?|param)'
+      - '(//|\*)\s*@param\s+\{?\w+\}?\s+(\w+)\s+(The|the)\s+\2\b'
+      - '(//|\*)\s*@returns?\s+(The|the)\s+(result|value|output)\.?\s*$'
+  why: >-
+    "Gets the name. @returns the name" costs a reader four lines to learn what
+    the signature already told them in one. It is the shape a docstring takes
+    when something had to fill the slot.
+  fix: >-
+    Document what the signature cannot say: the units, the failure mode, the
+    thing the caller has to have done first. If there is nothing like that,
+    leave it undocumented — the name is doing the work.
+
+- id: stub-shipped
+  kind: quality
+  title: A placeholder left in the shipped path
+  category: craft
+  severity: high
+  weight: 79
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "code:CODE-13" }
+  channels: [source]
+  source:
+    patterns:
+      - "throw new (Error|TypeError)\\((['\"`])(Not implemented|not implemented|TODO|Unimplemented|unimplemented)"
+      - '(//|#)\s*(TODO|FIXME|XXX|HACK)\s*[::-]?\s*(implement|finish|write|complete|handle)\b'
+      - '\breturn\s+(null|undefined|\{\}|\[\]);?\s*(//|#)\s*(TODO|FIXME|placeholder|stub|for now)\b'
+      - '(//|#)\s*(placeholder|stub|dummy|mock) (implementation|value|data|response)\b'
+  why: >-
+    A stub that throws is honest in development and a crash in production. A
+    stub that returns an empty array is worse: it is indistinguishable from a
+    real answer, so nothing fails and the wrong number reaches whoever was
+    counting on it.
+  fix: >-
+    Finish it, or make it fail loudly at the boundary with the name of what is
+    missing. A silent empty return is the one option that costs someone a
+    debugging session.
+
+- id: swallowed-error
+  kind: quality
+  title: A catch that hides what it caught
+  category: craft
+  severity: high
+  weight: 74
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "code:CODE-02" }
+    - { origin: catalogue, ref: "code:CODE-15" }
+  channels: [source]
+  source:
+    patterns:
+      # Genuinely empty, and an empty except.
+      - 'catch\s*(\([^)]*\))?\s*\{\s*\}'
+      - 'except\s+\w*\s*:\s*\n\s+pass\b'
+      # A comment that gives no reason. The fix below says a caught error with a
+      # stated reason is a decision, so a block carrying one has to pass — the
+      # first version of this fired on redpen's own
+      # `catch (e) { /* cross-origin stylesheet */ }`, contradicting its own
+      # advice. Same rule as redpen-ignore: the reason is what makes it a
+      # decision, and three words is the floor for one.
+      - 'catch\s*(\([^)]*\))?\s*\{\s*(//|/\*)\s*(ignore|noop|no-op|nothing|skip|empty|pass|swallow)?d?\s*(\*/)?\s*\n?\s*\}'
+      - 'catch\s*\([^)]*\)\s*\{\s*(console\.(log|debug))\([^)]*\);?\s*\}'
+  why: >-
+    An empty catch turns a failure into silence. The program continues in a
+    state nobody designed, and the first sign of it is a wrong number somewhere
+    else entirely, hours later, with nothing in the log to connect them.
+  fix: >-
+    Handle it, or let it propagate. If it is genuinely ignorable, say which
+    error and why in the block — a caught exception with a reason is a decision,
+    an empty block is an omission.
+
+- id: defensive-impossible-check
+  kind: slop
+  title: A guard against something that cannot happen
+  category: craft
+  severity: low
+  weight: 48
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "code:CODE-04" }
+  channels: [source]
+  source:
+    patterns:
+      - 'if\s*\(\s*typeof\s+\w+\s*===\s*[''"]undefined[''"]\s*\)\s*\{\s*\w+\s*=\s*(\[\]|\{\}|0|[''"]{2})'
+      - 'if\s*\(\s*!\s*Array\.isArray\(\s*\w+\s*\)\s*\)\s*(return|\w+\s*=)\s*\[\]'
+      - '(//|#)\s*(just in case|defensive|belt and braces|should never happen|shouldn''t happen)\b'
+  why: >-
+    A check for a value the type system already rules out reads as uncertainty
+    about the code around it. It also hides the real bug: if that value ever
+    does arrive, the guard turns a crash you could trace into a default you
+    cannot.
+  fix: >-
+    Trust the type, or fix the boundary where the value actually enters. Guard
+    at the edge, once, where untrusted input arrives — not at every function it
+    passes through afterwards.
