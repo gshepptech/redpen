@@ -7832,7 +7832,7 @@ function findCancelledFloors(css, opts = {}) {
 }
 
 // src/channels/source.ts
-var SCANNED_EXTENSIONS = /* @__PURE__ */ new Set([
+var UI_EXTENSIONS = /* @__PURE__ */ new Set([
   ".html",
   ".htm",
   ".css",
@@ -7850,6 +7850,38 @@ var SCANNED_EXTENSIONS = /* @__PURE__ */ new Set([
   ".astro",
   ".mdx"
 ]);
+var CODE_EXTENSIONS = /* @__PURE__ */ new Set([
+  ...UI_EXTENSIONS,
+  ".go",
+  ".py",
+  ".rs",
+  ".rb",
+  ".java",
+  ".kt",
+  ".swift",
+  ".cs",
+  ".php",
+  ".c",
+  ".h",
+  ".cc",
+  ".cpp",
+  ".hpp",
+  ".m",
+  ".mm",
+  ".scala",
+  ".ex",
+  ".exs",
+  ".lua",
+  ".pl",
+  ".r",
+  ".dart",
+  ".sh",
+  ".bash",
+  ".zsh",
+  ".sql",
+  ".gradle"
+]);
+var SCANNED_EXTENSIONS = CODE_EXTENSIONS;
 var SKIP_DIRS = /* @__PURE__ */ new Set([
   "node_modules",
   ".git",
@@ -7879,6 +7911,37 @@ var SKIP_DIRS = /* @__PURE__ */ new Set([
 var SKIP_FILE = /\.(golden|snap|snapshot)\.|\.golden$|\.snap$|\.(test|spec)\.[jt]sx?$/i;
 var MAX_FILE_BYTES = 512 * 1024;
 var MAX_LINE_LENGTH = 2e3;
+function unreadLanguages(root) {
+  const counts = /* @__PURE__ */ new Map();
+  const visit = (dir) => {
+    let entries;
+    try {
+      entries = readdirSync2(dir);
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      if (entry.startsWith(".") || SKIP_DIRS.has(entry)) continue;
+      const full = join2(dir, entry);
+      let stat;
+      try {
+        stat = statSync(full);
+      } catch {
+        continue;
+      }
+      if (stat.isDirectory()) {
+        visit(full);
+        continue;
+      }
+      const ext = extname(entry);
+      if (!ext || SCANNED_EXTENSIONS.has(ext) || !SOURCE_SHAPED.test(ext)) continue;
+      counts.set(ext, (counts.get(ext) ?? 0) + 1);
+    }
+  };
+  visit(root);
+  return [...counts].sort((a, b) => b[1] - a[1]).slice(0, 4);
+}
+var SOURCE_SHAPED = /^\.(zig|nim|hs|clj|cljs|erl|fs|fsx|ml|pas|pro|tcl|vb|groovy|jl|cr|d|v|elm|purs|res|rkt|scm|lisp|f90|f95|for|cob|adb|ads|asm|s)$/i;
 function walk(root) {
   const found = [];
   const visit = (dir) => {
@@ -7916,7 +7979,15 @@ function compile(rules) {
       // case — except where a rule reads prose, where case is the signal.
       patterns: m.patterns.map((p) => new RegExp(p, m.caseSensitive ? "gu" : "giu")),
       suppress: m.suppress ? new RegExp(m.suppress, m.caseSensitive ? "u" : "iu") : null,
-      extensions: m.extensions ? new Set(m.extensions) : null,
+      /**
+       * A rule reads the files its category is about.
+       *
+       * The walk carries every source language now, and a UI rule let loose
+       * on Go would report a colour literal in a terminal theme. Page rules
+       * stay on page files; craft and residue read whatever the project is
+       * written in. An explicit `extensions` on the rule still wins.
+       */
+      extensions: m.extensions ? new Set(m.extensions) : CODE_CATEGORIES.has(rule.category) ? CODE_EXTENSIONS : UI_EXTENSIONS,
       minHits: m.minHits ?? 1
     };
   });
@@ -11813,7 +11884,7 @@ async function runScan(opts) {
   let fingerprints = [];
   let screenshots = /* @__PURE__ */ new Map();
   const surfaces = {};
-  if (urls.length) {
+  if (urls.length && !opts.codeCategories) {
     opts.onProgress?.(`rendering ${urls.length} url(s) at ${viewports.join(", ")}px`);
     const t1 = Date.now();
     const wantShots = opts.screenshots || opts.vision;
@@ -11896,7 +11967,7 @@ async function runScan(opts) {
         }
       }
     }
-  } else {
+  } else if (!opts.codeCategories) {
     warnings.push(
       'no urls configured \u2014 the render channel did not run, so every source finding that render could confirm is capped at "possible". Add urls to .redpen/config.json or pass --url.'
     );
@@ -11962,6 +12033,14 @@ async function runScan(opts) {
     opts.onProgress?.(
       `fingerprint: ${fingerprints.length} page(s) recorded, ${prior.length} prior on file, ${clashes.length} clash(es)`
     );
+  }
+  if (opts.codeCategories) {
+    const unread = unreadLanguages(root);
+    if (unread.length) {
+      warnings.push(
+        `${unread.map(([ext, n]) => `${n} ${ext}`).join(", ")} file(s) were not read \u2014 no rule in this corpus knows that language, so nothing about them is in this score.`
+      );
+    }
   }
   const activeSurfaces = [...new Set(Object.values(surfaces).map((s) => s.surface))];
   const offSurface = /* @__PURE__ */ new Set();

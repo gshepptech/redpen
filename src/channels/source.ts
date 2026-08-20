@@ -1,6 +1,7 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative, extname } from 'node:path';
 import { rulesForChannel } from '../corpus/load.js';
+import { CODE_CATEGORIES } from '../scan.js';
 import type { RawFinding, Evidence, Rule } from '../types.js';
 import { findCancelledFloors } from './cascade.js';
 
@@ -12,11 +13,29 @@ import { findCancelledFloors } from './cascade.js';
  * is the reason promotion exists: a source-only hit is a lead, not a verdict.
  */
 
-const SCANNED_EXTENSIONS = new Set([
+/** What a UI lives in. The corpus's page rules only mean anything here. */
+const UI_EXTENSIONS = new Set([
   '.html', '.htm', '.css', '.scss', '.sass', '.less',
   '.js', '.jsx', '.mjs', '.cjs', '.ts', '.tsx',
   '.vue', '.svelte', '.astro', '.mdx',
 ]);
+
+/**
+ * What a project is written in, which is a different and much longer list.
+ *
+ * The craft and residue rules are about comments, stubs and process residue,
+ * and none of that is particular to a web language. Reading only the UI list
+ * meant `redpen code` on a 174-file Go repository read the fourteen HTML files
+ * and reported it clean — the most confident possible way to say nothing.
+ */
+const CODE_EXTENSIONS = new Set([
+  ...UI_EXTENSIONS,
+  '.go', '.py', '.rs', '.rb', '.java', '.kt', '.swift', '.cs', '.php',
+  '.c', '.h', '.cc', '.cpp', '.hpp', '.m', '.mm', '.scala', '.ex', '.exs',
+  '.lua', '.pl', '.r', '.dart', '.sh', '.bash', '.zsh', '.sql', '.gradle',
+]);
+
+const SCANNED_EXTENSIONS = CODE_EXTENSIONS;
 
 const SKIP_DIRS = new Set([
   'node_modules', '.git', 'dist', 'build', '.next', 'out', 'vendor',
@@ -43,6 +62,49 @@ const MAX_FILE_BYTES = 512 * 1024;
 
 /** A line this long is minified output; regex over it produces noise. */
 const MAX_LINE_LENGTH = 2000;
+
+/**
+ * Source files in the tree that no rule can read.
+ *
+ * `redpen code` on a 174-file Go repository read the fourteen HTML files in it
+ * and reported 100/100 clean, because the extension list was the UI one. That
+ * list is longer now, but it will always be a list, and a scan that read almost
+ * nothing must not answer with a score.
+ */
+export function unreadLanguages(root: string): Array<[string, number]> {
+  const counts = new Map<string, number>();
+  const visit = (dir: string): void => {
+    let entries: string[];
+    try {
+      entries = readdirSync(dir);
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      if (entry.startsWith('.') || SKIP_DIRS.has(entry)) continue;
+      const full = join(dir, entry);
+      let stat;
+      try {
+        stat = statSync(full);
+      } catch {
+        continue;
+      }
+      if (stat.isDirectory()) {
+        visit(full);
+        continue;
+      }
+      const ext = extname(entry);
+      // Only things that plausibly hold source. A .png is not a gap.
+      if (!ext || SCANNED_EXTENSIONS.has(ext) || !SOURCE_SHAPED.test(ext)) continue;
+      counts.set(ext, (counts.get(ext) ?? 0) + 1);
+    }
+  };
+  visit(root);
+  return [...counts].sort((a, b) => b[1] - a[1]).slice(0, 4);
+}
+
+/** Extensions that look like code without being on the read list. */
+const SOURCE_SHAPED = /^\.(zig|nim|hs|clj|cljs|erl|fs|fsx|ml|pas|pro|tcl|vb|groovy|jl|cr|d|v|elm|purs|res|rkt|scm|lisp|f90|f95|for|cob|adb|ads|asm|s)$/i;
 
 export function walk(root: string): string[] {
   const found: string[] = [];
@@ -100,7 +162,19 @@ function compile(rules: Rule[]): CompiledRule[] {
         // case — except where a rule reads prose, where case is the signal.
         patterns: m.patterns.map((p) => new RegExp(p, m.caseSensitive ? 'gu' : 'giu')),
         suppress: m.suppress ? new RegExp(m.suppress, m.caseSensitive ? 'u' : 'iu') : null,
-        extensions: m.extensions ? new Set(m.extensions) : null,
+        /**
+         * A rule reads the files its category is about.
+         *
+         * The walk carries every source language now, and a UI rule let loose
+         * on Go would report a colour literal in a terminal theme. Page rules
+         * stay on page files; craft and residue read whatever the project is
+         * written in. An explicit `extensions` on the rule still wins.
+         */
+        extensions: m.extensions
+          ? new Set(m.extensions)
+          : CODE_CATEGORIES.has(rule.category)
+            ? CODE_EXTENSIONS
+            : UI_EXTENSIONS,
         minHits: m.minHits ?? 1,
       };
     });

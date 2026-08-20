@@ -154,7 +154,12 @@
   source:
     patterns:
       - 'if\s*\(\s*typeof\s+\w+\s*===\s*[''"]undefined[''"]\s*\)\s*\{\s*\w+\s*=\s*(\[\]|\{\}|0|[''"]{2})'
-      - '(//|#)\s*(just in case|defensive|belt and braces|should never happen|shouldn''t happen)\b'
+      # "defensive" on its own is gone. It matched
+      # `// this is load-bearing, not\n// defensive padding` — a comment arguing
+      # the exact opposite of the finding, with the negation on the line above
+      # where a same-line suppression cannot see it. A word that reads the same
+      # asserted and denied is not a signal.
+      - '(//|#)\s*(just in case|belt and braces|should never happen|shouldn''t happen)\b'
       # `if (!Array.isArray(x)) return []` was here and is gone. On the first
       # real codebase it fired three times, every one of them narrowing an
       # `unknown` — from JSON.parse, and from a parameter declared `unknown`.

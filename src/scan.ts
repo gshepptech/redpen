@@ -1,6 +1,6 @@
 import { resolve, join } from 'node:path';
 import { mkdirSync, existsSync } from 'node:fs';
-import { scanSource } from './channels/source.js';
+import { scanSource, unreadLanguages } from './channels/source.js';
 import { scanRender } from './channels/render.js';
 import { buildBrief, writeBrief, readAnswers } from './channels/vision.js';
 import { promote, meetsThreshold } from './promote.js';
@@ -22,6 +22,7 @@ import type { ScanResult, RawFinding, Channel, Finding, Surface, Category } from
 
 /** The categories that describe source rather than the page it renders. */
 export const CODE_CATEGORIES: ReadonlySet<string> = new Set(['craft', 'residue']);
+
 
 export interface ScanOptions {
   root: string;
@@ -96,7 +97,12 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
   let fingerprints = [] as ScanResult['fingerprints'];
   let screenshots = new Map<string, string>();
   const surfaces: ScanResult['surfaces'] = {};
-  if (urls.length) {
+  // A code scan never opens a browser. Every craft and residue rule is
+  // source-channel, so rendering answers nothing they ask — and on the first
+  // real repository it launched chromium against eight configured urls with no
+  // server behind them, then printed the connection failures as though the run
+  // had lost something.
+  if (urls.length && !opts.codeCategories) {
     opts.onProgress?.(`rendering ${urls.length} url(s) at ${viewports.join(', ')}px`);
     const t1 = Date.now();
     const wantShots = opts.screenshots || opts.vision;
@@ -201,7 +207,11 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
         }
       }
     }
-  } else {
+  } else if (!opts.codeCategories) {
+    // Not on a code scan. No craft or residue rule has a render half, so
+    // "findings that render could confirm are capped" describes nothing here —
+    // and it said so on a project that has urls configured, which makes it
+    // wrong twice.
     warnings.push(
       'no urls configured — the render channel did not run, so every source finding that render could confirm is capped at "possible". Add urls to .redpen/config.json or pass --url.',
     );
@@ -277,6 +287,22 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
     opts.onProgress?.(
       `fingerprint: ${fingerprints.length} page(s) recorded, ${prior.length} prior on file, ${clashes.length} clash(es)`,
     );
+  }
+
+  // A code scan that read almost nothing must not answer "clean".
+  //
+  // The extension list was the UI one, so `redpen code` on a 174-file Go
+  // repository read the fourteen HTML files in it and reported 100/100. The
+  // list is fixed; this says so out loud when a project still holds source in
+  // a language nothing here knows.
+  if (opts.codeCategories) {
+    const unread = unreadLanguages(root);
+    if (unread.length) {
+      warnings.push(
+        `${unread.map(([ext, n]) => `${n} ${ext}`).join(', ')} file(s) were not read — ` +
+          'no rule in this corpus knows that language, so nothing about them is in this score.',
+      );
+    }
   }
 
   // ---- promote ----

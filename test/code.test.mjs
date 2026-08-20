@@ -87,3 +87,48 @@ test("redpen's own source stays clean of what it reports", async () => {
   const found = result.findings.map((f) => `${f.ruleId} — ${f.evidence[0]?.location}:${f.evidence[0]?.line}`);
   assert.deepEqual(found, [], `redpen's own source trips its own code rules:\n${found.join('\n')}`);
 });
+
+test('a code scan reads the language the project is written in', async () => {
+  // The extension list was the UI one, so `redpen code` on a 174-file Go
+  // repository read the fourteen HTML files in it and answered 100/100 clean.
+  const result = await runScan({
+    root: join(HERE, 'fixtures', 'go-code'),
+    codeCategories: true,
+    ephemeral: true,
+  });
+  const fired = result.findings.map((f) => f.ruleId);
+  assert.ok(fired.includes('orchestration-marker'), `read nothing in the .go files: ${fired}`);
+  const files = result.findings
+    .flatMap((f) => f.evidence.map((e) => e.location))
+    .filter((l) => l.endsWith('.go'));
+  assert.ok(files.length > 0, 'no evidence came from a .go file');
+});
+
+test('a language nothing can read is said out loud, not scored around', async () => {
+  const result = await runScan({
+    root: join(HERE, 'fixtures', 'unreadable-code'),
+    codeCategories: true,
+    ephemeral: true,
+  });
+  assert.ok(
+    result.warnings.some((w) => w.includes('were not read')),
+    `nothing said the files were skipped: ${result.warnings.join(' | ')}`,
+  );
+});
+
+test('a code scan opens no browser and claims no missing one', async () => {
+  // It launched chromium against eight configured urls with no server behind
+  // them, then reported the connection failures as though the run had lost
+  // something. No craft or residue rule has a render half.
+  const result = await runScan({
+    root: join(HERE, 'fixtures', 'sloppy-code'),
+    urls: ['http://127.0.0.1:9/nothing-here'],
+    codeCategories: true,
+    ephemeral: true,
+  });
+  assert.ok(!result.channelsRun.includes('render'), 'a code scan rendered');
+  assert.ok(
+    !result.warnings.some((w) => w.includes('capped at')),
+    `claimed a render half that no code rule has: ${result.warnings.join(' | ')}`,
+  );
+});
