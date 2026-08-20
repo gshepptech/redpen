@@ -143,6 +143,7 @@ missing channel is reported as unconfirmed, never as clean.
 | | |
 | --- | --- |
 | `/redpen:audit [path] [--url ...]` | scan, report the confirmed findings, apply the fixes you approve |
+| `/redpen:code [path]` | the source it is written in, not the page it serves |
 | `/redpen:typeset` | fix typography — faces, scale, leading, measure, tokens |
 | `/redpen:layout` | fix layout, spacing rhythm, and composition |
 | `/redpen:color` | fix palette, contrast, and colour tokens |
