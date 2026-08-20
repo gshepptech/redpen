@@ -444,19 +444,27 @@ dashboard: `default-sans`, `monotonous-spacing`, `ghost-cards`, `over-rounding`,
 ## What this has and has not been proven against
 
 v0.1.0. The corpus is 142 rules across 13 categories, the suite is 169 tests,
-and the whole thing has been run end to end against exactly **one** real
-project — a ten-route Go dashboard — plus its own fixtures. That run found six
-defects in the dashboard and six in redpen itself. Auditing redpen's own output
-afterwards found several more, including a header that printed a number and a
-word computed from different things. That is the honest summary of how mature
-this is: it works, most of what has been found in it was found by pointing it
-at something real, and it has not yet met a codebase that surprised it.
+and it has been run end to end against five real projects plus its own
+fixtures. Nearly everything ever found wrong with redpen was found by pointing
+it at something real rather than by reading it: a first Go dashboard gave up six
+defects in the dashboard and six in redpen, and each project since has given up
+one or two more.
+
+The last of those runs was the first with nothing at stake — five public
+marketing pages, fetched and scanned, none of them built by anyone who has
+touched this repository. Twelve findings. Three were spot-checked by hand
+against the pages, independently of redpen's own code, and all three held:
+gradient-clipped headings on two sites, Inter as the only declared face on one,
+emoji standing in for icons on two. The fifteen copy rules reported nothing, and
+a separate pass over the stripped text confirmed the tells genuinely are not
+there — professional copy, correctly left alone.
 
 Specifically not yet true:
 
-- **No independent validation.** Every project it has scanned was built
-  alongside it. Nothing here has been tested against a repository whose author
-  was not in the room.
+- **Validation is shallow.** Five pages checked by hand is not a corpus. Nothing
+  here has been run against a project by an author who could push back on the
+  result, and no finding has ever been argued with by the person who wrote the
+  code.
 - **The vision channel is hand-answered.** It writes a brief and folds answers
   back in; it does not look at the screenshots itself.
 - **Dark mode is one extra pass.** An emulated preference and, where the page
