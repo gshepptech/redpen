@@ -184,9 +184,12 @@
   surfaces: [persuade, read]
   title: Artwork from the free illustration sets
   category: iconography
-  severity: medium
-  weight: 58
-  evidenceRank: null
+  severity: low
+  # Rank 11 in the study, at 0.2% of comments — the lowest band it measures.
+  # It shipped at 58, above the rank-1 tell, for the same reason: added from
+  # the prose without reading the ranking beside it.
+  weight: 52
+  evidenceRank: 11
   sources:
     - { origin: study, ref: stock-illustration }
   channels: [render]

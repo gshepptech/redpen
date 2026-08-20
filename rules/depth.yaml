@@ -90,7 +90,9 @@
   category: depth
   severity: low
   weight: 43
-  evidenceRank: null
+  # 0.2% of comments and contested — the study says allowed. Advisory already
+  # keeps it out of the score; the rank records why.
+  evidenceRank: 11
   sources:
     - { origin: catalogue, ref: "antipattern:glassmorphism-without-purpose" }
     - { origin: study, ref: lower-signal-tells }
@@ -184,9 +186,14 @@
   kind: slop
   title: Starter cards nobody opened
   category: depth
-  severity: medium
-  weight: 55
-  evidenceRank: null
+  severity: high
+  # Rank 1 in the study — named in 2.5% of on-topic comments, the single
+  # most-cited concrete cause of the "they all look the same" reaction, across
+  # six subreddits. It shipped at 55 with no rank because it was added from the
+  # prose rather than the ranking, which put the corpus's strongest measured
+  # tell below a dozen rules the same study ranks under it.
+  weight: 92
+  evidenceRank: 1
   sources:
     - { origin: study, ref: shadcn-default-card }
   channels: [render]
