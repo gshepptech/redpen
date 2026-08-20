@@ -176,3 +176,67 @@
     Trust the type, or fix the boundary where the value actually enters. Guard
     at the edge, once, where untrusted input arrives — not at every function it
     passes through afterwards.
+
+- id: grandiose-identifier
+  kind: slop
+  title: A marketing adjective in a name
+  category: craft
+  severity: medium
+  weight: 61
+  evidenceRank: null
+  sources:
+    - { origin: redpen, ref: naming-residue }
+    - { origin: catalogue, ref: "code:CODE-14" }
+  channels: [source]
+  source:
+    paths:
+      # Not test files. `advanced_test.go` is Go grouping its harder cases, and
+      # the adjective there qualifies the tests rather than the code.
+      - '(^|/)(enhanced|improved|advanced|optimi[sz]ed|robust|smart|powerful|comprehensive|seamless|ultimate|super)[-_](?!test\.|spec\.)[\w-]+\.(?<!\.test\.)(?<!\.spec\.)[a-z]+$'
+    patterns:
+      - '\b(function|const|let|var|class|def|func|type|interface)\s+(enhanced|improved|advanced|optimi[sz]ed|robust|smart|powerful|comprehensive|seamless|ultimate)[A-Z_]\w*'
+      - '\b(enhanced|improved|advanced|optimi[sz]ed|robust|smart|comprehensive)(Version|Handler|Manager|Processor|Wrapper|Service|Helper|Util|Parser|Formatter)\b'
+    caseSensitive: true
+  why: >-
+    Nobody sits down to write `enhancedDataProcessor`. The adjective is there
+    because something had to distinguish this from a previous attempt, and it
+    describes the author's opinion of the code rather than what the code does —
+    which leaves the next reader with no way to guess what is inside it.
+  fix: >-
+    Name it for the difference. If it is enhanced relative to something, the
+    thing that changed is the name: `retryingFetch` rather than `robustFetch`,
+    `streamingParser` rather than `advancedParser`.
+
+- id: placeholder-identifier
+  kind: quality
+  title: A name from the tutorial it was copied out of
+  category: craft
+  severity: medium
+  weight: 67
+  evidenceRank: null
+  sources:
+    - { origin: redpen, ref: naming-residue }
+    - { origin: catalogue, ref: "code:CODE-13" }
+  channels: [source]
+  source:
+    patterns:
+      # `new`, `test` and `temp` are gone. newX() is the Go constructor idiom and
+      # a JS factory convention — `newToken`, `newCompileCmd`, `newPropertyId`,
+      # `newTestFlagSet` were every hit on four real codebases and every one was
+      # ordinary code. `tempDir` and `testService` are test helpers named
+      # exactly right. What is left is the set nobody chooses on purpose.
+      # `sample` is gone too. It is a real word doing real work — sampleProfile
+      # takes samples along a path, sampleTemplates returns sample templates —
+      # and it was wrong both times it fired on real code.
+      - '\b(function|const|let|var|class|def|func|type|interface)\s+(my|example|demo|foo|bar|baz|qux)[A-Z]\w*'
+      - '\b(function|def|func)\s+(doSomething|doStuff|handleIt|myFunction|newFunction|exampleFunction|testFunction)\b'
+      - '\b(const|let|var)\s+(data|result|temp|obj|item|thing|stuff|value)[0-9]\b'
+    caseSensitive: true
+  why: >-
+    `myHandler`, `exampleService`, `doSomething`, `data2`. These are the names a
+    thing gets before anyone knows what it is, and they survive because the code
+    works — so the file ends up describing a tutorial rather than the system it
+    became part of.
+  fix: >-
+    Name it for what it does in this system. If that is genuinely hard to say,
+    the difficulty is usually the code rather than the name.

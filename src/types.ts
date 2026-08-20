@@ -95,7 +95,15 @@ export interface Provenance {
 /** Source-channel matcher: regex over text with optional same-line suppression. */
 export interface SourceMatcher {
   /** Regex sources, applied case-insensitively unless the pattern opts out. */
-  patterns: string[];
+  patterns?: string[];
+  /**
+   * Regex sources matched against a file's path rather than its contents.
+   *
+   * A name is evidence too. `enhanced-utils-v2.ts` says as much about how a
+   * file came to exist as anything inside it, and no amount of reading the
+   * contents will find it.
+   */
+  paths?: string[];
   /** A same-line match here cancels the hit. Kills the common false positives. */
   suppress?: string;
   /**

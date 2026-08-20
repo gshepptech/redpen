@@ -7971,13 +7971,14 @@ function walk(root) {
   return found;
 }
 function compile(rules) {
-  return rules.filter((r) => r.source?.patterns?.length).map((rule) => {
+  return rules.filter((r) => r.source?.patterns?.length || r.source?.paths?.length).map((rule) => {
     const m = rule.source;
     return {
       rule,
       // 'u' for the emoji ranges, 'i' because CSS and class names vary in
       // case — except where a rule reads prose, where case is the signal.
-      patterns: m.patterns.map((p) => new RegExp(p, m.caseSensitive ? "gu" : "giu")),
+      patterns: (m.patterns ?? []).map((p) => new RegExp(p, m.caseSensitive ? "gu" : "giu")),
+      paths: (m.paths ?? []).map((p) => new RegExp(p, m.caseSensitive ? "u" : "iu")),
       suppress: m.suppress ? new RegExp(m.suppress, m.caseSensitive ? "u" : "iu") : null,
       /**
        * A rule reads the files its category is about.
@@ -8035,6 +8036,13 @@ function scanSource(opts) {
     }
     for (const c of compiled) {
       if (c.extensions && !c.extensions.has(ext)) continue;
+      for (const pattern of c.paths) {
+        if (!pattern.test(rel)) continue;
+        const list = hits.get(c.rule.id) ?? [];
+        list.push({ channel: "source", location: rel, line: 1, excerpt: rel });
+        hits.set(c.rule.id, list);
+        break;
+      }
       for (const pattern of c.patterns) {
         pattern.lastIndex = 0;
         let match;

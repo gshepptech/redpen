@@ -106,3 +106,28 @@
     Bring the sentence into the comment, or drop the pointer. A reference that
     cannot be followed is worse than no reference, because it stops the reader
     looking for a real explanation.
+
+- id: versioned-filename
+  kind: slop
+  title: A file named after its own revision
+  category: residue
+  severity: medium
+  weight: 64
+  evidenceRank: null
+  sources:
+    - { origin: redpen, ref: naming-residue }
+  channels: [source]
+  source:
+    paths:
+      - '(^|/)[\w.-]+[-_.](v[0-9]+|new|old|final|latest|updated|revised|copy|backup|orig|bak|fixed|temp|tmp)\.[a-z]+$'
+      - '(^|/)[\w-]+[0-9]\.(ts|tsx|js|jsx|go|py|rb|rs|java|css)$'
+      - '(^|/)(copy of|Copy of)[\w -]+\.'
+  why: >-
+    `handler-v2.ts` beside `handler.ts` asks every reader to work out which one
+    runs, and the answer is in neither name. Version lives in the history, where
+    it stays right; a suffix freezes one moment of a file's life into the thing
+    everyone types for the rest of it.
+  fix: >-
+    Delete the old one — it is in the history — and let the good name go to the
+    file that survived. Where both are live, name them for what makes them
+    different rather than for which came second.

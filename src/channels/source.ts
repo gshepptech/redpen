@@ -146,6 +146,7 @@ export function walk(root: string): string[] {
 interface CompiledRule {
   rule: Rule;
   patterns: RegExp[];
+  paths: RegExp[];
   suppress: RegExp | null;
   extensions: Set<string> | null;
   minHits: number;
@@ -153,14 +154,15 @@ interface CompiledRule {
 
 function compile(rules: Rule[]): CompiledRule[] {
   return rules
-    .filter((r) => r.source?.patterns?.length)
+    .filter((r) => r.source?.patterns?.length || r.source?.paths?.length)
     .map((rule) => {
       const m = rule.source!;
       return {
         rule,
         // 'u' for the emoji ranges, 'i' because CSS and class names vary in
         // case — except where a rule reads prose, where case is the signal.
-        patterns: m.patterns.map((p) => new RegExp(p, m.caseSensitive ? 'gu' : 'giu')),
+        patterns: (m.patterns ?? []).map((p) => new RegExp(p, m.caseSensitive ? 'gu' : 'giu')),
+        paths: (m.paths ?? []).map((p) => new RegExp(p, m.caseSensitive ? 'u' : 'iu')),
         suppress: m.suppress ? new RegExp(m.suppress, m.caseSensitive ? 'u' : 'iu') : null,
         /**
          * A rule reads the files its category is about.
@@ -258,6 +260,16 @@ export function scanSource(opts: SourceScanOptions): {
 
     for (const c of compiled) {
       if (c.extensions && !c.extensions.has(ext)) continue;
+
+      // The name first. A path match is reported at line 1 with the path as the
+      // excerpt, because there is no line in a file that its own name is on.
+      for (const pattern of c.paths) {
+        if (!pattern.test(rel)) continue;
+        const list = hits.get(c.rule.id) ?? [];
+        list.push({ channel: 'source', location: rel, line: 1, excerpt: rel });
+        hits.set(c.rule.id, list);
+        break;
+      }
 
       for (const pattern of c.patterns) {
         pattern.lastIndex = 0;

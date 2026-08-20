@@ -14,6 +14,8 @@ import { CODE_CATEGORIES } from '../dist/scan.js';
  */
 
 const HERE = dirname(fileURLToPath(import.meta.url));
+const NAME_RULES = ['versioned-filename', 'grandiose-identifier', 'placeholder-identifier'];
+
 const CODE_RULES = [
   'edit-narrating-comment',
   'signature-restating-docstring',
@@ -130,5 +132,39 @@ test('a code scan opens no browser and claims no missing one', async () => {
   assert.ok(
     !result.warnings.some((w) => w.includes('capped at')),
     `claimed a render half that no code rule has: ${result.warnings.join(' | ')}`,
+  );
+});
+
+test('a name is evidence too', async () => {
+  // Every rule before these read file contents. A file called
+  // `enhanced-parser-v2.ts` says as much about how it came to exist as
+  // anything inside it, and no amount of reading the contents finds it.
+  const result = await scanCode('sloppy-names');
+  const fired = new Set(result.findings.map((f) => f.ruleId));
+  for (const id of NAME_RULES) {
+    assert.ok(fired.has(id), `${id} did not fire on the name it describes`);
+  }
+
+  // A path hit reports the path, because no line in a file carries its name.
+  const byPath = result.findings.find((f) => f.ruleId === 'versioned-filename');
+  const excerpts = byPath.evidence.map((e) => e.excerpt);
+  assert.ok(
+    excerpts.some((e) => e && e.endsWith('.ts')),
+    `the filename is not the evidence: ${excerpts.join(', ')}`,
+  );
+});
+
+test('the naming rules leave ordinary naming alone', async () => {
+  // Learned from four codebases, one prefix at a time. `newToken` and
+  // `newCompileCmd` are the Go constructor idiom; `tempDir` and `testService`
+  // are test helpers named exactly right; `sampleProfile` takes samples along a
+  // path and `sampleTemplates` returns sample templates. Every one of those
+  // fired before the prefix list was cut down to the words nobody picks on
+  // purpose.
+  const result = await scanCode('ordinary-names');
+  assert.deepEqual(
+    result.findings.map((f) => `${f.ruleId}: ${f.evidence[0]?.excerpt}`),
+    [],
+    'a naming rule fired on ordinary code',
   );
 });
