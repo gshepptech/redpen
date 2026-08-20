@@ -131,8 +131,14 @@
   source:
     patterns:
       - 'if\s*\(\s*typeof\s+\w+\s*===\s*[''"]undefined[''"]\s*\)\s*\{\s*\w+\s*=\s*(\[\]|\{\}|0|[''"]{2})'
-      - 'if\s*\(\s*!\s*Array\.isArray\(\s*\w+\s*\)\s*\)\s*(return|\w+\s*=)\s*\[\]'
       - '(//|#)\s*(just in case|defensive|belt and braces|should never happen|shouldn''t happen)\b'
+      # `if (!Array.isArray(x)) return []` was here and is gone. On the first
+      # real codebase it fired three times, every one of them narrowing an
+      # `unknown` — from JSON.parse, and from a parameter declared `unknown`.
+      # That is not a defensive check, it is the only way to touch the value at
+      # all, and this rule's own fix text calls guarding at the edge correct.
+      # A regex cannot see the declared type, so it cannot tell the two apart,
+      # and a false positive here sends someone to delete a guard they need.
   why: >-
     A check for a value the type system already rules out reads as uncertainty
     about the code around it. It also hides the real bug: if that value ever
