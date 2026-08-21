@@ -751,3 +751,24 @@ test('a page that meets the criteria is not told otherwise', opts, async () => {
     assert.ok(!fired.includes(id), `${id} fired on a page that meets it`);
   }
 });
+
+test('the source rules find tells in a component that works', async () => {
+  // Same test the code rules got, one level up. This is a stand-register form
+  // that compiles and does its job, with the tells where they turn up rather
+  // than where they are easy to find.
+  //
+  // Two rules could not see them. `invented-metrics` listed the numbers and the
+  // nouns it would accept, so "Trusted by 50,000+ land managers" was invisible
+  // because "land managers" was not on the menu. And `no-loading-state` only
+  // knew the inline handler — `onClick={async () => await …}` — which is the
+  // tutorial shape; a real component extracts the handler, and that is most
+  // React ever written.
+  const result = await runScan({
+    root: join(HERE, 'fixtures', 'realistic-app'),
+    ephemeral: true,
+  });
+  const fired = new Set(result.findings.map((f) => f.ruleId));
+  for (const id of ['invented-metrics', 'no-loading-state', 'destructive-without-confirm']) {
+    assert.ok(fired.has(id), `${id} missed a tell in a component that works`);
+  }
+});

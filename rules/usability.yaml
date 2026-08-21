@@ -20,8 +20,12 @@
   channels: [source]
   source:
     patterns:
+      # The inline handler is the tutorial shape. Real components extract it —
+      # `onSubmit={submit}` with `async function submit()` above — and the rule
+      # could not see that at all, which is most React ever written.
       - 'onClick=\{[^}]*await\s'
       - 'onSubmit=\{[^}]*(fetch|axios|api)\.'
+      - 'async function \w+\([^)]*\)[^{]*\{[^}]*await [^}]*\}[\s\S]{0,600}?on(Submit|Click)=\{\w+\}'
     suppress: '(isLoading|isPending|loading|pending|isSubmitting|disabled)'
     minHits: 1
   why: >-

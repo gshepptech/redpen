@@ -166,8 +166,19 @@
   channels: [source, vision]
   source:
     patterns:
-      - '\b(99\.9{1,2}%|10x|50%|2x|3x|5x)\s+(faster|uptime|more|fewer|better|productivity)\b'
-      - '\b(10,000|50,000|100,000|1M|10M)\+?\s+(users|developers|teams|companies|customers)\b'
+      # The first version listed the numbers and the nouns it would accept, so
+      # "Trusted by 50,000+ land managers" and "cut scouting time by 40%" both
+      # went unreported — the number was not on the menu and neither was the
+      # noun. A claim's shape is the tell, not its vocabulary.
+      - '\b\d{1,3}(\.\d)?x\s+(faster|more|fewer|better|cheaper|higher|lower)\b'
+      - '\b(9[0-9](\.\d{1,2})?)%\s+(uptime|availability|accuracy|accurate)\b'
+      # A bare percentage is not a claim to a reader. `by 40%` and `60% more`
+      # matched a comment in a herbicide module explaining that a grower reading
+      # the wrong row applies 60% more than the label allows — a sourced fact,
+      # in code, on a page nobody markets. What makes an invented metric one is
+      # the framing around the number, so only framed shapes are matched.
+      - '(?:trusted by|join|over|more than|used by|powering)\s+\d{1,3}(,\d{3})+\+?\s+\w+'
+      - '\b\d{1,3}(,\d{3})+\+\s+\w+'
   vision:
     ask: >-
       Does the page state numbers — user counts, percentage gains, uptime —
