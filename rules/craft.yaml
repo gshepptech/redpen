@@ -9,6 +9,31 @@
 # addressed to whoever was reviewing that afternoon, left in a file that will
 # outlive them.
 
+# Measured and rejected: comment length.
+#
+# Two shapes were tested against six real codebases and one fixture written to
+# look like generated code.
+#
+#   density          7.6% to 35.7% of lines, and the generated fixture was the
+#                    highest of the lot at 35.7% — just ahead of the most
+#                    carefully maintained project at 30.2%. No threshold
+#                    separates them.
+#
+#   disproportion    a comment block more than twice the length of the code it
+#                    precedes: 12% to 42% of blocks, highest in the hand-written
+#                    projects (42.5%, 40.6%, 38.0%) and 0% in the generated one.
+#
+# The signal runs backwards. Long comments on short code are what careful
+# authorship looks like — the longest single block found was 232 lines above two
+# lines of data, explaining why a product appears twice in a seed catalogue. A
+# rule on either measure would fire hardest on the best-commented codebases and
+# never on the generated one, which is the definition of a rule that costs more
+# than it finds.
+#
+# What is a tell is a comment that says nothing the code does not already say,
+# and that is what signature-restating-docstring measures. Length is not a
+# proxy for it.
+
 - id: edit-narrating-comment
   kind: slop
   title: A comment addressed to the reviewer, not the reader
