@@ -300,7 +300,27 @@ const VARIANTS = {
   'swallow.ts': [2, 5, 8, 11, 14],
   'docstring.ts': [1, 9, 15, 19],
   'editnote.ts': [1, 4, 7, 10, 13],
+  'residue.ts': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+  'stubs.ts': [2, 5, 7, 10, 12, 15],
+  'names.ts': [1, 2, 3, 4, 5, 6, 7],
+  'guards.ts': [2, 7, 9],
 };
+
+/** Names, which have no line to report — a path hit is always line 1. */
+const PATH_VARIANTS = [
+  'handler-v2.ts',
+  'config-new.ts',
+  'schema-final.ts',
+  'index-copy.ts',
+  'parser2.ts',
+  'utils.ts',
+  'helpers.ts',
+  'common.ts',
+  'misc.ts',
+  'enhanced-parser.ts',
+  'improved-client.ts',
+  'smart-defaults.ts',
+];
 
 test('each tell is caught in every phrasing it is written in', async () => {
   const result = await scanCode('variants');
@@ -312,6 +332,9 @@ test('each tell is caught in every phrasing it is written in', async () => {
     for (const line of lines) {
       if (!seen.has(`${file}:${line}`)) escaped.push(`${file}:${line}`);
     }
+  }
+  for (const file of PATH_VARIANTS) {
+    if (!seen.has(`${file}:1`)) escaped.push(file);
   }
   assert.deepEqual(escaped, [], `these phrasings escaped:\n${escaped.join('\n')}`);
 });
