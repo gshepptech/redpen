@@ -9384,6 +9384,13 @@ var CHECKS_LIB = `
           if (/outline|box-shadow|all/.test(t)) {
             out.push({ selector: r.selectorText, excerpt: 'focus ring transitions: ' + t });
           }
+          // A keyframe animation moves the ring exactly as a transition does,
+          // and only the transition was looked for \u2014 so a ring that pulses
+          // forever went unreported while one that eased once did not.
+          var a = r.style.animation || r.style.animationName || '';
+          if (a && a !== 'none') {
+            out.push({ selector: r.selectorText, excerpt: 'focus ring animates: ' + a });
+          }
         }
       } catch (e) { /* cross-origin */ }
     }
@@ -9686,7 +9693,15 @@ var CHECKS_LIB = `
   };
 
   CHECKS['color-only-state'] = function () {
-    return all('[class*="error"], [class*="success"], [class*="warning"], [aria-invalid="true"]')
+    // The five words the rule declares were the only ones matched, and real code
+    // says ok, bad, pass, fail, good, danger, valid and invalid at least as
+    // often. A state carried by colour alone is the defect whatever it is
+    // called.
+    return all(
+      '[class*="error"], [class*="success"], [class*="warning"], [aria-invalid="true"],' +
+      '[class*="danger"], [class*="invalid"], [class~="ok"], [class~="bad"],' +
+      '[class~="pass"], [class~="fail"], [class~="good"], [class~="valid"]'
+    )
       .filter(function (el) {
         var hasIcon = el.querySelector('svg, img, [class*="icon"]');
         var hasText = textOf(el).length > 2;

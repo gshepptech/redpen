@@ -1,0 +1,31 @@
+:root { --ink: #1b1f1a; --paper: #f4f2ec; --line: #cfc9ba; }
+body { margin: 0; padding: 32px; background: var(--paper); color: var(--ink);
+       font-family: Georgia, serif; font-size: 17px; line-height: 1.6; }
+main { max-width: 62ch; display: flex; flex-direction: column; gap: 20px; }
+h1 { font-family: Futura, sans-serif; font-size: 40px; margin: 0; }
+
+.allcaps { text-transform: uppercase; font-size: 16px; }
+.justified { text-align: justify; }
+.glass { backdrop-filter: blur(16px); background: #ffffff55; padding: 16px; border-radius: 8px; }
+.glow { box-shadow: 0 0 24px 6px #5ce1ff; background: #10131a; color: #d8f6ff; padding: 16px; }
+.halo { height: 180px; background: radial-gradient(circle at 40% 30%, #b98cff, transparent 70%);
+        filter: blur(48px); }
+.pulse { display: block; width: 12px; height: 12px; border-radius: 50%; background: #48b884;
+         animation: pulse 1.4s infinite; }
+@keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .3 } }
+.figures td { font-family: Georgia, serif; padding: 4px 12px; text-align: right; }
+.drifted { color: #7a3e9d; font-family: "Comic Sans MS", cursive; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { border-radius: 999px; padding: 3px 10px; font-size: 13px; }
+.chip.a { background: #d7e7ff } .chip.b { background: #d6f5df } .chip.c { background: #fff0cc }
+.chip.d { background: #ffd9d9 } .chip.e { background: #e8e0ff }
+.clipped { width: 160px; height: 22px; overflow: hidden; white-space: nowrap; font-size: 18px; }
+.focusring { padding: 10px 18px; min-height: 44px; }
+.focusring:focus-visible { outline: 2px solid #7a4a2c; animation: ring 600ms infinite; }
+@keyframes ring { 0%,100% { outline-offset: 2px } 50% { outline-offset: 7px } }
+.mover { transition: width 400ms ease; width: 200px; background: #e6e1d4; padding: 10px; }
+.mover:hover { width: 320px; }
+.ok { color: #2f7d58 } .bad { color: #c0333a }
+.grid-bg { background-image: linear-gradient(#0001 1px, transparent 1px),
+           linear-gradient(90deg, #0001 1px, transparent 1px); background-size: 24px 24px;
+           height: 60vh; }

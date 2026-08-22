@@ -772,3 +772,58 @@ test('the source rules find tells in a component that works', async () => {
     assert.ok(fired.has(id), `${id} missed a tell in a component that works`);
   }
 });
+
+/**
+ * The visual tells, one page, one assertion each.
+ *
+ * A quarter of the corpus had never fired on anything — not a fixture, not a
+ * real project, not a marketing page. Untried is not the same as broken, and
+ * the only way to tell them apart is to build the page. This one carries
+ * eleven tells that had never been seen firing, and two of them turned out to
+ * be broken rather than merely untried.
+ */
+const VISUAL_TELLS = [
+  'all-caps-body',
+  'animated-focus-ring',
+  'animated-layout-property',
+  'dark-glow',
+  'glassmorphism',
+  'justified-text',
+  'marquee',
+  'no-tabular-nums',
+  'pulsing-dot',
+  'text-overflow',
+  'too-many-families',
+];
+
+test('every visual tell on the page is reported', opts, async () => {
+  const url = await serve(join(HERE, 'fixtures', 'visual-variants'));
+  const result = await runScan({
+    root: join(HERE, 'fixtures', 'visual-variants'),
+    urls: [url],
+    viewports: [375, 1440],
+    ephemeral: true,
+  });
+  const fired = new Set([
+    ...result.findings.map((f) => f.ruleId),
+    ...result.advisory.map((f) => f.ruleId),
+  ]);
+  const missed = VISUAL_TELLS.filter((id) => !fired.has(id));
+  assert.deepEqual(missed, [], `planted and not reported: ${missed.join(', ')}`);
+});
+
+test('none of the visual tells fire on a page without them', opts, async () => {
+  const url = await serve(join(HERE, 'fixtures', 'clean'));
+  const result = await runScan({
+    root: join(HERE, 'fixtures', 'clean'),
+    urls: [url],
+    viewports: [375, 1440],
+    ephemeral: true,
+  });
+  const fired = [
+    ...result.findings.map((f) => f.ruleId),
+    ...result.advisory.map((f) => f.ruleId),
+  ];
+  const wrong = VISUAL_TELLS.filter((id) => fired.includes(id));
+  assert.deepEqual(wrong, [], `fired on a page that does not have it: ${wrong.join(', ')}`);
+});
