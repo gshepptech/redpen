@@ -7908,7 +7908,8 @@ var SKIP_DIRS = /* @__PURE__ */ new Set([
   "fixtures",
   "__mocks__"
 ]);
-var SKIP_FILE = /\.(golden|snap|snapshot)\.|\.golden$|\.snap$|\.(test|spec)\.[jt]sx?$/i;
+var SKIP_FILE = /\.(golden|snap|snapshot)\.|\.golden$|\.snap$|\.(test|spec|testkit|fixture|mock|stub|e2e)\.[jt]sx?$/i;
+var PATTERN_LINE = /\/(\^|\\b|\(\?:)|\\b\(\?:|\[\^|\bnew RegExp\(/;
 var MAX_FILE_BYTES = 512 * 1024;
 var MAX_LINE_LENGTH = 2e3;
 function unreadLanguages(root) {
@@ -8055,6 +8056,7 @@ function scanSource(opts) {
           const lineNo = countLines(text, match.index);
           const line = lines[lineNo - 1] ?? "";
           if (line.length > MAX_LINE_LENGTH) continue;
+          if (PATTERN_LINE.test(line)) continue;
           if (c.suppress) {
             const from = Math.max(0, lineNo - 1 - c.suppressLines);
             const window = lines.slice(from, lineNo).join("\n");
@@ -11381,7 +11383,7 @@ function readAnswers(path2) {
 
 // src/promote.ts
 var AUTHORITATIVE = /* @__PURE__ */ new Set(["render", "fingerprint"]);
-function confidenceFor(rule, observed, renderRan) {
+function confidenceFor(rule, observed) {
   const possible = new Set(rule.channels);
   if (observed.size >= 2) return "confirmed";
   const only = [...observed][0];
@@ -11394,7 +11396,7 @@ function confidenceFor(rule, observed, renderRan) {
     return "likely";
   }
   if (possible.has("render")) {
-    return renderRan ? "possible" : "likely";
+    return "possible";
   }
   return "likely";
 }
@@ -11425,7 +11427,7 @@ function promote(raw, opts) {
       advisory: rule.advisory ?? false,
       severity: rule.severity,
       weight: rule.weight,
-      confidence: confidenceFor(rule, channels, opts.renderRan),
+      confidence: confidenceFor(rule, channels),
       channels: [...channels],
       evidence: evidence.slice(0, 16),
       why: rule.why,

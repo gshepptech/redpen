@@ -55,9 +55,17 @@ const SKIP_DIRS = new Set([
  * `page.test.tsx:222 it("exports the flag in SUMMARY...")` — matching "in
  * summary" inside an assertion about a CSV column.
  */
-const SKIP_FILE = /\.(golden|snap|snapshot)\.|\.golden$|\.snap$|\.(test|spec)\.[jt]sx?$/i;
+const SKIP_FILE = /\.(golden|snap|snapshot)\.|\.golden$|\.snap$|\.(test|spec|testkit|fixture|mock|stub|e2e)\.[jt]sx?$/i;
 
 /** Files above this size are almost always bundles, minified, or vendored. */
+/**
+ * A line that defines a pattern rather than containing prose.
+ *
+ * Regex literals with a group or a class in them, and lines that are plainly a
+ * list of words being matched against. Copy rules read these as copy.
+ */
+const PATTERN_LINE = /\/(\^|\\b|\(\?:)|\\b\(\?:|\[\^|\bnew RegExp\(/;
+
 const MAX_FILE_BYTES = 512 * 1024;
 
 /** A line this long is minified output; regex over it produces noise. */
@@ -287,6 +295,16 @@ export function scanSource(opts: SourceScanOptions): {
           const line = lines[lineNo - 1] ?? '';
 
           if (line.length > MAX_LINE_LENGTH) continue;
+          // A line that is a pattern is not a line that has the problem.
+          //
+          // huechemy ships a voice test kit whose job is to catch marketing
+          // verbs, so it contains the regex that lists them — and
+          // marketing-buzzword reported it, at `confirmed`. Same shape as
+          // redpen's own artifact page being flagged for quoting the bad
+          // example out of its own report. A prose rule reading a regex literal
+          // is reading the detector, not the copy.
+          if (PATTERN_LINE.test(line)) continue;
+
           // The line itself, and the few above it when the rule asks — a reason
           // is written above the code it explains, not beside it.
           if (c.suppress) {

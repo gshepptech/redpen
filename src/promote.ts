@@ -24,7 +24,7 @@ import type { RawFinding, Finding, Confidence, Channel, Rule } from './types.js'
 /** Channels that observe real state rather than text, in order of authority. */
 const AUTHORITATIVE: ReadonlySet<Channel> = new Set<Channel>(['render', 'fingerprint']);
 
-function confidenceFor(rule: Rule, observed: Set<Channel>, renderRan: boolean): Confidence {
+function confidenceFor(rule: Rule, observed: Set<Channel>): Confidence {
   const possible = new Set(rule.channels);
 
   if (observed.size >= 2) return 'confirmed';
@@ -44,17 +44,37 @@ function confidenceFor(rule: Rule, observed: Set<Channel>, renderRan: boolean): 
     return 'likely';
   }
 
-  // Source-only. If render could have confirmed it and ran without doing so,
-  // the two channels disagree and the finding is a lead at best.
+  // Source-only, on a rule the render channel could have settled.
+  //
+  // Both ways round this is a lead, and the second way was backwards. If render
+  // ran and did not agree, the channels disagree. If render never ran, nothing
+  // checked it — which is weaker still, and it was being reported as stronger.
+  //
+  // Measured on one real app: of eleven source-only findings presented as
+  // likely or confirmed, seven were false. The page had `lang="en"`, the nav had
+  // `aria-current`, the input was wrapped in its label, the stylesheet had the
+  // reduced-motion block. Every one of those is a fact about the rendered page
+  // that a regex over .tsx files cannot see, and each of those rules already
+  // carries a render check that would have answered it.
+  //
+  // This rule's own doc comment said `possible` means the render pass
+  // "disagreed or never ran". The code said otherwise.
   if (possible.has('render')) {
-    return renderRan ? 'possible' : 'likely';
+    return 'possible';
   }
 
   return 'likely';
 }
 
 export interface PromoteOptions {
-  /** False when playwright was unavailable, so absence is not disagreement. */
+  /**
+   * False when playwright was unavailable.
+   *
+   * No longer changes any confidence: a source hit on a rule render could have
+   * settled is a lead whether render disagreed or never ran. Kept because the
+   * report says which of those happened, and the two read very differently to
+   * someone deciding whether to act.
+   */
   renderRan: boolean;
   /** Rule ids that do not apply on this surface. Dropped before promotion. */
   offSurface?: Set<string>;
@@ -99,7 +119,7 @@ export function promote(raw: RawFinding[], opts: PromoteOptions): {
       advisory: rule.advisory ?? false,
       severity: rule.severity,
       weight: rule.weight,
-      confidence: confidenceFor(rule, channels, opts.renderRan),
+      confidence: confidenceFor(rule, channels),
       channels: [...channels],
       evidence: evidence.slice(0, 16),
       why: rule.why,

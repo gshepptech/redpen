@@ -29,16 +29,30 @@ test('source-only on a render-observable rule is demoted when render ran', () =>
   assert.equal(findings[0].confidence, 'possible');
 });
 
-test('the same finding is not demoted when render never ran', () => {
-  const { findings } = promote(
-    [{ ruleId: 'ai-purple', channel: 'source', evidence: [ev('source', 'a.css', { line: 2 })] }],
-    { renderRan: false },
-  );
-  assert.equal(
-    findings[0].confidence,
-    'likely',
-    'absence of a channel is not disagreement — that distinction is the whole point',
-  );
+test('a finding render could have settled is a lead whether it ran or not', () => {
+  // This test used to assert the opposite, and argued it well: absence of a
+  // channel is not disagreement, so do not penalise the source hit. It reads as
+  // fair and it is wrong, because it treats "nobody checked" as better than
+  // "somebody checked and did not agree" when both mean the finding is
+  // unconfirmed.
+  //
+  // Measured on a real app scanned without a browser: eleven source findings,
+  // presented as likely or confirmed, and seven were false. The page had
+  // `lang="en"`. The nav had `aria-current`. The input was wrapped in its own
+  // label. The stylesheet had the reduced-motion block. Every one of those is a
+  // fact about the rendered page, every one of those rules already carries a
+  // render check that would have answered it, and none of them ran.
+  for (const renderRan of [true, false]) {
+    const { findings } = promote(
+      [{ ruleId: 'ai-purple', channel: 'source', evidence: [ev('source', 'a.css', { line: 2 })] }],
+      { renderRan },
+    );
+    assert.equal(
+      findings[0].confidence,
+      'possible',
+      `render ran: ${renderRan} — unchecked is not the same as agreed`,
+    );
+  }
 });
 
 test('a source-only-observable rule is confirmed from source alone', () => {
