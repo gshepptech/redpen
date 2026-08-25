@@ -26,7 +26,11 @@
       - 'onClick=\{[^}]*await\s'
       - 'onSubmit=\{[^}]*(fetch|axios|api)\.'
       - 'async function \w+\([^)]*\)[^{]*\{[^}]*await [^}]*\}[\s\S]{0,600}?on(Submit|Click)=\{\w+\}'
-    suppress: '(isLoading|isPending|loading|pending|isSubmitting|disabled)'
+    # A pending flag is set a line or two into the handler, not on the line the
+    # await is on. Same-line suppression reported a button that carries
+    # `disabled` eight lines below its own onClick.
+    suppress: '(isLoading|isPending|loading|pending|isSubmitting|disabled|setBusy|setSaving|setCreating)'
+    suppressLines: 12
     minHits: 1
   why: >-
     The user clicks, nothing changes, they click again. Duplicate submissions
