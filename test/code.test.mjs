@@ -338,3 +338,30 @@ test('each tell is caught in every phrasing it is written in', async () => {
   }
   assert.deepEqual(escaped, [], `these phrasings escaped:\n${escaped.join('\n')}`);
 });
+
+test('an ignore written in the source is reported, not just obeyed', async () => {
+  // The channel collected in-source ignores into a map and scan.ts dropped it
+  // on the floor, so `--show-ignored` — whose help says it lists findings
+  // suppressed by redpen-ignore — listed only the ones named in
+  // .redpen/config.json. The reason a person is required to write, on the
+  // argument that an ignore with a reason is a decision on record, went
+  // nowhere and could not be read back.
+  //
+  // The renderer had the second half of the same bug: the block sat below the
+  // early return for a clean report, which is exactly when someone asks what
+  // was excused to get it.
+  const r = await runScan({
+    root: join(HERE, 'fixtures', 'excused'),
+    codeCategories: true,
+    ephemeral: true,
+  });
+
+  assert.equal(r.findings.length, 0, 'the ignore did not suppress the finding');
+  assert.equal(r.ignored.length, 1, 'the ignore was obeyed and then forgotten');
+
+  const [only] = r.ignored;
+  assert.equal(only.ruleId, 'swallowed-error');
+  assert.match(only.ignored.reason, /best-effort/);
+  assert.equal(only.evidence[0].location, 'worker.ts', 'the excuse has to name the file it excused');
+  assert.ok(only.evidence[0].line > 0, 'and the line');
+});

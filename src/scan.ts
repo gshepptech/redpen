@@ -5,7 +5,7 @@ import { scanRender } from './channels/render.js';
 import { buildBrief, writeBrief, readAnswers } from './channels/vision.js';
 import { promote, meetsThreshold } from './promote.js';
 import { MIN_SURFACE_CONFIDENCE } from './channels/surface.js';
-import { loadCorpus, appliesTo, isActionable } from './corpus/load.js';
+import { loadCorpus, appliesTo, isActionable, ruleById } from './corpus/load.js';
 import { findClashes, fingerprintFindings } from './fingerprint/distance.js';
 import * as store from './fingerprint/store.js';
 import { scoreKind, headline } from './score.js';
@@ -341,6 +341,41 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
 
   const ignores = configIgnores(config);
   const promoted = promote(raw, { renderRan, ignored: ignores, offSurface });
+
+  /**
+   * The ignores written in the source, which were collected and dropped.
+   *
+   * `--show-ignored` says it lists findings suppressed by redpen-ignore, and it
+   * listed only the ones named in `.redpen/config.json` — the channel silenced
+   * the in-source ones and threw the record away at the call above. So the
+   * reason a person is required to write, on the argument that an ignore with a
+   * reason is a decision on record, went nowhere and could not be read back.
+   *
+   * They never became findings, so there is nothing to demote; they are
+   * reported from the rule and the line that carried the directive.
+   */
+  for (const [ruleId, directives] of src.ignored) {
+    const rule = ruleById(ruleId);
+    if (!rule) continue;
+    for (const d of directives) {
+      promoted.ignored.push({
+        ruleId,
+        title: rule.title,
+        category: rule.category,
+        kind: rule.kind,
+        advisory: false,
+        severity: rule.severity,
+        weight: rule.weight,
+        confidence: 'possible',
+        channels: ['source'],
+        evidence: [{ channel: 'source', location: d.location ?? '', line: d.line }],
+        why: rule.why,
+        fix: rule.fix,
+        sources: rule.sources,
+        ignored: { reason: d.reason, location: d.location ?? '' },
+      });
+    }
+  }
   if (promoted.unknownRules.length) {
     warnings.push(`unknown rule ids reported by a channel: ${promoted.unknownRules.join(', ')}`);
   }

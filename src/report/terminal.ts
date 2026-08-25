@@ -91,6 +91,12 @@ export function renderTerminal(result: ScanResult, opts: TerminalOptions): strin
   if (!findings.length) {
     out.push(pc.green('  No findings.'));
     out.push('');
+    // A clean report is exactly when someone asks what was excused to get it.
+    // The ignored block sat below this return, so `--show-ignored` printed
+    // nothing on every project that had nothing left to report.
+    if (opts.showIgnored && result.ignored.length) {
+      out.push(...ignoredLines(result));
+    }
     return out.join('\n');
   }
 
@@ -173,11 +179,7 @@ export function renderTerminal(result: ScanResult, opts: TerminalOptions): strin
   }
 
   if (opts.showIgnored && result.ignored.length) {
-    out.push(pc.dim(`  ${result.ignored.length} finding(s) suppressed by redpen-ignore:`));
-    for (const f of result.ignored) {
-      out.push(pc.dim(`    ${f.ruleId} — ${f.ignored?.reason ?? 'no reason given'}`));
-    }
-    out.push('');
+    out.push(...ignoredLines(result));
   }
 
   return out.join('\n');
@@ -392,4 +394,18 @@ function wrap(text: string, width: number, indent: string): string {
   }
   if (line.trim()) lines.push(line.trim());
   return lines.join('\n' + indent);
+}
+
+/** What a project has excused, with the line that excused it. */
+function ignoredLines(result: ScanResult): string[] {
+  const out = [pc.dim(`  ${result.ignored.length} finding(s) suppressed by redpen-ignore:`)];
+  for (const f of result.ignored) {
+    // The line matters as much as the reason. A project that has excused
+    // twelve swallowed errors should be able to see which twelve.
+    const ev = f.evidence?.[0];
+    const at = ev?.location ? ` (${ev.location}${ev.line ? `:${ev.line}` : ''})` : '';
+    out.push(pc.dim(`    ${f.ruleId}${at} — ${f.ignored?.reason ?? 'no reason given'}`));
+  }
+  out.push('');
+  return out;
 }
