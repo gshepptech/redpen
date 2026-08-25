@@ -178,6 +178,7 @@ interface CompiledRule {
   suppress: RegExp | null;
   suppressProject: RegExp | null;
   suppressLines: number;
+  suppressAfter: number;
   extensions: Set<string> | null;
   minHits: number;
   readsCode: boolean;
@@ -197,6 +198,7 @@ function compile(rules: Rule[]): CompiledRule[] {
         suppress: m.suppress ? new RegExp(m.suppress, m.caseSensitive ? 'u' : 'iu') : null,
         suppressProject: m.suppressProject ? new RegExp(m.suppressProject, 'iu') : null,
         suppressLines: m.suppressLines ?? 0,
+        suppressAfter: m.suppressAfter ?? 0,
         /**
          * A rule reads the files its category is about.
          *
@@ -351,7 +353,8 @@ export function scanSource(opts: SourceScanOptions): {
           // is written above the code it explains, not beside it.
           if (c.suppress) {
             const from = Math.max(0, lineNo - 1 - c.suppressLines);
-            const window = lines.slice(from, lineNo).join('\n');
+            const to = Math.min(lines.length, lineNo + c.suppressAfter);
+            const window = lines.slice(from, to).join('\n');
             if (c.suppress.test(window)) continue;
           }
 

@@ -117,6 +117,17 @@ export interface SourceMatcher {
    */
   suppressLines?: number;
   /**
+   * Lines below the hit that the suppression also reads.
+   *
+   * A reason is written above; a guard is written below. `onClick={async (e) =>
+   * {` is the line a pattern lands on, and the confirmation the rule is asking
+   * about is two lines further in, inside the handler. Reading upward only,
+   * `destructive-without-confirm` reported two buttons whose very next
+   * statement was `if (!confirm("Cancel this deployment? This will remove it
+   * from history.")) return;`.
+   */
+  suppressAfter?: number;
+  /**
    * Match case exactly.
    *
    * Patterns compile case-insensitively because CSS and class names vary in

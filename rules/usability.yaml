@@ -88,7 +88,17 @@
       # and the labels below are what a button says when it means it.
       - 'onClick=\{[^}]*\b(delete|destroy|wipe|purge)[A-Z]\w*\('
       - '>\s*(Delete|Delete all|Clear all|Discard|Wipe)\s*<'
+    # The suppress list was right and could not see anything. Without a window
+    # it read the hit's own line only, and a confirmation is never written on
+    # the button — it is the branch the button sits inside. Both survivors on
+    # the real projects were guarded: ridgetag calls window.confirm seven lines
+    # up with "Clear N compared areas and their ranking? This can't be undone."
+    # and mozza swaps the row for an inline "Confirm?" before the Delete shows
+    # at all. The only critical-severity rule in the corpus was wrong on both
+    # of the two claims it had left.
     suppress: '(confirm|Confirm|AlertDialog|undo|Undo|areYouSure)'
+    suppressLines: 14
+    suppressAfter: 6
     minHits: 1
   why: >-
     Irreversible work destroyed by one misclick. This is the single highest-cost

@@ -7984,6 +7984,7 @@ function compile(rules) {
       suppress: m.suppress ? new RegExp(m.suppress, m.caseSensitive ? "u" : "iu") : null,
       suppressProject: m.suppressProject ? new RegExp(m.suppressProject, "iu") : null,
       suppressLines: m.suppressLines ?? 0,
+      suppressAfter: m.suppressAfter ?? 0,
       /**
        * A rule reads the files its category is about.
        *
@@ -8069,7 +8070,8 @@ function scanSource(opts) {
           if (!c.readsCode && COMMENT_LINE.test(line)) continue;
           if (c.suppress) {
             const from = Math.max(0, lineNo - 1 - c.suppressLines);
-            const window = lines.slice(from, lineNo).join("\n");
+            const to = Math.min(lines.length, lineNo + c.suppressAfter);
+            const window = lines.slice(from, to).join("\n");
             if (c.suppress.test(window)) continue;
           }
           const directive = parseIgnore(line) ?? parseIgnore(lines[lineNo - 2]);

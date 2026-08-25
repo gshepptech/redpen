@@ -918,3 +918,33 @@ test('a note about the interface is not the interface', async () => {
     'the comment skip silenced the categories whose whole subject is the comment',
   );
 });
+
+test('a guard written below the button still counts as a guard', async () => {
+  // `destructive-without-confirm` is the only critical-severity rule in the
+  // corpus, and it was wrong on both of the two claims it had left. It already
+  // carried the right suppress list and could not see anything with it: no
+  // window, so it read the hit's own line, and a guard is never written on the
+  // button. ridgetag calls window.confirm seven lines above; mozza swaps the
+  // row for an inline "Confirm?" step. A window upward fixed those and left a
+  // third shape reported — `onClick={async (e) => {` with the check two lines
+  // *below*, inside the handler — which is what suppressAfter is for.
+  //
+  // The fixture never says "confirm" in its own prose. An earlier draft did,
+  // and the upward window ate it, so the fixture passed while testing nothing.
+  const guarded = await runScan({ root: join(HERE, 'fixtures', 'guarded-delete'), ephemeral: true });
+  const claimed = [...guarded.findings, ...guarded.advisory].filter(
+    (f) => f.ruleId === 'destructive-without-confirm',
+  );
+  assert.deepEqual(
+    claimed.flatMap((f) => f.evidence.map((e) => `${e.location}:${e.line}`)),
+    [],
+    'a delete that asks first was reported as one that does not',
+  );
+
+  // And the rule still fires where nothing asks.
+  const real = await runScan({ root: join(HERE, 'fixtures', 'realistic-app'), ephemeral: true });
+  assert.ok(
+    real.findings.some((f) => f.ruleId === 'destructive-without-confirm'),
+    'the suppression window swallowed a delete with no guard at all',
+  );
+});
