@@ -126,6 +126,15 @@ export interface SourceMatcher {
    * apart, and the `i` flag was quietly discarding it.
    */
   caseSensitive?: boolean;
+  /**
+   * A match anywhere in the project cancels every hit for this rule.
+   *
+   * Some questions are about the project rather than the line. `no-live-region`
+   * fired on every file that imports a toast, because its suppression could
+   * only see the line the hit was on — and the live region lives in the toast
+   * component, one directory away. A project that has a live region has one.
+   */
+  suppressProject?: string;
   /** Restrict to these file extensions. Defaults to all scanned extensions. */
   extensions?: string[];
   /**

@@ -7981,6 +7981,7 @@ function compile(rules) {
       patterns: (m.patterns ?? []).map((p) => new RegExp(p, m.caseSensitive ? "gu" : "giu")),
       paths: (m.paths ?? []).map((p) => new RegExp(p, m.caseSensitive ? "u" : "iu")),
       suppress: m.suppress ? new RegExp(m.suppress, m.caseSensitive ? "u" : "iu") : null,
+      suppressProject: m.suppressProject ? new RegExp(m.suppressProject, "iu") : null,
       suppressLines: m.suppressLines ?? 0,
       /**
        * A rule reads the files its category is about.
@@ -8011,6 +8012,7 @@ function scanSource(opts) {
   const files = opts.files ?? walk(opts.root);
   const hits = /* @__PURE__ */ new Map();
   const ignored = /* @__PURE__ */ new Map();
+  const projectSuppressed = /* @__PURE__ */ new Set();
   for (const file of files) {
     let text;
     try {
@@ -8021,6 +8023,11 @@ function scanSource(opts) {
     const rel = relative(opts.root, file) || file;
     const lines = text.split("\n");
     const ext = extname(file);
+    for (const c of compiled) {
+      if (c.suppressProject && !projectSuppressed.has(c.rule.id) && c.suppressProject.test(text)) {
+        projectSuppressed.add(c.rule.id);
+      }
+    }
     if (ext === ".css") {
       for (const rule of cascadeRules) {
         const params = rule.cascade.params ?? {};
@@ -8086,6 +8093,7 @@ function scanSource(opts) {
   for (const c of compiled) {
     const evidence = hits.get(c.rule.id);
     if (!evidence) continue;
+    if (c.suppressProject && projectSuppressed.has(c.rule.id)) continue;
     const distinctLines = new Set(evidence.map((e) => `${e.location}:${e.line}`));
     if (distinctLines.size < c.minHits) continue;
     findings.push({

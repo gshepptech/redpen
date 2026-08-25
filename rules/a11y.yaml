@@ -89,6 +89,11 @@
     patterns:
       - '(toast|Toast|notification|Notification|snackbar)\b[^>]*>'
     suppress: '(aria-live|role="(status|alert)")'
+    # A live region declared anywhere is a live region. This fired on every file
+    # importing a toast on a project whose Toast component carries
+    # `aria-live="polite"` one directory away, because same-line suppression
+    # cannot see another file.
+    suppressProject: '(aria-live=|role="(status|alert)")'
     minHits: 1
   why: >-
     A toast that appears visually and silently for anyone not looking at that

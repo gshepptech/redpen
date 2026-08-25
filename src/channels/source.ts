@@ -156,6 +156,7 @@ interface CompiledRule {
   patterns: RegExp[];
   paths: RegExp[];
   suppress: RegExp | null;
+  suppressProject: RegExp | null;
   suppressLines: number;
   extensions: Set<string> | null;
   minHits: number;
@@ -173,6 +174,7 @@ function compile(rules: Rule[]): CompiledRule[] {
         patterns: (m.patterns ?? []).map((p) => new RegExp(p, m.caseSensitive ? 'gu' : 'giu')),
         paths: (m.paths ?? []).map((p) => new RegExp(p, m.caseSensitive ? 'u' : 'iu')),
         suppress: m.suppress ? new RegExp(m.suppress, m.caseSensitive ? 'u' : 'iu') : null,
+        suppressProject: m.suppressProject ? new RegExp(m.suppressProject, 'iu') : null,
         suppressLines: m.suppressLines ?? 0,
         /**
          * A rule reads the files its category is about.
@@ -241,6 +243,14 @@ export function scanSource(opts: SourceScanOptions): {
   const hits = new Map<string, Evidence[]>();
   const ignored = new Map<string, IgnoreDirective[]>();
 
+  /**
+   * Rules whose project-wide question was answered yes, so every hit is off.
+   *
+   * Filled during the same pass that collects hits — a second walk of the tree
+   * to answer one regex would double the read for no reason.
+   */
+  const projectSuppressed = new Set<string>();
+
   for (const file of files) {
     let text: string;
     try {
@@ -251,6 +261,12 @@ export function scanSource(opts: SourceScanOptions): {
     const rel = relative(opts.root, file) || file;
     const lines = text.split('\n');
     const ext = extname(file);
+
+    for (const c of compiled) {
+      if (c.suppressProject && !projectSuppressed.has(c.rule.id) && c.suppressProject.test(text)) {
+        projectSuppressed.add(c.rule.id);
+      }
+    }
 
     if (ext === '.css') {
       for (const rule of cascadeRules) {
@@ -341,6 +357,11 @@ export function scanSource(opts: SourceScanOptions): {
   for (const c of compiled) {
     const evidence = hits.get(c.rule.id);
     if (!evidence) continue;
+
+    // A question about the project, answered once. The line-level suppression
+    // cannot see a live region declared in another file, so it reported every
+    // consumer of a toast system that has one.
+    if (c.suppressProject && projectSuppressed.has(c.rule.id)) continue;
 
     // Aggregate rules ("rounded corners everywhere") need a threshold measured
     // in distinct lines, not raw matches — one line with four violet classes is

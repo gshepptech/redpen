@@ -827,3 +827,28 @@ test('none of the visual tells fire on a page without them', opts, async () => {
   const wrong = VISUAL_TELLS.filter((id) => fired.includes(id));
   assert.deepEqual(wrong, [], `fired on a page that does not have it: ${wrong.join(', ')}`);
 });
+
+test('a live region one file away is still a live region', async () => {
+  // no-live-region fired on every file importing a toast, on a project whose
+  // Toast component carries `aria-live="polite"` one directory away. Same-line
+  // suppression cannot see another file, and this is a question about the
+  // project rather than the line.
+  const withOne = await runScan({
+    root: join(HERE, 'fixtures', 'toast-with-live'),
+    ephemeral: true,
+  });
+  assert.ok(
+    !withOne.findings.some((f) => f.ruleId === 'no-live-region'),
+    'reported a project that has a live region',
+  );
+
+  // ...and a project with a toast and no live region anywhere still is one.
+  const without = await runScan({
+    root: join(HERE, 'fixtures', 'toast-no-live'),
+    ephemeral: true,
+  });
+  assert.ok(
+    without.findings.some((f) => f.ruleId === 'no-live-region'),
+    'stopped reporting a toast with no live region anywhere',
+  );
+});
