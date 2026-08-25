@@ -79,8 +79,15 @@
   channels: [source]
   source:
     patterns:
-      - 'onClick=\{[^}]*\b(delete|remove|destroy|clear|reset|wipe)[A-Z]\w*\('
-      - '>\s*(Delete|Remove|Clear all|Reset|Discard)\s*<'
+      # `remove`, `clear` and `reset` are gone. They fired on every form builder
+      # in reach — removeService in a deploy wizard, removeComponent on a chip
+      # in a draft, a Remove button beside a row being composed. Nothing is
+      # saved yet in any of them, and the rule is about work that is.
+      #
+      # delete, destroy and wipe are what a codebase says when the data is real,
+      # and the labels below are what a button says when it means it.
+      - 'onClick=\{[^}]*\b(delete|destroy|wipe|purge)[A-Z]\w*\('
+      - '>\s*(Delete|Delete all|Clear all|Discard|Wipe)\s*<'
     suppress: '(confirm|Confirm|AlertDialog|undo|Undo|areYouSure)'
     minHits: 1
   why: >-

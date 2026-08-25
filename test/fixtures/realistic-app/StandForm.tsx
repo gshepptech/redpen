@@ -29,3 +29,21 @@ export function StandForm({ onSave }: { onSave: (v: string) => Promise<void> }) 
     </form>
   );
 }
+
+// Saved rows, deleted straight through with nothing to catch a misclick.
+export function StandList({ rows, refresh }: { rows: string[]; refresh: () => void }) {
+  async function deleteStand(id: string) {
+    await fetch(`/api/stands/${id}`, { method: "DELETE" });
+    refresh();
+  }
+  return (
+    <ul>
+      {rows.map((id) => (
+        <li key={id}>
+          {id}
+          <button type="button" onClick={() => deleteStand(id)}>Delete</button>
+        </li>
+      ))}
+    </ul>
+  );
+}

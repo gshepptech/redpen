@@ -852,3 +852,23 @@ test('a live region one file away is still a live region', async () => {
     'stopped reporting a toast with no live region anywhere',
   );
 });
+
+test('deleting saved work is destructive; editing a draft is not', async () => {
+  // `destructive-without-confirm` was claimed on all four real projects and
+  // three of them were form builders — removeService in a deploy wizard,
+  // removeComponent on a chip in a draft, a Remove button beside a row being
+  // composed. Nothing is saved in any of them, and the rule is about work that
+  // is. `remove`, `clear` and `reset` are gone; delete, destroy and wipe are
+  // what a codebase says when the data is real.
+  const real = await runScan({ root: join(HERE, 'fixtures', 'realistic-app'), ephemeral: true });
+  assert.ok(
+    real.findings.some((f) => f.ruleId === 'destructive-without-confirm'),
+    'a Delete button on saved rows with no confirm went unreported',
+  );
+
+  const draft = await runScan({ root: join(HERE, 'fixtures', 'draft-form'), ephemeral: true });
+  assert.ok(
+    !draft.findings.some((f) => f.ruleId === 'destructive-without-confirm'),
+    'removing an item from a form nobody has submitted is not destroying work',
+  );
+});
