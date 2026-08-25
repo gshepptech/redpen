@@ -12217,7 +12217,7 @@ function renderTerminal(result, opts) {
     const list = byConfidence.get(conf);
     if (!list?.length) continue;
     out.push(CONFIDENCE_LABEL[conf](`  ${conf.toUpperCase()} (${list.length})`));
-    out.push(import_picocolors.default.dim(`  ${wrap(describeConfidence(conf), MEASURE - 2, "  ")}`));
+    out.push(import_picocolors.default.dim(`  ${wrap(describeConfidence(conf, result.channelsRun.includes("render")), MEASURE - 2, "  ")}`));
     out.push("");
     const depth = opts.verbose ? list.length : DETAIL[conf];
     for (const f of list.slice(0, depth)) {
@@ -12304,14 +12304,14 @@ function formatEvidence(e) {
   const excerpt = budget > 12 && e.excerpt.length > budget ? `${e.excerpt.slice(0, budget - 1)}\u2026` : e.excerpt;
   return `${head}  ${excerpt}`;
 }
-function describeConfidence(c) {
+function describeConfidence(c, renderRan) {
   switch (c) {
     case "confirmed":
       return "Seen independently by more than one channel, or by the only channel that can see it.";
     case "likely":
       return "Seen by one channel that reads real state. No channel disagreed.";
     case "possible":
-      return "Source-only. The render pass checked the same thing and did not confirm it.";
+      return renderRan ? "Source-only. The render pass checked the same thing and did not confirm it." : "Source-only, and nothing checked it \u2014 the render pass never ran. Read these in the file before acting on any of them.";
   }
 }
 function kindLine(result) {

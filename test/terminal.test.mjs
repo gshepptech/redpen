@@ -105,3 +105,23 @@ test('a roster line carries the rule id whole, so it can be looked up', () => {
     assert.match(l, /rule-with-a-fairly-long-identifier-\d+/, `rule id was cut: ${l}`);
   }
 });
+
+test('the possible tier says which of the two things happened', () => {
+  // It said the render pass "checked the same thing and did not confirm it",
+  // which was true while only a disagreement landed here. Folding the
+  // never-ran case into the same tier made that sentence a lie half the time,
+  // and the two are not the same thing to whoever is deciding what to fix.
+  const base = busy();
+  base.findings = base.findings.map((f) => ({ ...f, confidence: 'possible' }));
+
+  const checked = strip(renderTerminal({ ...base, channelsRun: ['source', 'render'] }, OPTS));
+  assert.match(checked, /render pass checked the same thing/);
+
+  const unchecked = strip(renderTerminal({ ...base, channelsRun: ['source'] }, OPTS));
+  assert.match(unchecked, /nothing checked it/);
+  assert.doesNotMatch(
+    unchecked,
+    /render pass checked the same thing/,
+    'claimed a render pass that never ran',
+  );
+});

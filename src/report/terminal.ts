@@ -125,7 +125,7 @@ export function renderTerminal(result: ScanResult, opts: TerminalOptions): strin
     if (!list?.length) continue;
 
     out.push(CONFIDENCE_LABEL[conf](`  ${conf.toUpperCase()} (${list.length})`));
-    out.push(pc.dim(`  ${wrap(describeConfidence(conf), MEASURE - 2, '  ')}`));
+    out.push(pc.dim(`  ${wrap(describeConfidence(conf, result.channelsRun.includes('render')), MEASURE - 2, '  ')}`));
     out.push('');
 
     const depth = opts.verbose ? list.length : DETAIL[conf];
@@ -264,14 +264,25 @@ function formatEvidence(e: Evidence): string {
   return `${head}  ${excerpt}`;
 }
 
-function describeConfidence(c: Confidence): string {
+/**
+ * What a confidence tier means, which depends on whether render ran.
+ *
+ * `possible` used to say the render pass "checked the same thing and did not
+ * confirm it" — true when render ran, and a lie the moment both cases were
+ * folded into one tier. A finding nothing looked at and a finding something
+ * looked at and did not agree with are both unconfirmed, and they are not the
+ * same thing to whoever is deciding what to fix.
+ */
+function describeConfidence(c: Confidence, renderRan: boolean): string {
   switch (c) {
     case 'confirmed':
       return 'Seen independently by more than one channel, or by the only channel that can see it.';
     case 'likely':
       return 'Seen by one channel that reads real state. No channel disagreed.';
     case 'possible':
-      return 'Source-only. The render pass checked the same thing and did not confirm it.';
+      return renderRan
+        ? 'Source-only. The render pass checked the same thing and did not confirm it.'
+        : 'Source-only, and nothing checked it — the render pass never ran. Read these in the file before acting on any of them.';
   }
 }
 
