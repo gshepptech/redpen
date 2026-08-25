@@ -7444,7 +7444,8 @@ var require_dist = __commonJS({
 // src/cli.ts
 var import_picocolors2 = __toESM(require_picocolors(), 1);
 import { writeFileSync as writeFileSync4, readFileSync as readFileSync6, existsSync as existsSync4 } from "node:fs";
-import { resolve as resolve4, join as join7 } from "node:path";
+import { resolve as resolve4, join as join7, dirname as dirname4 } from "node:path";
+import { fileURLToPath as fileURLToPath2 } from "node:url";
 
 // src/scan.ts
 import { resolve as resolve3, join as join6 } from "node:path";
@@ -12594,6 +12595,7 @@ ${import_picocolors2.default.dim("Options")}
   --min <level>      confidence floor for scoring: confirmed | likely | possible
   --verbose          argue every finding in full, and show rule provenance
   --show-ignored     list findings suppressed by redpen-ignore
+  --version, -V      print the version and exit
   --quiet            suppress progress output
 
 ${import_picocolors2.default.dim("Suppressing a finding")}
@@ -12621,6 +12623,10 @@ function parseArgs(argv) {
   let first = true;
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
+    if (a === "--version" || a === "-V") {
+      args.command = "version";
+      return args;
+    }
     if (a === "--help" || a === "-h") {
       args.command = "help";
       return args;
@@ -12678,7 +12684,7 @@ function parseArgs(argv) {
     if (a.startsWith("--")) {
       fail(`unknown option ${a}`);
     }
-    if (first && ["scan", "code", "check", "baseline", "rules", "why", "sources", "fingerprints", "brief", "init", "why-score", "help"].includes(a)) {
+    if (first && ["scan", "code", "check", "baseline", "rules", "why", "sources", "fingerprints", "brief", "init", "why-score", "help", "version"].includes(a)) {
       args.command = a;
       first = false;
       continue;
@@ -12697,10 +12703,29 @@ function fail(message) {
 `));
   process.exit(2);
 }
+function packageVersion() {
+  let dir = dirname4(fileURLToPath2(import.meta.url));
+  for (let up = 0; up < 6; up++) {
+    try {
+      const pkg = JSON.parse(readFileSync6(join7(dir, "package.json"), "utf8"));
+      if (pkg.version) return pkg.version;
+    } catch {
+    }
+    const parent = dirname4(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+  return "unknown";
+}
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.command === "help") {
     process.stdout.write(HELP);
+    return;
+  }
+  if (args.command === "version") {
+    process.stdout.write(`redpen ${packageVersion()}
+`);
     return;
   }
   const TAKES_A_PATH = /* @__PURE__ */ new Set(["scan", "code", "check", "baseline", "fingerprints", "brief", "init", "why-score"]);

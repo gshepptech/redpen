@@ -127,3 +127,38 @@ test('no command file tells anyone to run a path that may not be there', () => {
     }
   }
 });
+
+test('the version is answered, and answered from every install shape', () => {
+  // `redpen --version` returned "unknown option --version" and exited 2. It is
+  // the first thing anyone types when a report looks wrong and they want to
+  // know which build produced it.
+  //
+  // It is read from package.json by walking up, not from a constant, because a
+  // constant drifts from what npm and the plugin manifest publish — and
+  // because dist/, bundle/ and a global install sit at three different depths,
+  // which is the same thing that broke the rules/ lookup.
+  const expected = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')).version;
+
+  const dir = freshInstall();
+  try {
+    const bin = join(dir, '__bin');
+    execFileSync('mkdir', ['-p', bin]);
+    symlinkSync(process.execPath, join(bin, 'node'));
+
+    for (const flag of ['--version', '-V', 'version']) {
+      const out = execFileSync(process.execPath, [join(ROOT, 'dist', 'cli.js'), flag], {
+        encoding: 'utf8',
+      }).trim();
+      assert.equal(out, `redpen ${expected}`, `dist/ answered "${out}" for ${flag}`);
+    }
+
+    const fromBundle = execFileSync(
+      '/bin/bash',
+      ['-c', `node "${dir}/bundle/redpen.mjs" --version`],
+      { cwd: dir, encoding: 'utf8', env: { PATH: `${bin}:/usr/bin:/bin`, HOME: dir } },
+    ).trim();
+    assert.equal(fromBundle, `redpen ${expected}`, 'the bundle could not find its own package.json');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});

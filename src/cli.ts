@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { writeFileSync, readFileSync, existsSync } from 'node:fs';
-import { resolve, join } from 'node:path';
+import { resolve, join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import pc from 'picocolors';
 import { runScan, ruleIds } from './scan.js';
 import { meetsThreshold } from './promote.js';
@@ -49,6 +50,7 @@ ${pc.dim('Options')}
   --min <level>      confidence floor for scoring: confirmed | likely | possible
   --verbose          argue every finding in full, and show rule provenance
   --show-ignored     list findings suppressed by redpen-ignore
+  --version, -V      print the version and exit
   --quiet            suppress progress output
 
 ${pc.dim('Suppressing a finding')}
@@ -95,6 +97,13 @@ export function parseArgs(argv: string[]): Args {
   let first = true;
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i]!;
+    if (a === '--version' || a === '-V') {
+      // Every CLI has this and redpen answered `unknown option --version`. It
+      // is the first thing anyone types when a report looks wrong and they
+      // want to know which build produced it.
+      args.command = 'version';
+      return args;
+    }
     if (a === '--help' || a === '-h') {
       args.command = 'help';
       return args;
@@ -122,7 +131,7 @@ export function parseArgs(argv: string[]): Args {
     if (a.startsWith('--')) {
       fail(`unknown option ${a}`);
     }
-    if (first && ['scan', 'code', 'check', 'baseline', 'rules', 'why', 'sources', 'fingerprints', 'brief', 'init', 'why-score', 'help'].includes(a)) {
+    if (first && ['scan', 'code', 'check', 'baseline', 'rules', 'why', 'sources', 'fingerprints', 'brief', 'init', 'why-score', 'help', 'version'].includes(a)) {
       args.command = a;
       first = false;
       continue;
@@ -142,11 +151,43 @@ function fail(message: string): never {
   process.exit(2);
 }
 
+/**
+ * The version, found by walking up rather than by a fixed depth.
+ *
+ * A checkout runs this from dist/, a plugin install runs it from bundle/, and
+ * a global install runs it from somewhere else again — the same three shapes
+ * that broke the rules/ lookup, so this uses the same walk.
+ */
+function packageVersion(): string {
+  let dir = dirname(fileURLToPath(import.meta.url));
+  for (let up = 0; up < 6; up++) {
+    try {
+      const pkg = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')) as {
+        version?: string;
+      };
+      if (pkg.version) return pkg.version;
+    } catch {
+      // Not this level. Keep walking; the throw below is the only failure.
+    }
+    const parent = dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+  return 'unknown';
+}
+
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
 
   if (args.command === 'help') {
     process.stdout.write(HELP);
+    return;
+  }
+
+  if (args.command === 'version') {
+    // Read from package.json rather than a constant, so it cannot drift from
+    // the thing npm and the plugin manifest actually publish.
+    process.stdout.write(`redpen ${packageVersion()}\n`);
     return;
   }
 
