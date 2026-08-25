@@ -66,6 +66,26 @@ const SKIP_FILE = /\.(golden|snap|snapshot)\.|\.golden$|\.snap$|\.(test|spec|tes
  */
 const PATTERN_LINE = /\/(\^|\\b|\(\?:)|\\b\(\?:|\[\^|\bnew RegExp\(/;
 
+/**
+ * A comment is not the interface.
+ *
+ * Thirteen copy rules carried `suppress: '^\s*(//|\*|...)'` by hand, which is
+ * how it was discovered — and a11y and usability never got it, so 23 of 632
+ * source hits across four real projects landed on a comment line. Every one was
+ * false: a note above a ConfirmDialog reported as a modal with no escape, a
+ * commit message quoting "Something went wrong" reported as the message itself,
+ * a paragraph about `outline: none` reported as removing the focus ring.
+ *
+ * craft and residue are exempt, because a comment is the thing they read.
+ *
+ * `*` needs the lookahead. A JSDoc continuation and the CSS universal selector
+ * open the same way, and `* { box-sizing }` is a rule that a UI check should
+ * still see. `#` is left out entirely — at the start of a line it is a comment
+ * in shell and an id selector in CSS, and the CSS reading is the one that
+ * matters here.
+ */
+const COMMENT_LINE = /^\s*(\/\/|\/\*|<!--|\*(?!\s*[,{]))/;
+
 const MAX_FILE_BYTES = 512 * 1024;
 
 /** A line this long is minified output; regex over it produces noise. */
@@ -160,6 +180,7 @@ interface CompiledRule {
   suppressLines: number;
   extensions: Set<string> | null;
   minHits: number;
+  readsCode: boolean;
 }
 
 function compile(rules: Rule[]): CompiledRule[] {
@@ -190,6 +211,7 @@ function compile(rules: Rule[]): CompiledRule[] {
             ? CODE_EXTENSIONS
             : UI_EXTENSIONS,
         minHits: m.minHits ?? 1,
+        readsCode: CODE_CATEGORIES.has(rule.category),
       };
     });
 }
@@ -320,6 +342,10 @@ export function scanSource(opts: SourceScanOptions): {
           // example out of its own report. A prose rule reading a regex literal
           // is reading the detector, not the copy.
           if (PATTERN_LINE.test(line)) continue;
+
+          // A note about the interface is not the interface. Skipped for every
+          // rule except the two categories whose subject is the comment.
+          if (!c.readsCode && COMMENT_LINE.test(line)) continue;
 
           // The line itself, and the few above it when the rule asks — a reason
           // is written above the code it explains, not beside it.

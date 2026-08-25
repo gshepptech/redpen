@@ -47,3 +47,8 @@ export function StandList({ rows, refresh }: { rows: string[]; refresh: () => vo
     </ul>
   );
 }
+
+export function SaveNotice({ failed }: { failed: boolean }) {
+  // Nothing here says what failed or what to do about it, which is the tell.
+  return failed ? <p role="alert">Something went wrong. Please try again.</p> : null;
+}

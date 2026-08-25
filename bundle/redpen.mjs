@@ -7910,6 +7910,7 @@ var SKIP_DIRS = /* @__PURE__ */ new Set([
 ]);
 var SKIP_FILE = /\.(golden|snap|snapshot)\.|\.golden$|\.snap$|\.(test|spec|testkit|fixture|mock|stub|e2e)\.[jt]sx?$/i;
 var PATTERN_LINE = /\/(\^|\\b|\(\?:)|\\b\(\?:|\[\^|\bnew RegExp\(/;
+var COMMENT_LINE = /^\s*(\/\/|\/\*|<!--|\*(?!\s*[,{]))/;
 var MAX_FILE_BYTES = 512 * 1024;
 var MAX_LINE_LENGTH = 2e3;
 function unreadLanguages(root) {
@@ -7992,7 +7993,8 @@ function compile(rules) {
        * written in. An explicit `extensions` on the rule still wins.
        */
       extensions: m.extensions ? new Set(m.extensions) : CODE_CATEGORIES.has(rule.category) ? CODE_EXTENSIONS : UI_EXTENSIONS,
-      minHits: m.minHits ?? 1
+      minHits: m.minHits ?? 1,
+      readsCode: CODE_CATEGORIES.has(rule.category)
     };
   });
 }
@@ -8064,6 +8066,7 @@ function scanSource(opts) {
           const line = lines[lineNo - 1] ?? "";
           if (line.length > MAX_LINE_LENGTH) continue;
           if (PATTERN_LINE.test(line)) continue;
+          if (!c.readsCode && COMMENT_LINE.test(line)) continue;
           if (c.suppress) {
             const from = Math.max(0, lineNo - 1 - c.suppressLines);
             const window = lines.slice(from, lineNo).join("\n");

@@ -19,7 +19,11 @@
   channels: [source]
   source:
     patterns:
-      - '(//|#|\*|<!--)\s*\b(L[0-9]{1,2}|P[0-9]{1,2}|M[0-9]{1,2})\s*[-–—:]\s*\S'
+      # The optional TODO( is not decoration. The id almost never sits bare
+      # against the comment marker in real code — it arrives as `TODO(L2-04):`
+      # or `FIXME(P3-11)`, and requiring the marker adjacent meant the most
+      # common shape there is went straight past.
+      - '(//|#|\*|<!--)\s*((TODO|FIXME|NOTE|HACK|XXX)\s*[([])?\s*\b(L[0-9]{1,2}|P[0-9]{1,2}|M[0-9]{1,2})\s*[-–—:]\s*\S'
       - '(//|#|\*)\s*\b(phase|milestone|casting|task|ticket|story|epic)\s+[#-]?\d+\b'
       - '(//|#|\*)[^\n]{0,40}\b(per|from|for)\s+(the\s+)?(phase|milestone|spec|plan|roadmap)\s+(above|below|doc|file|\d)'
       - '(//|#|\*)\s*(as (required|specified) by|required by)\s+(the\s+)?(phase|spec|plan|milestone)\b'

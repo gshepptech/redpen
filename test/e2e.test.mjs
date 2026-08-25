@@ -872,3 +872,49 @@ test('deleting saved work is destructive; editing a draft is not', async () => {
     'removing an item from a form nobody has submitted is not destroying work',
   );
 });
+
+test('a message that names nothing is found in markup as well as in a string', async () => {
+  // `generic-error-message` read quoted literals only, for its whole life, so
+  // `<p role="alert">Something went wrong.</p>` — the most ordinary way there
+  // is to render one — went past it. It was also case-insensitive, which made
+  // the bare word `Error` match `=== 'error'`: a state, not a message. That
+  // reported a project whose two error branches read "Live conditions
+  // unavailable — wind unknown, can't scan." and "Couldn't reach iNaturalist
+  // or GBIF, so the sightings overlay is empty."
+  const real = await runScan({ root: join(HERE, 'fixtures', 'realistic-app'), ephemeral: true });
+  assert.ok(
+    real.findings.some((f) => f.ruleId === 'generic-error-message'),
+    'a generic message rendered as JSX text rather than assigned to a variable went unreported',
+  );
+
+  const draft = await runScan({ root: join(HERE, 'fixtures', 'draft-form'), ephemeral: true });
+  assert.ok(
+    !draft.findings.some((f) => f.ruleId === 'generic-error-message'),
+    "a status literal named 'error' beside a message that says what broke is not a generic message",
+  );
+});
+
+test('a note about the interface is not the interface', async () => {
+  // Thirteen copy rules carried comment suppression by hand and no other
+  // category had it, so 23 of 632 source hits across four real projects landed
+  // on a comment line — every one of them false. This fixture is a component
+  // that does everything right, with the tells written only in the prose that
+  // explains why.
+  const ui = await runScan({ root: join(HERE, 'fixtures', 'commented-tells'), ephemeral: true });
+  const claimed = [...ui.findings, ...ui.advisory].map((f) => f.ruleId);
+  assert.deepEqual(claimed, [], `reported a tell that exists only inside a comment: ${claimed}`);
+
+  // And the exemption holds in the other direction: the two categories whose
+  // subject is the comment must still read it. The same file carries
+  // TODO(L2-04), which is how a phase id is actually written — the rule wanted
+  // the id flush against the comment marker and missed every real one.
+  const code = await runScan({
+    root: join(HERE, 'fixtures', 'commented-tells'),
+    codeCategories: true,
+    ephemeral: true,
+  });
+  assert.ok(
+    [...code.findings, ...code.advisory].some((f) => f.ruleId === 'orchestration-marker'),
+    'the comment skip silenced the categories whose whole subject is the comment',
+  );
+});

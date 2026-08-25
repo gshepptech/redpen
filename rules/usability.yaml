@@ -157,7 +157,19 @@
   channels: [source]
   source:
     patterns:
-      - '[''"`](Something went wrong|An error occurred|Invalid input|Error|Failed|Please try again)[.!]?[''"`]'
+      # The bare words are gone and the rest match case. `'error'` is a state,
+      # a type or a key far more often than it is a message, and matching it
+      # case-insensitively reported a project whose two error branches read
+      # "Live conditions unavailable — wind unknown, can't scan." and
+      # "Couldn't reach iNaturalist or GBIF, so the sightings overlay is empty."
+      # A phrase is a message. A single word in quotes is usually an enum.
+      - '[''"`](Something went wrong|An error occurred|An unexpected error|Invalid input|Operation failed|Request failed|Please try again|Try again later)[.!]?[''"`]'
+      # The same phrase written as markup rather than as a string. The rule read
+      # only quoted literals for its whole life, so `<p role="alert">Something
+      # went wrong.</p>` — the most ordinary way there is to render one — went
+      # straight past it.
+      - '>\s*(Something went wrong|An error occurred|An unexpected error|Invalid input|Operation failed|Request failed|Please try again|Try again later)[.!]?'
+    caseSensitive: true
   why: >-
     The user learns that it broke, not what broke or what to do. These strings
     are the default because the real message requires knowing the failure mode.
