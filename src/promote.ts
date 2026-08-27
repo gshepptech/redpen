@@ -122,6 +122,7 @@ export function promote(raw: RawFinding[], opts: PromoteOptions): {
       confidence: confidenceFor(rule, channels),
       channels: [...channels],
       evidence: evidence.slice(0, 16),
+      evidenceTotal: evidence.length,
       why: rule.why,
       fix: rule.fix,
       sources: rule.sources,

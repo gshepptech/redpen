@@ -31,7 +31,15 @@ const CODE_RULES = [
 ];
 
 const scanCode = (fixture) =>
-  runScan({ root: join(HERE, 'fixtures', fixture), codeCategories: true, ephemeral: true });
+  runScan({
+    root: join(HERE, 'fixtures', fixture),
+    codeCategories: true,
+    ephemeral: true,
+    // The analysers read whatever the machine has installed, so leaving them on
+    // makes every assertion below depend on the environment rather than on the
+    // fixture. They have their own tests.
+    tools: false,
+  });
 
 test('every code rule fires on the shape it describes', async () => {
   const result = await scanCode('sloppy-code');
@@ -87,6 +95,7 @@ test("redpen's own source stays clean of what it reports", async () => {
     root: join(HERE, '..', 'src'),
     codeCategories: true,
     ephemeral: true,
+    tools: false,
   });
   const found = result.findings.map((f) => `${f.ruleId} — ${f.evidence[0]?.location}:${f.evidence[0]?.line}`);
   assert.deepEqual(found, [], `redpen's own source trips its own code rules:\n${found.join('\n')}`);
@@ -99,6 +108,7 @@ test('a code scan reads the language the project is written in', async () => {
     root: join(HERE, 'fixtures', 'go-code'),
     codeCategories: true,
     ephemeral: true,
+    tools: false,
   });
   const fired = result.findings.map((f) => f.ruleId);
   assert.ok(fired.includes('orchestration-marker'), `read nothing in the .go files: ${fired}`);
@@ -113,6 +123,7 @@ test('a language nothing can read is said out loud, not scored around', async ()
     root: join(HERE, 'fixtures', 'unreadable-code'),
     codeCategories: true,
     ephemeral: true,
+    tools: false,
   });
   assert.ok(
     result.warnings.some((w) => w.includes('were not read')),
@@ -129,6 +140,7 @@ test('a code scan opens no browser and claims no missing one', async () => {
     urls: ['http://127.0.0.1:9/nothing-here'],
     codeCategories: true,
     ephemeral: true,
+    tools: false,
   });
   assert.ok(!result.channelsRun.includes('render'), 'a code scan rendered');
   assert.ok(
@@ -356,6 +368,7 @@ test('an ignore written in the source is reported, not just obeyed', async () =>
     root: join(HERE, 'fixtures', 'excused'),
     codeCategories: true,
     ephemeral: true,
+    tools: false,
   });
 
   assert.equal(r.findings.length, 0, 'the ignore did not suppress the finding');
@@ -400,6 +413,7 @@ test('a tuple in a signature is not six parameters', async () => {
     root: join(HERE, '..', 'src'),
     codeCategories: true,
     ephemeral: true,
+    tools: false,
   });
   assert.deepEqual(
     result.findings.map((f) => f.ruleId),
@@ -421,7 +435,7 @@ test('a number that already has a name is not a magic number', async () => {
       ].join('\n'),
       'utf8',
     );
-    const result = await runScan({ root: dir, codeCategories: true, ephemeral: true });
+    const result = await runScan({ root: dir, codeCategories: true, ephemeral: true, tools: false });
     const magic = result.findings.find((f) => f.ruleId === 'named-magic-number');
     assert.ok(magic, 'the unnamed literal is still reported');
     assert.equal(magic.evidence.length, 1, 'only the unnamed one');
@@ -444,7 +458,7 @@ test('English prose is not a type annotation', async () => {
       '# an undefined target is skipped, same as any other failure\n'.repeat(4),
       'utf8',
     );
-    const result = await runScan({ root: dir, codeCategories: true, ephemeral: true });
+    const result = await runScan({ root: dir, codeCategories: true, ephemeral: true, tools: false });
     assert.ok(
       !result.findings.some((f) => f.ruleId === 'weak-type-escape'),
       'a shell comment is not a widened type',
@@ -471,7 +485,7 @@ test('a local named for a standard helper is not a reimplementation of one', asy
       ].join('\n'),
       'utf8',
     );
-    const result = await runScan({ root: dir, codeCategories: true, ephemeral: true });
+    const result = await runScan({ root: dir, codeCategories: true, ephemeral: true, tools: false });
     assert.ok(!result.findings.some((f) => f.ruleId === 'rewritten-standard-library'));
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -489,7 +503,7 @@ test('a Python or Go test file is test material, not shipped source', async () =
     writeFileSync(join(dir, 'conftest.py'), 'try:\n    go()\nexcept Exception:\n    pass\n');
     writeFileSync(join(dir, 'test_grid.py'), 'geom[10:50, 20:22] = 5     # two spur lines\n');
     writeFileSync(join(dir, 'thing_test.go'), 'func TestX(t *testing.T) {\n}\n');
-    const result = await runScan({ root: dir, codeCategories: true, ephemeral: true });
+    const result = await runScan({ root: dir, codeCategories: true, ephemeral: true, tools: false });
     assert.deepEqual(result.findings.map((f) => f.ruleId), []);
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -515,7 +529,7 @@ test('a comment about a type is not a type', async () => {
       ].join('\n'),
       'utf8',
     );
-    const result = await runScan({ root: dir, codeCategories: true, ephemeral: true });
+    const result = await runScan({ root: dir, codeCategories: true, ephemeral: true, tools: false });
     assert.ok(!result.findings.some((f) => f.ruleId === 'weak-type-escape'));
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -537,7 +551,7 @@ test('arithmetic that spells out its unit is not a magic number', async () => {
       ].join('\n'),
       'utf8',
     );
-    const result = await runScan({ root: dir, codeCategories: true, ephemeral: true });
+    const result = await runScan({ root: dir, codeCategories: true, ephemeral: true, tools: false });
     const magic = result.findings.find((f) => f.ruleId === 'named-magic-number');
     assert.ok(magic, 'the bare literal is still reported');
     assert.equal(magic.evidence.length, 1);
@@ -557,7 +571,7 @@ test('a named re-export is a public surface; only the star form is a barrel', as
       ['A', 'B', 'C', 'D', 'E', 'F'].map((n) => `export { ${n}Badge } from "./${n}Badge";`).join('\n'),
       'utf8',
     );
-    const result = await runScan({ root: dir, codeCategories: true, ephemeral: true });
+    const result = await runScan({ root: dir, codeCategories: true, ephemeral: true, tools: false });
     assert.ok(!result.findings.some((f) => f.ruleId === 'barrel-file'));
   } finally {
     rmSync(dir, { recursive: true, force: true });

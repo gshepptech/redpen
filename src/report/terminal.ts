@@ -228,8 +228,12 @@ function renderFinding(f: Finding, opts: TerminalOptions): string[] {
   for (const e of shown) {
     out.push(pc.dim(`      ${formatEvidence(e)}`));
   }
-  if (f.evidence.length > shown.length) {
-    out.push(pc.dim(`      … and ${f.evidence.length - shown.length} more`));
+  // Against the true total, not against the already-capped list: `evidence` is
+  // cut to sixteen upstream, so counting within it reports "and 6 more" on a
+  // rule that hit 1,772 times.
+  const total = f.evidenceTotal ?? f.evidence.length;
+  if (total > shown.length) {
+    out.push(pc.dim(`      … and ${total - shown.length} more`));
   }
 
   if (opts.verbose) {

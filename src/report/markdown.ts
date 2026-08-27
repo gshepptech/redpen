@@ -150,7 +150,10 @@ function findingBlock(f: Finding): string[] {
   if (f.evidence.length) {
     out.push('```');
     for (const e of f.evidence.slice(0, 8)) out.push(evidenceLine(e));
-    if (f.evidence.length > 8) out.push(`… and ${f.evidence.length - 8} more`);
+    // Against the true total. `evidence` is capped at sixteen upstream, so the
+    // markdown said "and 8 more" about a rule that hit 1,772 times.
+    const total = f.evidenceTotal ?? f.evidence.length;
+    if (total > 8) out.push(`… and ${total - 8} more`);
     out.push('```');
     out.push('');
   }

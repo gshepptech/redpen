@@ -11452,6 +11452,7 @@ function promote(raw, opts) {
       confidence: confidenceFor(rule, channels),
       channels: [...channels],
       evidence: evidence.slice(0, 16),
+      evidenceTotal: evidence.length,
       why: rule.why,
       fix: rule.fix,
       sources: rule.sources
@@ -11499,7 +11500,27 @@ import { execFileSync } from "node:child_process";
 import { accessSync, constants, existsSync, mkdtempSync, readFileSync as readFileSync4, rmSync } from "node:fs";
 import { join as join4 } from "node:path";
 import { tmpdir } from "node:os";
-var ignoreGlobs = () => [...SKIP_DIRS].map((d) => `**/${d}/**`).join(",");
+var SKIP_FILE_GLOBS = [
+  "**/*_test.go",
+  "**/*_test.py",
+  "**/*_test.rb",
+  "**/*_test.rs",
+  "**/test_*.py",
+  "**/conftest.py",
+  "**/*.test.*",
+  "**/*.spec.*",
+  "**/*.e2e.*",
+  "**/*.mock.*",
+  "**/*.stub.*",
+  "**/*.golden",
+  "**/*.snap",
+  "**/*.pb.go",
+  "**/*_pb.ts",
+  "**/*_connect.ts",
+  "**/*.gen.go",
+  "**/*.generated.*"
+];
+var ignoreGlobs = () => [...[...SKIP_DIRS].map((d) => `**/${d}/**`), ...SKIP_FILE_GLOBS].join(",");
 var excludeRe = () => `^(${[...SKIP_DIRS].map((d) => d.replace(/\./g, "\\.")).join("|")})/`;
 function resolveBin(root, bin) {
   const local = join4(root, "node_modules", ".bin", bin);
@@ -12241,7 +12262,7 @@ async function runScan(opts) {
       "vision needs screenshots \u2014 pass --url so the render channel can capture them"
     );
   }
-  if (opts.codeCategories) {
+  if (opts.codeCategories && opts.tools !== false) {
     const tools = runTools(root, opts.onProgress);
     if (tools.ran.length) {
       channelsRun.push("tools");
@@ -12322,6 +12343,7 @@ async function runScan(opts) {
         confidence: "possible",
         channels: ["source"],
         evidence: [{ channel: "source", location: d.location ?? "", line: d.line }],
+        evidenceTotal: 1,
         why: rule.why,
         fix: rule.fix,
         sources: rule.sources,
@@ -12513,8 +12535,9 @@ function renderFinding(f, opts) {
   for (const e of shown) {
     out.push(import_picocolors.default.dim(`      ${formatEvidence(e)}`));
   }
-  if (f.evidence.length > shown.length) {
-    out.push(import_picocolors.default.dim(`      \u2026 and ${f.evidence.length - shown.length} more`));
+  const total = f.evidenceTotal ?? f.evidence.length;
+  if (total > shown.length) {
+    out.push(import_picocolors.default.dim(`      \u2026 and ${total - shown.length} more`));
   }
   if (opts.verbose) {
     out.push(import_picocolors.default.dim(`      from ${f.sources.map((s) => `${s.origin}:${s.ref}`).join(", ")}`));
@@ -12734,7 +12757,8 @@ function findingBlock(f) {
   if (f.evidence.length) {
     out.push("```");
     for (const e of f.evidence.slice(0, 8)) out.push(evidenceLine(e));
-    if (f.evidence.length > 8) out.push(`\u2026 and ${f.evidence.length - 8} more`);
+    const total = f.evidenceTotal ?? f.evidence.length;
+    if (total > 8) out.push(`\u2026 and ${total - 8} more`);
     out.push("```");
     out.push("");
   }

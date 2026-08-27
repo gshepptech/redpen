@@ -17,7 +17,34 @@ import { SKIP_DIRS } from './source.js';
 // SKIP_DIRS while source.ts was still initialising — a circular import between
 // the two channels, introduced in the same change that added the rule for
 // circular imports.
-const ignoreGlobs = () => [...SKIP_DIRS].map((d) => `**/${d}/**`).join(',');
+//
+// Test material too. redpen's own walk skips it by filename, but a tool doing
+// its own walk knows nothing about that: on a 1,872-file repository the single
+// largest source of reported duplication was `*_integration_test.go`, where
+// setup blocks repeat by design and sharing them is the wrong answer.
+const SKIP_FILE_GLOBS = [
+  '**/*_test.go',
+  '**/*_test.py',
+  '**/*_test.rb',
+  '**/*_test.rs',
+  '**/test_*.py',
+  '**/conftest.py',
+  '**/*.test.*',
+  '**/*.spec.*',
+  '**/*.e2e.*',
+  '**/*.mock.*',
+  '**/*.stub.*',
+  '**/*.golden',
+  '**/*.snap',
+  '**/*.pb.go',
+  '**/*_pb.ts',
+  '**/*_connect.ts',
+  '**/*.gen.go',
+  '**/*.generated.*',
+];
+
+const ignoreGlobs = () =>
+  [...[...SKIP_DIRS].map((d) => `**/${d}/**`), ...SKIP_FILE_GLOBS].join(',');
 const excludeRe = () => `^(${[...SKIP_DIRS].map((d) => d.replace(/\./g, '\\.')).join('|')})/`;
 
 /**

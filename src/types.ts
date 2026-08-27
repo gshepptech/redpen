@@ -294,6 +294,15 @@ export interface Finding {
   /** Which channels independently saw it. Length >= 2 means `confirmed`. */
   channels: Channel[];
   evidence: Evidence[];
+  /**
+   * How many pieces of evidence there were before `evidence` was cut.
+   *
+   * The list is capped so one rule cannot fill a report, and the cap used to be
+   * silent: on a 1,872-file repository 1,772 duplicated blocks rendered as
+   * sixteen, with nothing saying the other 1,756 existed. A count hidden behind
+   * a cap is the thing this tool exists to argue against.
+   */
+  evidenceTotal: number;
   why: string;
   fix: string;
   sources: Provenance[];

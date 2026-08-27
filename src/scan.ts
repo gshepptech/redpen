@@ -49,6 +49,15 @@ export interface ScanOptions {
    * pages could produce a sameness finding.
    */
   ephemeral?: boolean;
+  /**
+   * Skip the external analysers even where the project has them.
+   *
+   * Their output depends on what is installed on the machine, which is right
+   * for a scan and wrong for a test: the code fixtures started failing the day
+   * jscpd went on to a PATH, because a result that changes with the
+   * environment is not a fixture.
+   */
+  tools?: boolean;
   onProgress?: (message: string) => void;
 }
 
@@ -278,7 +287,7 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
   // Only on a code scan. Duplication, cycles and unused exports are questions
   // about a project's source, not about the page it serves, and folding them
   // into a UI scan would move every score anyone holds a baseline against.
-  if (opts.codeCategories) {
+  if (opts.codeCategories && opts.tools !== false) {
     const tools = runTools(root, opts.onProgress);
     if (tools.ran.length) {
       channelsRun.push('tools');
@@ -396,6 +405,7 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
         confidence: 'possible',
         channels: ['source'],
         evidence: [{ channel: 'source', location: d.location ?? '', line: d.line }],
+        evidenceTotal: 1,
         why: rule.why,
         fix: rule.fix,
         sources: rule.sources,
