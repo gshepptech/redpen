@@ -385,6 +385,40 @@ because someone looked.
 unreadable or malformed answers file — each is reported as a warning and the
 affected findings stay unconfirmed. Nothing degrades into a clean report.
 
+### The tools channel
+
+Three of the tells that most mark a codebase as machine-written cannot be seen
+by a pattern, because each needs a parse of the whole project: whether a block
+is a copy of another block, whether an export has any caller, and whether the
+import graph has a cycle.
+
+Duplication is the most measured of the three. Across 600 million commits,
+block duplication rose 81% between 2023 and 2026 while the share of *moved* —
+that is, refactored — code fell from 21% to 3.8%. A second copy is cheaper to
+generate than a shared function is to find.
+
+So `redpen code` runs the analysers the project already carries, the same way
+the render channel borrows a browser rather than shipping one:
+
+| tool | reports as |
+| --- | --- |
+| [jscpd](https://jscpd.dev/) | `copy-paste-duplication` |
+| [madge](https://github.com/pahen/madge) | `circular-dependency` |
+| [knip](https://knip.dev/) | `unused-export` |
+
+```
+npm i -D jscpd madge knip     # then `redpen code .` picks them up
+```
+
+**redpen installs nothing.** It looks in the scanned project's
+`node_modules/.bin` first, then PATH, and never fetches. A scan that reaches the
+network behaves differently on a plane and runs code nobody in the project
+chose. When an analyser is absent, the run says which one and why it matters —
+a tool that did not run means a finding is *absent*, not that the code is clean.
+
+These rules never run on a UI scan. A project's source and the page it serves
+are different questions.
+
 ## Two scores, not one
 
 "Does this look machine-made" and "is this broken" are different questions, and
@@ -463,30 +497,50 @@ there — professional copy, correctly left alone.
 
 Specifically not yet true:
 
-- **Validation is shallow.** Five pages checked by hand is not a corpus. Nothing
-  here has been run against a project by an author who could push back on the
-  result, and no finding has ever been argued with by the person who wrote the
-  code.
+- **Validation is still thin, but no longer untested.** The code rules have now
+  been run against a 1,872-file repository by someone who could push back, and
+  that one report produced four false positives — a comment about a type read
+  as a type, `staleTime: 5 * 60 * 1000, // 5 minutes` reported as an unnamed
+  constant, a named re-export reported as a barrel, and Go's `interface{}`,
+  which turned out to be the language rather than a habit and was measured and
+  rejected. All four are fixed and each has a regression test. The page rules
+  have had no equivalent pass.
 - **The vision channel is hand-answered.** It writes a brief and folds answers
   back in; it does not look at the screenshots itself.
 - **Dark mode is one extra pass.** An emulated preference and, where the page
   ships one, its own theme toggle — but not a matrix of both against every
   viewport.
-- **The composition rules are unmeasured.** Seven of them ask a human a
+- **The composition rules are unmeasured.** Eight of them ask a human a
   question no detector can answer, and they carry no evidence ranking because
   no study measured them.
+
+- **The tools channel is only as good as what the project carries.** With no
+  analyser installed, duplication, cycles and unused exports are simply not
+  looked at. The run says so, but a score with the tools channel missing is not
+  comparable to one with it.
 
 If you run it against a codebase it has never seen and it says something
 useless, that is the most valuable bug report available right now.
 
 ## Rule categories
 
+Thirteen for the page:
+
 `color` · `typography` · `layout` · `depth` · `motion` · `iconography` · `copy`
 · `usability` · `a11y` · `sameness` · `chrome` · `system` · `composition`
 
+Two for the source it is written in, which only `redpen code` returns:
+
+`craft` · `residue`
+
+`craft` is code that reads as machine-written — comments narrating an edit,
+stubs in the shipped path, types widened to quiet the compiler, a block copied
+rather than shared. `residue` is what the machine left behind: a phase id in a
+comment, an agent's byline, a pointer to a file nobody created.
+
 `chrome` is the surfaces nobody drew — selection, caret, scrollbar, focus ring.
 `system` is drift from the project's own declared tokens. `composition` is the
-seven judgements no measurement reaches, and the only category that is
+eight judgements no measurement reaches, and the only category that is
 vision-only by construction.
 
 Accessibility rules sit next to the visual rule they interact with — contrast in
