@@ -339,18 +339,35 @@
     # Only the languages that have a widening escape hatch. Without this the
     # rule read `# same as any other failure` in a shell script and called an
     # English sentence a type annotation.
-    extensions: ['.ts', '.tsx', '.go', '.py', '.java', '.cs', '.rs']
+    extensions: ['.ts', '.tsx', '.py', '.java', '.cs']
     caseSensitive: true
     patterns:
+      #
+      # Measured and rejected: Go's `interface{}`.
+      #
+      # On a 1,872-file Go repository every hit was the language rather than a
+      # habit — `var obj map[string]interface{}` unmarshalling arbitrary JSON,
+      # and `func walkAllStrings(obj interface{})` fronting a type switch. Both
+      # are the only way Go expresses those, so the rule was firing on Go. A
+      # signal present in every member of the population is not a signal.
+      #
+      # TypeScript keeps its patterns because `unknown` is a real alternative
+      # there: it narrows, and `any` is the choice not to.
       - '\bas\s+any\b'
       - ':\s*any\s*(\[\])?\s*[,;)=>}]'
-      - '\binterface\{\}'
       - '\bDict\[str,\s*Any\]'
       - ':\s*Any\s*[,)=]'
       - '<\s*any\s*>'
-    # `as unknown` and a narrowed `unknown` are the correct shape at a boundary,
-    # and `any` inside a .d.ts is describing someone else's library.
-    suppress: '\.d\.ts$'
+    # Three suppressions, all of them from one Go repository of 1,872 files.
+    #
+    # A comment is not a type. `// structToMap converts a reflect.Value to a
+    # map[string]interface{}` is a sentence explaining a signature, and
+    # `// is NOT recorded as any other manifest's` is English — the same
+    # "as any" that a shell script produced before extensions were narrowed.
+    # Craft rules read comments on purpose, so the skip has to be written here.
+    #
+    # And `any` inside a .d.ts is describing someone else's library.
+    suppress: '^\s*(//|#|\*|/\*)|\.d\.ts$|\b(ComponentType|FC|FunctionComponent|Component)<'
   why: >-
     A widened type is a type error that was in the way. It moves the failure
     from the compiler, which would have named the line, to runtime, which will
@@ -472,7 +489,12 @@
     # A line that already declares the constant has done what this rule asks
     # for. `const MAX_IDS = 1000; // cap array-of-ids fields` is named, and the
     # comment is explaining the cap rather than standing in for a name.
-    suppress: '\b(const|final|static|let|var|#define)\s+[A-Z][A-Z0-9_]{2,}\s*[=:]|(^|\n)\s*[A-Z][A-Z0-9_]{2,}\s*[=:]'
+    #
+    # `staleTime: 5 * 60 * 1000, // 5 minutes` is the shape this rule is asking
+    # for — the arithmetic spells the unit out and the comment confirms it — and
+    # the rule reported it. So is a digit inside a quoted string:
+    # `"capi-ubun2-2404", // default` is a version, not a limit.
+    suppress: '\b(const|final|static|let|var|#define)\s+[A-Z][A-Z0-9_]{2,}\s*[=:]|(^|\n)\s*[A-Z][A-Z0-9_]{2,}\s*[=:]|\d\s*\*\s*\d|["\x27][^"\x27]*\d[^"\x27]*["\x27]'
   why: >-
     `if (retries > 3) // max retries` puts the name in a comment, where nothing
     can reference it and nothing will update it. The second place that needs
@@ -499,8 +521,13 @@
       # `^` is the start of the file, not of a line: patterns compile with `gu`
       # and never `m`, so an anchored pattern matches once at most. A newline
       # class is the line anchor that actually works here.
+      #
+      # Only the star form. `export { StatusBadge } from './StatusBadge'` names
+      # what it forwards, so the graph is still readable and the importer still
+      # resolves one file — that shape is a directory's public surface, and a
+      # components directory is entitled to one. `export *` is the form that
+      # makes every importer transitively import every sibling.
       - '(^|\n)\s*export\s+\*\s+from\s'
-      - '(^|\n)\s*export\s+\{[^}]*\}\s+from\s'
     # One or two forwards is a module boundary. Five is a file that exists to
     # save an import path and costs a cycle to resolve.
     minHits: 5

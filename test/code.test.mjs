@@ -495,3 +495,71 @@ test('a Python or Go test file is test material, not shipped source', async () =
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('a comment about a type is not a type', async () => {
+  // Craft rules read comments on purpose, which is why this needed saying
+  // twice: `// structToMap converts a reflect.Value to a map[string]interface{}`
+  // and `// is NOT recorded as any other manifest's` were both reported as
+  // widened types on a 1,872-file repository.
+  const { runScan } = await import('../dist/scan.js');
+  const dir = mkdtempSync(join(tmpdir(), 'redpen-typecomment-'));
+  try {
+    writeFileSync(join(dir, 'package.json'), '{"name":"c","private":true}');
+    writeFileSync(
+      join(dir, 'a.ts'),
+      [
+        '// convertValue returns an appropriate any value',
+        '// this is NOT recorded as any other entry',
+        '// the map is typed as any deliberately',
+        '// a fourth line mentioning as any, to clear minHits',
+      ].join('\n'),
+      'utf8',
+    );
+    const result = await runScan({ root: dir, codeCategories: true, ephemeral: true });
+    assert.ok(!result.findings.some((f) => f.ruleId === 'weak-type-escape'));
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('arithmetic that spells out its unit is not a magic number', async () => {
+  // `staleTime: 5 * 60 * 1000, // 5 minutes` is the shape the rule asks for.
+  const { runScan } = await import('../dist/scan.js');
+  const dir = mkdtempSync(join(tmpdir(), 'redpen-stale-'));
+  try {
+    writeFileSync(join(dir, 'package.json'), '{"name":"s","private":true}');
+    writeFileSync(
+      join(dir, 'a.ts'),
+      [
+        'const q = { staleTime: 5 * 60 * 1000 }; // 5 minutes',
+        'const region = "capi-ubun2-2404"; // default',
+        'const port = 5050; // default fallback',
+      ].join('\n'),
+      'utf8',
+    );
+    const result = await runScan({ root: dir, codeCategories: true, ephemeral: true });
+    const magic = result.findings.find((f) => f.ruleId === 'named-magic-number');
+    assert.ok(magic, 'the bare literal is still reported');
+    assert.equal(magic.evidence.length, 1);
+    assert.match(magic.evidence[0].excerpt, /5050/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('a named re-export is a public surface; only the star form is a barrel', async () => {
+  const { runScan } = await import('../dist/scan.js');
+  const dir = mkdtempSync(join(tmpdir(), 'redpen-barrel-'));
+  try {
+    writeFileSync(join(dir, 'package.json'), '{"name":"b","private":true}');
+    writeFileSync(
+      join(dir, 'index.ts'),
+      ['A', 'B', 'C', 'D', 'E', 'F'].map((n) => `export { ${n}Badge } from "./${n}Badge";`).join('\n'),
+      'utf8',
+    );
+    const result = await runScan({ root: dir, codeCategories: true, ephemeral: true });
+    assert.ok(!result.findings.some((f) => f.ruleId === 'barrel-file'));
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
