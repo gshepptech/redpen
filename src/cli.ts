@@ -18,6 +18,7 @@ import {
 } from './config.js';
 import * as store from './fingerprint/store.js';
 import { verdict, explainScore } from './score.js';
+import { compareToBaseline } from './gate.js';
 import type { Confidence } from './types.js';
 
 const HELP = `
@@ -322,74 +323,60 @@ async function cmdScan(root: string, args: Args, gating: boolean, code = false):
     process.exit(0);
   }
 
-  // A check that ran fewer channels than the baseline did sees fewer findings
-  // and therefore a *higher* score, so it passes for having looked at less.
-  // That is the one failure a gate must never have.
-  const ran = new Set<string>(result.channelsRun);
-  const missing = (baseline.channels ?? []).filter((c) => !ran.has(c));
-  if (missing.length) {
-    process.stderr.write(
-      pc.red(
-        `\n  cannot check: the baseline was recorded with ${baseline.channels!.join(', ')} but this run` +
-        ` only managed ${result.channelsRun.join(', ')}.\n  Missing ${missing.join(', ')} means fewer findings and a higher score, which would pass for the wrong reason.\n`,
-      ),
-    );
-    process.exit(2);
-  }
-  if (!baseline.channels) {
-    process.stderr.write(
-      pc.yellow('\n  ! this baseline predates channel recording, so a partial run cannot be detected.\n    Re-record it with `redpen baseline` to close that hole.\n'),
-    );
-  }
-
-  // A baseline without the two axes was written under the old scoring model,
-  // where `score` was the union of both rather than the worse of them. The two
-  // numbers are not the same quantity, so comparing them would gate on
-  // arithmetic rather than on the page.
-  if (baseline.slop === undefined || baseline.quality === undefined) {
-    process.stderr.write(
-      pc.red(
-        '\n  cannot check: this baseline predates the two-axis score, so its number is not\n' +
-        '  the same quantity as this run\'s. Re-record it with `redpen baseline`.\n',
-      ),
-    );
-    process.exit(2);
-  }
-
-  // Gate on each axis, not on the headline. The headline is the worse of the
-  // two, so a page that regresses on its healthier axis moves the headline not
-  // at all — and a gate that cannot see a regression is not a gate.
-  const drops = [
-    { axis: 'slop', was: baseline.slop, now: result.slopScore },
-    { axis: 'quality', was: baseline.quality, now: result.qualityScore },
-  ]
-    .map((a) => ({ ...a, drop: a.was - a.now }))
-    .filter((a) => a.drop > result.config.tolerance);
-  const known = new Set(baseline.knownRules);
-  const introduced = ruleIds(result.findings.filter((f) => f.confidence !== 'possible')).filter(
-    (id) => !known.has(id),
+  const gate = compareToBaseline(
+    baseline,
+    {
+      slop: result.slopScore,
+      quality: result.qualityScore,
+      channelsRun: result.channelsRun,
+      findings: result.findings,
+    },
+    result.config.tolerance,
   );
 
-  process.stderr.write('\n');
-  for (const a of drops) {
-    process.stderr.write(
-      pc.red(
-        `  ${a.axis} dropped ${a.drop} point(s), ${a.was} to ${a.now} (tolerance ${result.config.tolerance})\n`,
-      ),
-    );
-  }
-  if (introduced.length) {
-    process.stderr.write(pc.red(`  new tells since baseline: ${introduced.join(', ')}\n`));
+  for (const note of gate.notes) {
+    process.stderr.write(pc.yellow(`\n  ! ${note}.\n    Re-record it with \`redpen baseline\` to close that hole.\n`));
   }
 
-  if (drops.length || introduced.length) {
+  if (gate.status === 'incomparable') {
+    if (gate.reason === 'missing-channels') {
+      process.stderr.write(
+        pc.red(
+          `\n  cannot check: the baseline was recorded with ${gate.had.join(', ')} but this run` +
+            ` only managed ${gate.ran.join(', ')}.\n  Missing ${gate.missing.join(', ')} means fewer findings and a higher score, which would pass for the wrong reason.\n`,
+        ),
+      );
+    } else {
+      process.stderr.write(
+        pc.red(
+          '\n  cannot check: this baseline predates the two-axis score, so its number is not\n' +
+            "  the same quantity as this run's. Re-record it with `redpen baseline`.\n",
+        ),
+      );
+    }
+    process.exit(2);
+  }
+
+  process.stderr.write('\n');
+
+  if (gate.status === 'regressed') {
+    for (const a of gate.drops) {
+      process.stderr.write(
+        pc.red(
+          `  ${a.axis} dropped ${a.drop} point(s), ${a.was} to ${a.now} (tolerance ${result.config.tolerance})\n`,
+        ),
+      );
+    }
+    if (gate.introduced.length) {
+      process.stderr.write(pc.red(`  new tells since baseline: ${gate.introduced.join(', ')}\n`));
+    }
     process.exit(1);
   }
 
   process.stderr.write(
     pc.green(
-      `  holding: slop ${result.slopScore} against ${baseline.slop}, ` +
-        `quality ${result.qualityScore} against ${baseline.quality}\n`,
+      `  holding: slop ${gate.slop} against ${baseline.slop}, ` +
+        `quality ${gate.quality} against ${baseline.quality}\n`,
     ),
   );
 }

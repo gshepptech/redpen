@@ -12564,6 +12564,42 @@ function evidenceLine(e) {
   return `${where.trim()}${vp}${e.excerpt ? `  ${e.excerpt}` : ""}`;
 }
 
+// src/gate.ts
+function compareToBaseline(baseline, run, tolerance) {
+  const notes = [];
+  const ran = new Set(run.channelsRun);
+  if (baseline.channels) {
+    const missing = baseline.channels.filter((c) => !ran.has(c));
+    if (missing.length) {
+      return {
+        status: "incomparable",
+        reason: "missing-channels",
+        missing,
+        had: baseline.channels,
+        ran: run.channelsRun,
+        notes
+      };
+    }
+  } else {
+    notes.push("this baseline predates channel recording, so a partial run cannot be detected");
+  }
+  if (baseline.slop === void 0 || baseline.quality === void 0) {
+    return { status: "incomparable", reason: "pre-two-axis", notes };
+  }
+  const drops = [
+    { axis: "slop", was: baseline.slop, now: run.slop },
+    { axis: "quality", was: baseline.quality, now: run.quality }
+  ].map((a) => ({ ...a, drop: a.was - a.now })).filter((a) => a.drop > tolerance);
+  const known = new Set(baseline.knownRules);
+  const introduced = ruleIds(run.findings.filter((f) => f.confidence !== "possible")).filter(
+    (id) => !known.has(id)
+  );
+  if (drops.length || introduced.length) {
+    return { status: "regressed", drops, introduced, notes };
+  }
+  return { status: "holding", slop: run.slop, quality: run.quality, notes };
+}
+
 // src/cli.ts
 var HELP = `
 ${import_picocolors2.default.bold("redpen")} \u2014 one verdict on your UI
@@ -12842,59 +12878,60 @@ async function cmdScan(root, args, gating, code = false) {
     );
     process.exit(0);
   }
-  const ran = new Set(result.channelsRun);
-  const missing = (baseline.channels ?? []).filter((c) => !ran.has(c));
-  if (missing.length) {
-    process.stderr.write(
-      import_picocolors2.default.red(
-        `
-  cannot check: the baseline was recorded with ${baseline.channels.join(", ")} but this run only managed ${result.channelsRun.join(", ")}.
-  Missing ${missing.join(", ")} means fewer findings and a higher score, which would pass for the wrong reason.
-`
-      )
-    );
-    process.exit(2);
-  }
-  if (!baseline.channels) {
-    process.stderr.write(
-      import_picocolors2.default.yellow("\n  ! this baseline predates channel recording, so a partial run cannot be detected.\n    Re-record it with `redpen baseline` to close that hole.\n")
-    );
-  }
-  if (baseline.slop === void 0 || baseline.quality === void 0) {
-    process.stderr.write(
-      import_picocolors2.default.red(
-        "\n  cannot check: this baseline predates the two-axis score, so its number is not\n  the same quantity as this run's. Re-record it with `redpen baseline`.\n"
-      )
-    );
-    process.exit(2);
-  }
-  const drops = [
-    { axis: "slop", was: baseline.slop, now: result.slopScore },
-    { axis: "quality", was: baseline.quality, now: result.qualityScore }
-  ].map((a) => ({ ...a, drop: a.was - a.now })).filter((a) => a.drop > result.config.tolerance);
-  const known = new Set(baseline.knownRules);
-  const introduced = ruleIds(result.findings.filter((f) => f.confidence !== "possible")).filter(
-    (id) => !known.has(id)
+  const gate = compareToBaseline(
+    baseline,
+    {
+      slop: result.slopScore,
+      quality: result.qualityScore,
+      channelsRun: result.channelsRun,
+      findings: result.findings
+    },
+    result.config.tolerance
   );
-  process.stderr.write("\n");
-  for (const a of drops) {
-    process.stderr.write(
-      import_picocolors2.default.red(
-        `  ${a.axis} dropped ${a.drop} point(s), ${a.was} to ${a.now} (tolerance ${result.config.tolerance})
-`
-      )
-    );
-  }
-  if (introduced.length) {
-    process.stderr.write(import_picocolors2.default.red(`  new tells since baseline: ${introduced.join(", ")}
+  for (const note of gate.notes) {
+    process.stderr.write(import_picocolors2.default.yellow(`
+  ! ${note}.
+    Re-record it with \`redpen baseline\` to close that hole.
 `));
   }
-  if (drops.length || introduced.length) {
+  if (gate.status === "incomparable") {
+    if (gate.reason === "missing-channels") {
+      process.stderr.write(
+        import_picocolors2.default.red(
+          `
+  cannot check: the baseline was recorded with ${gate.had.join(", ")} but this run only managed ${gate.ran.join(", ")}.
+  Missing ${gate.missing.join(", ")} means fewer findings and a higher score, which would pass for the wrong reason.
+`
+        )
+      );
+    } else {
+      process.stderr.write(
+        import_picocolors2.default.red(
+          "\n  cannot check: this baseline predates the two-axis score, so its number is not\n  the same quantity as this run's. Re-record it with `redpen baseline`.\n"
+        )
+      );
+    }
+    process.exit(2);
+  }
+  process.stderr.write("\n");
+  if (gate.status === "regressed") {
+    for (const a of gate.drops) {
+      process.stderr.write(
+        import_picocolors2.default.red(
+          `  ${a.axis} dropped ${a.drop} point(s), ${a.was} to ${a.now} (tolerance ${result.config.tolerance})
+`
+        )
+      );
+    }
+    if (gate.introduced.length) {
+      process.stderr.write(import_picocolors2.default.red(`  new tells since baseline: ${gate.introduced.join(", ")}
+`));
+    }
     process.exit(1);
   }
   process.stderr.write(
     import_picocolors2.default.green(
-      `  holding: slop ${result.slopScore} against ${baseline.slop}, quality ${result.qualityScore} against ${baseline.quality}
+      `  holding: slop ${gate.slop} against ${baseline.slop}, quality ${gate.quality} against ${baseline.quality}
 `
     )
   );
