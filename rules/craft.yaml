@@ -311,3 +311,272 @@
     Name each one for what it actually holds. Most junk drawers turn out to be
     two or three real modules that were never separated: dates, formatting, and
     a client wrapper, filed together because they arrived on the same afternoon.
+
+# ---------------------------------------------------------------------------
+# Added from code-slop CODE-03, 06, 09, 10, 12, cross-referenced against the
+# structural-smell tooling that damu-adjacent cleanup plugins reach for and,
+# where one exists, an empirical measurement. CODE-07, CODE-11 and CODE-16 are
+# deliberately absent: 07 lives in test files, which the walk skips before any
+# rule sees them, and 11 and 16 need a syntax tree rather than a pattern.
+# ---------------------------------------------------------------------------
+
+- id: weak-type-escape
+  kind: slop
+  title: Types widened to quiet the compiler
+  category: craft
+  severity: medium
+  weight: 64
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "code:CODE-03" }
+    - { origin: heuristics, ref: "type-strengthen" }
+  channels: [source]
+  source:
+    # Three, not one. A codebase is entitled to a handful of genuine boundaries
+    # — a freshly parsed body, a dynamic dispatch — and firing on the first one
+    # would report the boundary rather than the habit.
+    minHits: 3
+    # Only the languages that have a widening escape hatch. Without this the
+    # rule read `# same as any other failure` in a shell script and called an
+    # English sentence a type annotation.
+    extensions: ['.ts', '.tsx', '.go', '.py', '.java', '.cs', '.rs']
+    caseSensitive: true
+    patterns:
+      - '\bas\s+any\b'
+      - ':\s*any\s*(\[\])?\s*[,;)=>}]'
+      - '\binterface\{\}'
+      - '\bDict\[str,\s*Any\]'
+      - ':\s*Any\s*[,)=]'
+      - '<\s*any\s*>'
+    # `as unknown` and a narrowed `unknown` are the correct shape at a boundary,
+    # and `any` inside a .d.ts is describing someone else's library.
+    suppress: '\.d\.ts$'
+  why: >-
+    A widened type is a type error that was in the way. It moves the failure
+    from the compiler, which would have named the line, to runtime, which will
+    name something three calls away — and it does it silently, so nobody
+    revisits the decision.
+  fix: >-
+    Find the real type by reading what produces the value, not what consumes
+    it. Where the value genuinely is unknown, say `unknown` and narrow it at
+    the point of use, so the check is written down rather than assumed.
+
+- id: long-parameter-list
+  kind: slop
+  title: A signature that takes everything it might ever need
+  category: craft
+  severity: medium
+  weight: 61
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "code:CODE-06" }
+    - { origin: study, ref: "llm-smell-taxonomy" }
+  channels: [source]
+  source:
+    patterns:
+      # Six or more parameters on one signature. Anticipating every use is
+      # cheaper to generate than choosing one, and the measured shape of LLM
+      # code is long parameter lists carrying context that deep nesting then
+      # consumes.
+      #
+      # Brackets, braces and angle brackets are excluded from a parameter
+      # segment on purpose. Without that, `compare(x: [number, number, number],
+      # y: [number, number, number])` counts its tuple commas and reports a
+      # two-parameter function as a six-parameter one — which is what it did on
+      # redpen's own cascade.ts the first time this rule ran.
+      - '\b(function|def)\s+\w+\s*\(\s*(?:[^()\[\]{}<>]*?,\s*){5,}[^()\[\]{}<>]*?\)'
+      # Four or more optional parameters is an options bag written as a
+      # signature: every call site passes a different subset and none of them
+      # passes all of it.
+      - '\([^()\[\]{}<>]*?(?:\w+\?:[^,()\[\]{}<>]+,\s*){3,}\w+\?:[^,()\[\]{}<>]+\)'
+  why: >-
+    Six parameters is a function that was never asked what it is for. Each one
+    is a decision deferred to the caller, and the callers do not agree — which
+    is why most of them are optional and most of those are never passed.
+  fix: >-
+    Parameters for what actually varies between call sites, and nothing else.
+    If two callers want genuinely different things, that is two functions
+    wearing one name.
+
+- id: rewritten-standard-library
+  kind: slop
+  title: A utility the runtime already ships
+  category: craft
+  severity: low
+  weight: 55
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "code:CODE-09" }
+    - { origin: heuristics, ref: "dedup" }
+  channels: [source]
+  source:
+    patterns:
+      # Named for what it is, because that is the tell: a hand-rolled `groupBy`
+      # is recognisable precisely because it took the standard name.
+      #
+      # Only names with a real standard equivalent to be a duplicate *of*.
+      # `sleep`, `clamp`, `debounce` and `slugify` are not in any of these
+      # runtimes, so a local one is the only one there can be — the first draft
+      # of this rule reported eleven honest `const sleep = ms => ...` lines.
+      #
+      # And the right-hand side has to look like a function. `const pick =
+      # features.find(f => ...)` is a variable that happens to share a name
+      # with a lodash helper.
+      - '\b(function|export function)\s+(groupBy|deepClone|structuredClone|flatten|uuidv4|randomUUID)\s*[(<]'
+      - '\b(const|let|export const)\s+(groupBy|deepClone|flatten|uuidv4)\s*=\s*(\(|function\b|async\b)'
+      - '\bdef\s+(group_by|deep_clone|flatten)\s*\('
+    # A re-export or a typed wrapper over the real one is not a reimplementation.
+    suppress: '\b(from|require|import)\b'
+  why: >-
+    `structuredClone`, `Object.groupBy`, `crypto.randomUUID` and
+    `Array.prototype.flat` already exist and are already correct. A hand-rolled
+    copy is a second implementation to keep right, and the ones that get
+    written from memory are usually subtly wrong at the edges — empty input,
+    sparse arrays, prototype keys.
+  fix: >-
+    Use the built-in. If you need behaviour it does not have, keep the local
+    one but say in a line above it what the difference is, so the next reader
+    does not delete it as a duplicate.
+
+- id: named-magic-number
+  kind: slop
+  title: A magic number with a comment where a name belongs
+  category: craft
+  severity: low
+  weight: 51
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "code:CODE-10" }
+    - { origin: heuristics, ref: "naming" }
+  channels: [source]
+  source:
+    # Case-sensitive, because the suppression below turns on a name being
+    # SCREAMING_CASE, and under the `i` flag `const food` looked like one —
+    # which silenced the rule on the very lines it was written for.
+    caseSensitive: true
+    patterns:
+      # The literal and its explanation generated together. The comment proves
+      # the author knew the number needed a name, and wrote the name in the one
+      # place nothing can reference it.
+      #
+      # Bare number words are out. `# two spur lines running N-S` above a test
+      # fixture matched "two" and reported an array index as an unnamed
+      # constant — that comment was describing a shape, not naming a limit.
+      # What survives is the vocabulary of a limit or a unit, opening the
+      # comment rather than appearing anywhere in it.
+      - '\b\d{2,}\b[^\n]{0,24}(//|#)\s*[Mm]ax\b'
+      - '\b\d{2,}\b[^\n]{0,24}(//|#)\s*[Mm]in\b'
+      - '\b\d{2,}\b[^\n]{0,24}(//|#)\s*([Dd]efault|[Ll]imit|[Tt]imeout|[Rr]etries|[Tt]hreshold|[Cc]ap)\b'
+      - '\b\d{3,}\b[^\n]{0,24}(//|#)\s*\w{0,6}\s*([Ss]econds?|[Mm]inutes?|[Hh]ours?|[Dd]ays?|[Ww]eeks?|ms|[Mm]illiseconds?)\b'
+      - '(setTimeout|setInterval)\s*\([^,)]*,\s*\d{4,}\s*\)\s*(//|#)'
+    # A line that already declares the constant has done what this rule asks
+    # for. `const MAX_IDS = 1000; // cap array-of-ids fields` is named, and the
+    # comment is explaining the cap rather than standing in for a name.
+    suppress: '\b(const|final|static|let|var|#define)\s+[A-Z][A-Z0-9_]{2,}\s*[=:]|(^|\n)\s*[A-Z][A-Z0-9_]{2,}\s*[=:]'
+  why: >-
+    `if (retries > 3) // max retries` puts the name in a comment, where nothing
+    can reference it and nothing will update it. The second place that needs
+    the same number will get its own literal, and the two will drift.
+  fix: >-
+    Name it once as a constant and use the name. The comment then has something
+    to be about, or turns out to have been unnecessary.
+
+- id: barrel-file
+  kind: slop
+  title: An index file that only forwards
+  category: craft
+  severity: low
+  weight: 48
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "code:CODE-12" }
+    - { origin: heuristics, ref: "circular-deps" }
+  channels: [source]
+  source:
+    paths:
+      - '(^|/)index\.[cm]?[jt]sx?$'
+    patterns:
+      # `^` is the start of the file, not of a line: patterns compile with `gu`
+      # and never `m`, so an anchored pattern matches once at most. A newline
+      # class is the line anchor that actually works here.
+      - '(^|\n)\s*export\s+\*\s+from\s'
+      - '(^|\n)\s*export\s+\{[^}]*\}\s+from\s'
+    # One or two forwards is a module boundary. Five is a file that exists to
+    # save an import path and costs a cycle to resolve.
+    minHits: 5
+  why: >-
+    A barrel re-exporting five modules buys a shorter import and sells the
+    ability to see what depends on what. It is also the most common way a
+    circular dependency gets introduced without anyone writing one, because
+    every importer now transitively imports every sibling.
+  fix: >-
+    Import from the module that defines the thing. Keep a barrel only where it
+    is a real public surface — a package entry point — and not as a convenience
+    over a handful of files in the same directory.
+
+# ---------------------------------------------------------------------------
+# The three tells that need a parse of the whole project rather than a pattern.
+# Each is produced by an analyser the project already carries — see
+# src/channels/tools.ts — and none of them runs unless that analyser is present.
+# ---------------------------------------------------------------------------
+
+- id: copy-paste-duplication
+  kind: slop
+  title: Blocks repeated instead of shared
+  category: craft
+  severity: high
+  weight: 77
+  evidenceRank: null
+  sources:
+    - { origin: study, ref: "gitclear:block-duplication" }
+    - { origin: heuristics, ref: "dedup" }
+  channels: [tools]
+  why: >-
+    The most measured signal there is. Across 600 million commits, block
+    duplication rose 81% between 2023 and 2026 while the share of moved —
+    that is, refactored — code fell from 21% to 3.8%. A second copy is cheaper
+    to generate than a shared function is to find, and the cost lands on
+    whoever has to change both.
+  fix: >-
+    Extract the block once both copies are in front of you, so you can see what
+    actually varies between them. Two blocks that differ in one literal want a
+    parameter; two that differ in their middle want two functions.
+
+- id: circular-dependency
+  kind: quality
+  title: Modules that import each other
+  category: craft
+  severity: medium
+  weight: 63
+  evidenceRank: null
+  sources:
+    - { origin: heuristics, ref: "circular-deps" }
+    - { origin: catalogue, ref: "code:CODE-12" }
+  channels: [tools]
+  why: >-
+    A cycle means neither module can be understood, tested or loaded without
+    the other. Most are introduced by accident — a barrel file, or a type
+    pulled back across a boundary — and they surface as an undefined value at
+    import time, which is the hardest failure in the language to read.
+  fix: >-
+    Move what both need into a third module that depends on neither. Breaking
+    the cycle by adding an interface only hides it behind one more file.
+
+- id: unused-export
+  kind: quality
+  title: Exports nothing imports
+  category: craft
+  severity: low
+  weight: 47
+  evidenceRank: null
+  sources:
+    - { origin: heuristics, ref: "dead-code" }
+    - { origin: catalogue, ref: "code:CODE-13" }
+  channels: [tools]
+  why: >-
+    An export with no importer is a public surface nobody asked for. It has to
+    be kept compiling, it turns up in every rename, and it makes the module
+    look like it has a wider contract than it has.
+  fix: >-
+    Delete it, or make it local. Anything genuinely kept for a future caller
+    wants a line saying so, or the next reader deletes it anyway.

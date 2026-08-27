@@ -5,6 +5,7 @@ import { scanRender } from './channels/render.js';
 import { buildBrief, writeBrief, readAnswers } from './channels/vision.js';
 import { promote, meetsThreshold } from './promote.js';
 import { MIN_SURFACE_CONFIDENCE } from './channels/surface.js';
+import { runTools } from './channels/tools.js';
 import { loadCorpus, appliesTo, isActionable, ruleById } from './corpus/load.js';
 import { findClashes, fingerprintFindings } from './fingerprint/distance.js';
 import * as store from './fingerprint/store.js';
@@ -270,6 +271,32 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
     warnings.push(
       'vision needs screenshots — pass --url so the render channel can capture them',
     );
+  }
+
+  // ---- tools ----
+  //
+  // Only on a code scan. Duplication, cycles and unused exports are questions
+  // about a project's source, not about the page it serves, and folding them
+  // into a UI scan would move every score anyone holds a baseline against.
+  if (opts.codeCategories) {
+    const tools = runTools(root, opts.onProgress);
+    if (tools.ran.length) {
+      channelsRun.push('tools');
+      raw.push(...tools.findings);
+      opts.onProgress?.(
+        `tools: ${tools.ran.join(', ')} produced ${tools.findings.length} finding(s)`,
+      );
+    }
+    if (tools.missing.length) {
+      // Absent, not clean. A project without jscpd gets no duplication finding
+      // and that is not the same as having no duplication.
+      warnings.push(
+        `${tools.missing.join(', ')} not found in this project or on PATH — ` +
+          'duplication, dependency cycles and unused exports need a parse of the whole ' +
+          'project, so nothing about them is in this score. redpen installs nothing; ' +
+          'add them to the project to have them read.',
+      );
+    }
   }
 
   // ---- fingerprint ----

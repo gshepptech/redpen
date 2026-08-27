@@ -261,3 +261,61 @@
     lags behind the tab key.
   fix: >-
     Exclude outline and box-shadow on :focus-visible from any transition.
+
+- id: gratuitous-parallax
+  kind: slop
+  surfaces: [persuade, read]
+  title: Parallax on a page that has nothing to reveal
+  category: motion
+  severity: medium
+  weight: 57
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "slop:SLOP-03" }
+    - { origin: catalogue, ref: "antipattern:animate-on-scroll-on-everything" }
+  channels: [source]
+  source:
+    extensions: ['.css', '.scss', '.sass', '.less', '.html', '.htm', '.tsx', '.jsx', '.vue', '.svelte', '.astro']
+    patterns:
+      - 'background-attachment\s*:\s*fixed'
+      - '\bparallax\b'
+      - 'data-(parallax|speed|scroll-speed|rellax)'
+      - 'translateZ\(\s*-?\d*\.?\d+px\s*\)[^;]*\bscale\('
+  why: >-
+    Depth that moves at a different rate to the content is a device for
+    revealing something — a horizon, a change of scene. Applied to a marketing
+    section it reveals nothing, costs a repaint on every scroll frame, and on
+    iOS `background-attachment: fixed` does not work at all, so the effect the
+    author is looking at is not the one the visitor gets.
+  fix: >-
+    Cut it, or make it reveal something. If the aim was depth, a static
+    foreground over a still image reads as depth without a scroll handler.
+
+- id: gradient-border
+  kind: slop
+  surfaces: [persuade]
+  title: A gradient traced around the edge of a box
+  category: motion
+  severity: low
+  weight: 49
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "slop:SLOP-15" }
+    - { origin: catalogue, ref: "antipattern:glassmorphism-without-purpose" }
+  channels: [source]
+  source:
+    extensions: ['.css', '.scss', '.sass', '.less', '.html', '.htm', '.tsx', '.jsx', '.vue', '.svelte', '.astro']
+    patterns:
+      - 'border-image\s*:\s*(linear|conic|radial)-gradient'
+      # The two-background mask trick, which exists only to put a gradient on a
+      # border: a gradient background composited against a padding-box mask.
+      - 'mask-composite\s*:\s*(xor|exclude)'
+      - '-webkit-mask-composite\s*:\s*(xor|destination-out)'
+  why: >-
+    A gradient border is decoration with no state behind it — it does not mean
+    focus, or selection, or error, so it is a colour the reader learns to
+    ignore on the one element that most needs to be able to signal.
+  fix: >-
+    A single-colour border, and keep gradients for the surface. If the box
+    needs to stand out, size and space are the tools that still leave the
+    border free to mean something.

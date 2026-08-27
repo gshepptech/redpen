@@ -22,7 +22,7 @@ import type { RawFinding, Finding, Confidence, Channel, Rule } from './types.js'
  */
 
 /** Channels that observe real state rather than text, in order of authority. */
-const AUTHORITATIVE: ReadonlySet<Channel> = new Set<Channel>(['render', 'fingerprint']);
+const AUTHORITATIVE: ReadonlySet<Channel> = new Set<Channel>(['render', 'fingerprint', 'tools']);
 
 function confidenceFor(rule: Rule, observed: Set<Channel>): Confidence {
   const possible = new Set(rule.channels);

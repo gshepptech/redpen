@@ -41,7 +41,7 @@ export type Category =
    */
   | 'residue';
 
-export type Channel = 'source' | 'render' | 'vision' | 'fingerprint';
+export type Channel = 'source' | 'render' | 'vision' | 'fingerprint' | 'tools';
 
 /**
  * What kind of failure a rule describes — the most useful single distinction

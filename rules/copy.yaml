@@ -511,3 +511,135 @@
     Rewrite each item as a claim — "failed shares stayed under 1% across a
     twelve-hour run" beats "low failed share rates" — or turn the list into a
     paragraph. Where a bare list is genuinely right, vary the items.
+
+# ---------------------------------------------------------------------------
+# Added from copy-slop COPY-03, 05, 10 and 12. COPY-01, 02, 04, 08 and 09 are
+# already covered by invented-metrics, false-breadth, placeholder-name,
+# tricolon-cadence and emoji-as-icon respectively.
+# ---------------------------------------------------------------------------
+
+- id: benefit-without-mechanism
+  kind: slop
+  surfaces: [persuade]
+  title: A benefit with no mechanism behind it
+  category: copy
+  severity: medium
+  weight: 58
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "copy:COPY-03" }
+    - { origin: catalogue, ref: "antipattern:benefit-without-mechanism" }
+  channels: [source]
+  source:
+    extensions: ['.html', '.htm', '.tsx', '.jsx', '.ts', '.js', '.mjs', '.vue', '.svelte', '.astro', '.mdx']
+    # The comparison can be made before the adjective as well as after it, and
+    # the lookahead only saw one direction: "it will make your life worse rather
+    # than better" is a page naming who it is *not* for — the best sentence on
+    # the fixture — and this rule reported it. A `than` anywhere on the line
+    # means a comparison is being drawn.
+    suppress: '^\s*(//|\*|/\*|#|<!--)|\bthan\b|\d'
+    patterns:
+      # A comparative with nothing on the other side of it. "Faster" is a claim
+      # about a measurement nobody made; "faster than the nightly export" is a
+      # claim someone can check.
+      - '\b(faster|smarter|simpler|easier|better|cheaper|safer|cleaner)\b(?![^.!?<]{0,40}\b(than|by|from|because|so that|using|with our|per|in \d))'
+      - '\b(save|saves|saving) (you )?(time|money|hours|effort)\b(?![^.!?<]{0,30}\bby\b)'
+  why: >-
+    "Faster, smarter, simpler" is three claims with nothing to check any of
+    them against. A reader who wants the product already believes it; a reader
+    deciding cannot use it, so the sentence only reaches the people it did not
+    need to reach.
+  fix: >-
+    Say the mechanism or the measurement. Faster than what, by how much, and
+    because of what — one of those turns an adjective into a reason.
+
+- id: no-exclusions
+  kind: slop
+  surfaces: [persuade]
+  title: A pitch that never says who it is not for
+  category: copy
+  severity: low
+  weight: 46
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "copy:COPY-05" }
+    - { origin: heuristics, ref: "specificity" }
+  channels: [source]
+  source:
+    extensions: ['.html', '.htm', '.tsx', '.jsx', '.ts', '.js', '.mjs', '.vue', '.svelte', '.astro', '.mdx']
+    suppress: '^\s*(//|\*|/\*|#|<!--)'
+    patterns:
+      # Universality asserted outright. A page that claims everyone is a page
+      # that has not chosen anyone.
+      - '\bfor (everyone|every team|any team|anyone|every business|all teams|any workflow|every workflow)\b'
+      - '\b(whatever|whichever) (your|the) (size|team|stack|workflow|industry)\b'
+      - '\bno matter (your|the|what) \w+'
+      - '\bworks with (everything|anything|any \w+ you)\b'
+  why: >-
+    A page that never says who it is not for is a page that has not decided. The
+    exclusion is the most useful sentence on a landing page, because it is the
+    only one a reader can use to rule themselves in.
+  fix: >-
+    Name the case you do not serve. "Not for teams under five" or "no on-prem"
+    costs you the readers who would have churned and earns the trust of the ones
+    who stay.
+
+- id: closing-paragraph-adds-nothing
+  kind: slop
+  surfaces: [persuade, read]
+  title: A closing paragraph that restates the page
+  category: copy
+  severity: low
+  weight: 44
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "copy:COPY-10" }
+    - { origin: catalogue, ref: "writing:summary-restatement" }
+  channels: [source]
+  source:
+    extensions: ['.html', '.htm', '.tsx', '.jsx', '.ts', '.js', '.mjs', '.vue', '.svelte', '.astro', '.mdx']
+    suppress: '^\s*(//|\*|/\*|#|<!--)'
+    patterns:
+      - '\b(In (conclusion|summary|short)|To (summari[sz]e|sum up|recap)|All in all|At the end of the day|Ultimately,)\b'
+      # The apostrophe is written as a character class rather than escaped: a
+      # single-quoted YAML scalar ends at the first lone quote, and `\'` is not
+      # an escape there.
+      - '\bWhether you([^ a-z]re| are)[^.!?<]{0,60}\b(we|our|it)\b[^.!?<]{0,40}\b(got you|here to help|covered)\b'
+  why: >-
+    A paragraph that summarises what the reader just read is a paragraph
+    written because the shape expected one. It is the last thing on the page and
+    it says nothing, which is the worst place to say nothing.
+  fix: >-
+    End on the action, or end on the strongest specific claim. If the page needs
+    summarising, the page is too long.
+
+- id: undated-reference
+  kind: quality
+  # No `surfaces`: a quality rule holds everywhere, and the path match already
+  # confines this one to the four files it is about.
+  title: Documentation with no version or date on it
+  category: copy
+  severity: medium
+  weight: 54
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "copy:COPY-12" }
+    - { origin: heuristics, ref: "documentation-currency" }
+  channels: [source]
+  source:
+    paths:
+      - '(^|/)(CHANGELOG|RELEASES|UPGRADING|MIGRATION)\.mdx?$'
+    patterns:
+      # A changelog entry with a version and no date, or a heading that names
+      # neither. The reader's first question about any of these files is "how
+      # old is this", and it is the one question the file refuses to answer.
+      - '(^|\n)#{1,3}\s*v?\d+\.\d+[^\n]{0,20}(\n|$)(?![^\n]*\d{4})'
+      - '(^|\n)#{1,3}\s*(Unreleased|Latest|Recent [Cc]hanges)\s*(\n|$)'
+  why: >-
+    A changelog entry with no date is a claim the reader cannot place. Version
+    numbers only order things relative to each other; a date is what tells
+    someone whether this page has been touched since the thing they are using
+    shipped.
+  fix: >-
+    Put an ISO date beside every version heading. It costs eight characters and
+    it is the first thing anyone opening the file is looking for.

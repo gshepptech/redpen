@@ -59,6 +59,7 @@ const VALID_CHANNELS: ReadonlySet<string> = new Set<Channel>([
   'render',
   'vision',
   'fingerprint',
+  'tools',
 ]);
 
 const VALID_KINDS: ReadonlySet<string> = new Set<Kind>(['slop', 'quality']);

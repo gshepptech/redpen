@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runScan } from '../dist/scan.js';
+import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { CODE_CATEGORIES } from '../dist/scan.js';
 
 /**
@@ -364,4 +366,132 @@ test('an ignore written in the source is reported, not just obeyed', async () =>
   assert.match(only.ignored.reason, /best-effort/);
   assert.equal(only.evidence[0].location, 'worker.ts', 'the excuse has to name the file it excused');
   assert.ok(only.evidence[0].line > 0, 'and the line');
+});
+
+/**
+ * The rules added from code-slop CODE-03, 06, 09, 10 and 12.
+ *
+ * Each one is here with the false positive it produced on a real codebase
+ * before it was narrowed, because that is the only evidence that the narrowing
+ * is real rather than asserted.
+ */
+const ADDED_CODE_RULES = [
+  'weak-type-escape',
+  'long-parameter-list',
+  'rewritten-standard-library',
+  'named-magic-number',
+  'barrel-file',
+];
+
+test('the rules added from the code catalogue fire on the shapes they name', async () => {
+  const result = await scanCode('sloppy-code');
+  const fired = new Set(result.findings.map((f) => f.ruleId));
+  for (const id of ADDED_CODE_RULES) {
+    assert.ok(fired.has(id), `${id} did not fire on the shape it describes`);
+  }
+});
+
+test('a tuple in a signature is not six parameters', async () => {
+  // `compare(x: [number, number, number], y: [number, number, number])` counted
+  // its tuple commas and reported redpen's own cascade.ts as a six-parameter
+  // function. Brackets are excluded from a parameter segment for this reason.
+  const { runScan } = await import('../dist/scan.js');
+  const result = await runScan({
+    root: join(HERE, '..', 'src'),
+    codeCategories: true,
+    ephemeral: true,
+  });
+  assert.deepEqual(
+    result.findings.map((f) => f.ruleId),
+    [],
+    "redpen's own source must stay clean of everything it reports",
+  );
+});
+
+test('a number that already has a name is not a magic number', async () => {
+  const { runScan } = await import('../dist/scan.js');
+  const dir = mkdtempSync(join(tmpdir(), 'redpen-magic-'));
+  try {
+    writeFileSync(join(dir, 'package.json'), '{"name":"m","private":true}');
+    writeFileSync(
+      join(dir, 'a.ts'),
+      [
+        'const MAX_IDS = 1000; // cap array-of-ids fields',
+        'const rows = tier(acres, [[10, 25]]);          // max 25',
+      ].join('\n'),
+      'utf8',
+    );
+    const result = await runScan({ root: dir, codeCategories: true, ephemeral: true });
+    const magic = result.findings.find((f) => f.ruleId === 'named-magic-number');
+    assert.ok(magic, 'the unnamed literal is still reported');
+    assert.equal(magic.evidence.length, 1, 'only the unnamed one');
+    assert.match(magic.evidence[0].excerpt, /max 25/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('English prose is not a type annotation', async () => {
+  // `# same as any other failure` in a shell script matched `as any` and was
+  // reported as a widened type. The rule now reads only languages that have
+  // one.
+  const { runScan } = await import('../dist/scan.js');
+  const dir = mkdtempSync(join(tmpdir(), 'redpen-prose-'));
+  try {
+    writeFileSync(join(dir, 'package.json'), '{"name":"p","private":true}');
+    writeFileSync(
+      join(dir, 'run.sh'),
+      '# an undefined target is skipped, same as any other failure\n'.repeat(4),
+      'utf8',
+    );
+    const result = await runScan({ root: dir, codeCategories: true, ephemeral: true });
+    assert.ok(
+      !result.findings.some((f) => f.ruleId === 'weak-type-escape'),
+      'a shell comment is not a widened type',
+    );
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('a local named for a standard helper is not a reimplementation of one', async () => {
+  // `const pick = features.find(...)` is a variable that shares a name with a
+  // lodash helper, and eleven honest `const sleep = ms => ...` lines are not
+  // duplicates of anything — nothing in the runtime is called sleep.
+  const { runScan } = await import('../dist/scan.js');
+  const dir = mkdtempSync(join(tmpdir(), 'redpen-stdlib-'));
+  try {
+    writeFileSync(join(dir, 'package.json'), '{"name":"s","private":true}');
+    writeFileSync(
+      join(dir, 'a.ts'),
+      [
+        'const pick = features.find((f) => f.kind === "boundary");',
+        'const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));',
+        'const clamp = (n: number) => Math.max(0, Math.min(100, n));',
+      ].join('\n'),
+      'utf8',
+    );
+    const result = await runScan({ root: dir, codeCategories: true, ephemeral: true });
+    assert.ok(!result.findings.some((f) => f.ruleId === 'rewritten-standard-library'));
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('a Python or Go test file is test material, not shipped source', async () => {
+  // `test_corridor.py` gave a magic-number finding on an array index and
+  // `conftest.py` gave eleven swallowed-error findings. SKIP_FILE only knew
+  // the JavaScript spellings.
+  const { runScan } = await import('../dist/scan.js');
+  const dir = mkdtempSync(join(tmpdir(), 'redpen-pytest-'));
+  try {
+    writeFileSync(join(dir, 'package.json'), '{"name":"py","private":true}');
+    writeFileSync(join(dir, 'conftest.py'), 'try:\n    go()\nexcept Exception:\n    pass\n');
+    writeFileSync(join(dir, 'test_grid.py'), 'geom[10:50, 20:22] = 5     # two spur lines\n');
+    writeFileSync(join(dir, 'thing_test.go'), 'func TestX(t *testing.T) {\n}\n');
+    const result = await runScan({ root: dir, codeCategories: true, ephemeral: true });
+    assert.deepEqual(result.findings.map((f) => f.ruleId), []);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });

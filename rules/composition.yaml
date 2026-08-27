@@ -212,3 +212,30 @@
   fix: >-
     Cut it, or give it a job. If the shape is carrying brand rather than
     meaning, say so in the design notes and keep one, not five.
+
+- id: icon-meaning-mismatch
+  kind: slop
+  title: Icons that do not mean what they sit beside
+  category: composition
+  severity: medium
+  weight: 60
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "slop:SLOP-11" }
+    - { origin: heuristics, ref: "match-between-system-and-real-world" }
+  channels: [vision]
+  vision:
+    ask: >-
+      Look at each icon and read the label next to it. Are there icons whose
+      picture has no relationship to the words beside them — a rocket against
+      "Security", a lightning bolt against "Reporting", a sparkle against
+      anything?
+  why: >-
+    An icon chosen for decoration rather than meaning costs the reader twice:
+    once to look at it, and once to discover it told them nothing. A set where
+    the pictures do not track the labels is the clearest sign they were picked
+    to fill slots.
+  fix: >-
+    Either the icon depicts the thing, or there is no icon. A list with four
+    labels and no pictures reads faster than one with four pictures that have
+    to be ignored.

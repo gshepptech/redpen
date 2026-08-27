@@ -37,7 +37,7 @@ const CODE_EXTENSIONS = new Set([
 
 const SCANNED_EXTENSIONS = CODE_EXTENSIONS;
 
-const SKIP_DIRS = new Set([
+export const SKIP_DIRS = new Set([
   'node_modules', '.git', 'dist', 'build', '.next', 'out', 'vendor',
   'coverage', '.svelte-kit', '.astro', '.turbo', '.cache', '__pycache__',
   '.vercel', '.netlify', 'storybook-static', '.redpen',
@@ -55,10 +55,16 @@ const SKIP_DIRS = new Set([
  * `page.test.tsx:222 it("exports the flag in SUMMARY...")` — matching "in
  * summary" inside an assertion about a CSV column.
  */
-const SKIP_FILE = /\.(golden|snap|snapshot)\.|\.golden$|\.snap$|\.(test|spec|testkit|fixture|mock|stub|e2e)\.[cm]?[jt]sx?$/i;
+const SKIP_FILE =
+  /\.(golden|snap|snapshot)\.|\.golden$|\.snap$|\.(test|spec|testkit|fixture|mock|stub|e2e)\.[cm]?[jt]sx?$|^(test_|conftest\.py$)|_test\.(py|go|rb|rs)$|(^|\/)tests?_[^/]*\.py$/i;
 
 /**
  * A file that says it was generated — and which kind of saying it is.
+ *
+ * The JS shapes were the only ones covered, so a Python suite was read as
+ * shipped source: `test_corridor.py` gave a magic-number finding on an array
+ * index and `conftest.py` gave eleven swallowed-error findings, none of them
+ * about code anyone runs in production.
  *
  * `[jt]sx?` did not cover `.mjs`, so redpen's own `e2e.test.mjs` was read as
  * source and reported for the slop it deliberately contains, and the bundle
