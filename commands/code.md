@@ -45,7 +45,20 @@ Two categories:
   the tool named as an author, half a conversation committed, pointers to plan
   files that were deleted after the run that wrote them.
 
-No browser is involved and none is needed: every rule here is source-channel.
+No browser is involved and none is needed. Most rules here read the source
+directly; three need a parse of the whole project and come from analysers the
+project already carries — `jscpd` for blocks repeated instead of shared,
+`madge` for modules that import each other, `knip` for exports nothing imports.
+redpen installs none of them. If they are absent the run says so, and those
+three findings are *absent* rather than clean:
+
+```bash
+npm i -D jscpd madge knip     # optional; picked up automatically if present
+```
+
+Duplication is worth asking for specifically. It is the tell that most
+separates code that was generated from code that was maintained, and no pattern
+can see it.
 
 ## Reading the result
 

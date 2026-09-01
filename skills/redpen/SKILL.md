@@ -1,6 +1,6 @@
 ---
 name: redpen
-description: Judge and fix UI that reads as AI-generated. Runs a source scan, a real browser reading computed styles, and a structural comparison against the project's other pages, then reports only what more than one channel agrees on. Use when building, reviewing, or auditing any web UI — landing page, dashboard, component, design system — and whenever the user says a page looks generic, templated, AI-made, vibe-coded, or "like every other site", or asks for a design review, a UI audit, an accessibility check, or wants to know why a page feels off.
+description: Judge and fix UI, and the source behind it, when either reads as AI-generated. Runs a source scan, a real browser reading computed styles, a structural comparison against the project's other pages, and — on a code scan — the duplication, dead-export and dependency-cycle analysers the project already carries, then reports only what more than one channel agrees on. Use when building, reviewing, or auditing any web UI — landing page, dashboard, component, design system — and whenever the user says a page or a codebase looks generic, templated, AI-made, vibe-coded, or "like every other site", or asks for a design review, a UI audit, an accessibility check, a check for machine-written code, or wants to know why a page feels off.
 ---
 
 # redpen
