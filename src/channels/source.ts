@@ -33,6 +33,11 @@ const CODE_EXTENSIONS = new Set([
   '.go', '.py', '.rs', '.rb', '.java', '.kt', '.swift', '.cs', '.php',
   '.c', '.h', '.cc', '.cpp', '.hpp', '.m', '.mm', '.scala', '.ex', '.exs',
   '.lua', '.pl', '.r', '.dart', '.sh', '.bash', '.zsh', '.sql', '.gradle',
+  // Documents. `.mdx` was already here as a page format; plain `.md` was in
+  // neither list, so a README, a changelog, a design doc and a course script
+  // were all unreadable to a tool whose whole subject is writing that reads as
+  // machine-made.
+  '.md', '.markdown', '.rst', '.txt', '.adoc',
 ]);
 
 const SCANNED_EXTENSIONS = CODE_EXTENSIONS;

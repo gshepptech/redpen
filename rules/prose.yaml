@@ -1,0 +1,240 @@
+# Writing that reads as machine-made.
+#
+# Source channel only, and code-side on purpose: a README, a changelog, a
+# design doc and a course script are files in the project, not markup the
+# browser serves. `redpen code` returns these; `redpen scan` never does.
+#
+# The `copy` category is the sibling question — words on a rendered page. The
+# two share several tells and differ in where they look, which is why a page
+# scan reads .tsx and .html and this reads .md and .rst.
+#
+# Every word list here is quoted from a catalogue rather than invented, and the
+# tiers that catalogue draws are kept: a cluster of frequency markers is
+# evidence about how a passage was produced, and a wordiness fix is not.
+
+- id: ai-vocabulary
+  kind: slop
+  title: The vocabulary that marks machine prose
+  category: prose
+  severity: medium
+  weight: 66
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "writing:tier-1a-frequency-markers" }
+    - { origin: catalogue, ref: "copy:filler" }
+  channels: [source]
+  source:
+    extensions: ['.md', '.markdown', '.rst', '.txt', '.adoc']
+    # A cluster, never a single word. "Robust" is an ordinary English adjective
+    # and one of them says nothing; four in a document is a register. The
+    # catalogue this comes from is explicit that the frequency claim behind the
+    # list is inherited rather than measured, so the threshold carries the
+    # doubt.
+    minHits: 4
+    patterns:
+      - '\b(delve|delving|delves) into\b'
+      - '\b(tapestry|realm|paradigm|beacon|synergy|synergies|interplay)\b'
+      - '\b(testament to|at its core|ever-evolving|watershed moment)\b'
+      - '\b(meticulous|meticulously|seamless|seamlessly|holistic|holistically)\b'
+      - '\b(cutting-edge|game-chang(er|ing)|thought leader(ship)?|best practices)\b'
+      # `underscores` only as the verb. Bare "underscore" is the character,
+      # and a document explaining APP_LABS_CLOUD_DIR said "the
+      # single-underscore form" four times and was read as machine prose.
+      - '\b(pivotal|showcasing|showcases)\b'
+      - '\bunderscor(es|ing) (the|its|how|why|just how)\b'
+      - '\b(leverage|leveraging|leveraged) (the|our|its|their|a)\b'
+      - '\b(embark|embarking) on\b'
+      - '\b(bustling|vibrant|thriving|nestled|daunting)\b'
+      - '\b(intricacies|complexities|learnings|actionable|impactful)\b'
+      - '\b(deep dive|dive into|unpack|unpacking) (the|this|these|our)\b'
+    # A code fence is someone else's words, and a list of banned words is not a
+    # document using them — redpen's own corpus would fire on every line.
+    suppress: '^\s{4,}|^\s*(```|>|\||- \[)'
+  why: >-
+    Individually these are ordinary words. Together they are a register: the one
+    a model reaches for when it has nothing specific to say, because they carry
+    approval without carrying a claim. Four in one document is a document that
+    was generated rather than written.
+  fix: >-
+    Replace each with the specific thing. "Delve into" is "look at", "robust" is
+    the property you actually mean, "leverage" is "use", and "tapestry" is
+    whatever complexity you were describing before you reached for a metaphor.
+
+- id: inflated-formality
+  kind: slop
+  advisory: true
+  title: Formality where a shorter word exists
+  category: prose
+  severity: low
+  weight: 38
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "writing:tier-1b-clarity" }
+  channels: [source]
+  source:
+    extensions: ['.md', '.markdown', '.rst', '.txt', '.adoc']
+    minHits: 3
+    patterns:
+      - '\b(utilize|utilizing|utilization)\b'
+      - '\bin order to\b'
+      - '\bdue to the fact that\b'
+      - '\b(commence|ascertain|endeavor|endeavour)\b'
+      - '\b(boasts|serves as a)\b'
+    suppress: '^\s{4,}|^\s*(```|>|\|)'
+  # Advisory, because the catalogue that names these measured them against 257
+  # paragraphs of verified pre-2023 human prose and found they fire on ordinary
+  # professional writing at a meaningful rate. Presenting a wordiness fix as
+  # evidence of machine authorship is the error the split exists to prevent.
+  why: >-
+    Wordiness, not authorship. "Utilize" is "use" and "in order to" is "to", and
+    both are worth fixing — but people have always written this way, so a hit
+    here says something about the prose and nothing about who produced it.
+  fix: >-
+    Use the shorter word. It is the same sentence with less between the reader
+    and the meaning.
+
+- id: chatbot-artifact
+  kind: quality
+  title: A line addressed to the person who asked for the document
+  category: prose
+  severity: high
+  weight: 81
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "writing:chatbot-artifacts" }
+    - { origin: redpen, ref: conversation-residue }
+  channels: [source]
+  source:
+    extensions: ['.md', '.markdown', '.rst', '.txt', '.adoc']
+    patterns:
+      - '(^|\n)\s*(Certainly|Absolutely|Sure)[!,]'
+      - '\b(I hope this helps|Let me know if you.{0,20}(need|want|have)|feel free to (ask|reach out|let me know))\b'
+      - '\bAs an AI\b|\bas a language model\b'
+      - "(^|\\n)\\s*(Here(.s| is) (the|a|an|your) [a-z ]{0,30}(you (asked|requested)|I (created|wrote|made)))"
+      - '(^|\n)\s*(Would you like me to|Shall I|Do you want me to)\b'
+  why: >-
+    A sentence written to whoever prompted the document, left in the document.
+    It is addressed to a conversation that is over, in a file that will outlive
+    it, and it is the single clearest evidence a reader can have that nobody
+    read this before it shipped.
+  fix: >-
+    Delete the line. Nothing else in the paragraph depends on it.
+
+- id: vague-attribution
+  kind: slop
+  title: A claim credited to nobody
+  category: prose
+  severity: medium
+  weight: 62
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "writing:vague-attributions" }
+    - { origin: catalogue, ref: "writing:third-party-validation" }
+  channels: [source]
+  source:
+    extensions: ['.md', '.markdown', '.rst', '.txt', '.adoc']
+    patterns:
+      - '\b(experts|researchers|analysts|developers|many|some|critics) (say|argue|believe|agree|note|point out|have noted)\b'
+      - '\b(studies|research|data) (show|shows|suggest|suggests|indicate|indicates)\b(?![^.\n]{0,60}\[)'
+      - '\bit is (widely|generally|commonly) (regarded|considered|accepted|believed|known)\b'
+      - '\b(is|are) (widely|generally) (regarded|considered|seen) as\b'
+    suppress: '^\s{4,}|^\s*(```|>|\|)|\bhttps?://'
+  why: >-
+    "Studies show" with no study is a citation shaped like one. It borrows the
+    authority of evidence without producing any, and a reader who tries to check
+    it finds there was never anything to check.
+  fix: >-
+    Name the source and link it, or drop the appeal and make the claim in your
+    own voice. An unattributed assertion you stand behind is more honest than a
+    borrowed one you cannot produce.
+
+- id: speculative-opener
+  kind: slop
+  title: A document that opens by asking you to imagine
+  category: prose
+  severity: low
+  weight: 49
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "writing:speculative-scenario-openers" }
+    - { origin: catalogue, ref: "writing:lets-constructions" }
+  channels: [source]
+  source:
+    extensions: ['.md', '.markdown', '.rst', '.txt', '.adoc']
+    patterns:
+      - '\b(Imagine|Picture) (a world|a future|this|yourself|if)\b'
+      - '(^|\n)\s*(Let.s (dive|explore|take a look|walk through|get started|begin|unpack))\b'
+      - '\bIn today.s (fast-paced|ever-changing|digital|modern|competitive)\b'
+      - '\bhas become increasingly (important|popular|common|critical)\b'
+    # No path exclusion for scripts: `suppressProject` tests a file's contents,
+    # not its name, so there is nothing here to hang one on. The genre
+    # exception is recorded as `legitimateWhen` and dismissed by the reader,
+    # which is what that field is for.
+    suppress: '^\s{4,}|^\s*(```|>|\|)'
+  legitimateWhen: >-
+    A script, a talk or any copy written to be spoken. Direct address and a
+    scene-setting opener are how narration works, and a listener cannot skim
+    back to a heading the way a reader can.
+  why: >-
+    An opener that spends the reader's first sentence on a hypothetical is an
+    opener with nothing to say yet. "In today's fast-paced world" is true of
+    every year and tells no one anything.
+  fix: >-
+    Open on the specific thing. The first sentence is the one with the most
+    readers, so it should carry the most information.
+
+- id: superficial-ing-analysis
+  kind: slop
+  title: A trailing clause that adds a verdict instead of a fact
+  category: prose
+  severity: low
+  weight: 45
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "writing:superficial-ing-analyses" }
+  channels: [source]
+  source:
+    extensions: ['.md', '.markdown', '.rst', '.txt', '.adoc']
+    minHits: 2
+    patterns:
+      - ',\s*(highlighting|underscoring|showcasing|demonstrating|reflecting|emphasi[sz]ing|illustrating|marking|signaling|signalling) (the|a|an|its|their|how|why)\b'
+    suppress: '^\s{4,}|^\s*(```|>|\|)'
+  why: >-
+    ", highlighting the importance of collaboration" is a clause that tells the
+    reader what to think about the sentence they just read, in place of telling
+    them anything further. It is the written equivalent of nodding.
+  fix: >-
+    End the sentence, or add a fact. If the significance is not obvious from
+    what you wrote, the fix is a better example rather than a label on the old
+    one.
+
+- id: title-case-heading
+  kind: slop
+  title: Headings in Title Case
+  category: prose
+  severity: low
+  weight: 36
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "writing:title-case-headings" }
+  channels: [source]
+  source:
+    extensions: ['.md', '.markdown']
+    # Case-sensitive, or the `i` flag makes [A-Z] match lowercase and every
+    # sentence-case heading reads as Title Case — which is the whole rule.
+    caseSensitive: true
+    # Three, so a document with one proper-noun heading is not a document with a
+    # habit.
+    minHits: 3
+    patterns:
+      # A lookbehind, not a consumed newline: (^|\n) put the match on the blank
+      # line above the heading, so every hit reported the wrong line and an
+      # empty excerpt.
+      - '(?<=^|\n)#{2,4} [A-Z][a-z]+(?: [A-Z][a-z]+){2,}(?=\s*(?:\n|$))'
+    suppress: '^\s*(```|>|\|)'
+  why: >-
+    Title Case On Every Heading is a house style almost nobody chose and models
+    default to. Sentence case reads faster because it looks like the prose
+    around it, and it stops proper nouns from disappearing into the capitals.
+  fix: >-
+    Sentence case. Capitalise the first word and anything that is a name.

@@ -9,6 +9,7 @@
  */
 
 export type Category =
+  | 'prose'
   | 'color'
   | 'typography'
   | 'layout'

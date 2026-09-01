@@ -23,7 +23,15 @@ import type { ScanResult, RawFinding, Channel, Finding, Surface, Category } from
  */
 
 /** The categories that describe source rather than the page it renders. */
-export const CODE_CATEGORIES: ReadonlySet<string> = new Set(['craft', 'residue']);
+/**
+ * The categories that describe a repository rather than a page.
+ *
+ * `prose` is here because a README, a changelog and a course script are files
+ * in the project, not markup the browser serves — and until it existed redpen
+ * read no `.md` at all, so every document in every repository it scanned was
+ * invisible to a tool whose subject is writing that reads as machine-made.
+ */
+export const CODE_CATEGORIES: ReadonlySet<string> = new Set(['craft', 'residue', 'prose']);
 
 
 export interface ScanOptions {

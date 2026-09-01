@@ -7481,6 +7481,7 @@ function rulesDir() {
 var VALID_CATEGORIES = /* @__PURE__ */ new Set([
   "craft",
   "residue",
+  "prose",
   "color",
   "typography",
   "layout",
@@ -7881,7 +7882,16 @@ var CODE_EXTENSIONS = /* @__PURE__ */ new Set([
   ".bash",
   ".zsh",
   ".sql",
-  ".gradle"
+  ".gradle",
+  // Documents. `.mdx` was already here as a page format; plain `.md` was in
+  // neither list, so a README, a changelog, a design doc and a course script
+  // were all unreadable to a tool whose whole subject is writing that reads as
+  // machine-made.
+  ".md",
+  ".markdown",
+  ".rst",
+  ".txt",
+  ".adoc"
 ]);
 var SCANNED_EXTENSIONS = CODE_EXTENSIONS;
 var SKIP_DIRS = /* @__PURE__ */ new Set([
@@ -12331,7 +12341,7 @@ function headline(slop, quality) {
 }
 
 // src/scan.ts
-var CODE_CATEGORIES = /* @__PURE__ */ new Set(["craft", "residue"]);
+var CODE_CATEGORIES = /* @__PURE__ */ new Set(["craft", "residue", "prose"]);
 async function runScan(opts) {
   const root = resolve3(opts.root);
   const config = loadConfig(root);
