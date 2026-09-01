@@ -6,6 +6,7 @@ import { buildBrief, writeBrief, readAnswers } from './channels/vision.js';
 import { promote, meetsThreshold } from './promote.js';
 import { MIN_SURFACE_CONFIDENCE } from './channels/surface.js';
 import { runTools } from './channels/tools.js';
+import { discoverRoutes } from './channels/routes.js';
 import { loadCorpus, appliesTo, isActionable, ruleById } from './corpus/load.js';
 import { findClashes, fingerprintFindings } from './fingerprint/distance.js';
 import * as store from './fingerprint/store.js';
@@ -69,10 +70,58 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
 }> {
   const root = resolve(opts.root);
   const config = loadConfig(root);
-  const urls = opts.urls?.length ? opts.urls : config.urls;
+  const given = opts.urls?.length ? opts.urls : config.urls;
   const viewports = opts.viewports?.length ? opts.viewports : config.viewports;
 
   const warnings: string[] = [];
+
+  /**
+   * One bare origin means "the whole app", not "the home page".
+   *
+   * `redpen scan . http://localhost:3000` used to read exactly one page, which
+   * is almost never what someone pointing redpen at their dev server wants —
+   * and the sameness channel, which compares a project's pages against each
+   * other, cannot run at all on a single page. The routes are already in the
+   * repository, so they are used.
+   *
+   * Only for a bare origin. Any explicit path is an instruction to read that
+   * page and is obeyed exactly.
+   */
+  const MAX_EXPANDED = 20;
+  let urls = given;
+  let expandedFrom: number | null = null;
+  if (given.length === 1) {
+    const only = given[0]!;
+    let bare = false;
+    try {
+      const u = new URL(only);
+      bare = u.pathname === '/' && !u.search && !u.hash;
+    } catch {
+      bare = false;
+    }
+    if (bare) {
+      const routes = discoverRoutes(root);
+      if (routes.length > 1) {
+        const origin = only.replace(/\/$/, '');
+        urls = routes.slice(0, MAX_EXPANDED).map((r) => origin + (r.path === '/' ? '' : r.path));
+        if (!urls.includes(origin)) urls.unshift(origin);
+        expandedFrom = routes.length;
+      }
+    }
+  }
+  if (expandedFrom !== null) {
+    opts.onProgress?.(
+      `routes: ${expandedFrom} declared in the source, scanning ${urls.length}` +
+        (expandedFrom > MAX_EXPANDED ? ` (capped at ${MAX_EXPANDED}; list urls in .redpen/config.json to choose)` : ''),
+    );
+    if (expandedFrom > MAX_EXPANDED) {
+      warnings.push(
+        `${expandedFrom} routes were found in the source and the first ${MAX_EXPANDED} were scanned — ` +
+          'the rest are not in this score. List the ones you care about in .redpen/config.json.',
+      );
+    }
+  }
+
   const state = stateRoot(root);
   if (!existsSync(join(state, '.redpen', 'config.json'))) {
     warnings.push(
@@ -222,8 +271,19 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
     // "findings that render could confirm are capped" describes nothing here —
     // and it said so on a project that has urls configured, which makes it
     // wrong twice.
+    // Naming the routes rather than asking for them. redpen has the source, so
+    // "add urls" is asking someone to retype what the repository already
+    // states — and the cost of not bothering is invisible: the same fixture
+    // scored 76 with no url and 3 with one.
+    const routes = discoverRoutes(root);
+    const listed = routes.slice(0, 8).map((r: { path: string }) => r.path).join(' ');
     warnings.push(
-      'no urls configured — the render channel did not run, so every source finding that render could confirm is capped at "possible". Add urls to .redpen/config.json or pass --url.',
+      'no urls configured — the render channel did not run, so every source finding that render could confirm is capped at "possible". ' +
+        (routes.length
+          ? `This project declares ${routes.length} route(s) (${routes[0]!.framework}): ${listed}` +
+            (routes.length > 8 ? ` … and ${routes.length - 8} more.` : '.') +
+            ' Start the app and pass an origin — `redpen scan . http://localhost:3000` scans them all.'
+          : 'Add urls to .redpen/config.json or pass --url.'),
     );
   }
 

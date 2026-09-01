@@ -4075,10 +4075,10 @@ var require_resolve_block_map = __commonJS({
       let offset = bm.offset;
       let commentEnd = null;
       for (const collItem of bm.items) {
-        const { start, key, sep, value } = collItem;
+        const { start, key, sep: sep2, value } = collItem;
         const keyProps = resolveProps.resolveProps(start, {
           indicator: "explicit-key-ind",
-          next: key ?? sep?.[0],
+          next: key ?? sep2?.[0],
           offset,
           onError,
           parentIndent: bm.indent,
@@ -4092,7 +4092,7 @@ var require_resolve_block_map = __commonJS({
             else if ("indent" in key && key.indent !== bm.indent)
               onError(offset, "BAD_INDENT", startColMsg);
           }
-          if (!keyProps.anchor && !keyProps.tag && !sep) {
+          if (!keyProps.anchor && !keyProps.tag && !sep2) {
             commentEnd = keyProps.end;
             if (keyProps.comment) {
               if (map.comment)
@@ -4116,7 +4116,7 @@ var require_resolve_block_map = __commonJS({
         ctx.atKey = false;
         if (utilMapIncludes.mapIncludes(ctx, map.items, keyNode))
           onError(keyStart, "DUPLICATE_KEY", "Map keys must be unique");
-        const valueProps = resolveProps.resolveProps(sep ?? [], {
+        const valueProps = resolveProps.resolveProps(sep2 ?? [], {
           indicator: "map-value-ind",
           next: value,
           offset: keyNode.range[2],
@@ -4132,7 +4132,7 @@ var require_resolve_block_map = __commonJS({
             if (ctx.options.strict && keyProps.start < valueProps.found.offset - 1024)
               onError(keyNode.range, "KEY_OVER_1024_CHARS", "The : indicator must be at most 1024 chars after the start of an implicit block mapping key");
           }
-          const valueNode = value ? composeNode(ctx, value, valueProps, onError) : composeEmptyNode(ctx, offset, sep, null, valueProps, onError);
+          const valueNode = value ? composeNode(ctx, value, valueProps, onError) : composeEmptyNode(ctx, offset, sep2, null, valueProps, onError);
           if (ctx.schema.compat)
             utilFlowIndentCheck.flowIndentCheck(bm.indent, value, onError);
           offset = valueNode.range[2];
@@ -4223,7 +4223,7 @@ var require_resolve_end = __commonJS({
       let comment = "";
       if (end) {
         let hasSpace = false;
-        let sep = "";
+        let sep2 = "";
         for (const token of end) {
           const { source, type } = token;
           switch (type) {
@@ -4237,13 +4237,13 @@ var require_resolve_end = __commonJS({
               if (!comment)
                 comment = cb;
               else
-                comment += sep + cb;
-              sep = "";
+                comment += sep2 + cb;
+              sep2 = "";
               break;
             }
             case "newline":
               if (comment)
-                sep += source;
+                sep2 += source;
               hasSpace = true;
               break;
             default:
@@ -4286,18 +4286,18 @@ var require_resolve_flow_collection = __commonJS({
       let offset = fc.offset + fc.start.source.length;
       for (let i = 0; i < fc.items.length; ++i) {
         const collItem = fc.items[i];
-        const { start, key, sep, value } = collItem;
+        const { start, key, sep: sep2, value } = collItem;
         const props = resolveProps.resolveProps(start, {
           flow: fcName,
           indicator: "explicit-key-ind",
-          next: key ?? sep?.[0],
+          next: key ?? sep2?.[0],
           offset,
           onError,
           parentIndent: fc.indent,
           startOnNewline: false
         });
         if (!props.found) {
-          if (!props.anchor && !props.tag && !sep && !value) {
+          if (!props.anchor && !props.tag && !sep2 && !value) {
             if (i === 0 && props.comma)
               onError(props.comma, "UNEXPECTED_TOKEN", `Unexpected , in ${fcName}`);
             else if (i < fc.items.length - 1)
@@ -4351,8 +4351,8 @@ var require_resolve_flow_collection = __commonJS({
             }
           }
         }
-        if (!isMap && !sep && !props.found) {
-          const valueNode = value ? composeNode(ctx, value, props, onError) : composeEmptyNode(ctx, props.end, sep, null, props, onError);
+        if (!isMap && !sep2 && !props.found) {
+          const valueNode = value ? composeNode(ctx, value, props, onError) : composeEmptyNode(ctx, props.end, sep2, null, props, onError);
           coll.items.push(valueNode);
           offset = valueNode.range[2];
           if (isBlock(value))
@@ -4364,7 +4364,7 @@ var require_resolve_flow_collection = __commonJS({
           if (isBlock(key))
             onError(keyNode.range, "BLOCK_IN_FLOW", blockMsg);
           ctx.atKey = false;
-          const valueProps = resolveProps.resolveProps(sep ?? [], {
+          const valueProps = resolveProps.resolveProps(sep2 ?? [], {
             flow: fcName,
             indicator: "map-value-ind",
             next: value,
@@ -4375,8 +4375,8 @@ var require_resolve_flow_collection = __commonJS({
           });
           if (valueProps.found) {
             if (!isMap && !props.found && ctx.options.strict) {
-              if (sep)
-                for (const st of sep) {
+              if (sep2)
+                for (const st of sep2) {
                   if (st === valueProps.found)
                     break;
                   if (st.type === "newline") {
@@ -4393,7 +4393,7 @@ var require_resolve_flow_collection = __commonJS({
             else
               onError(valueProps.start, "MISSING_CHAR", `Missing , or : between ${fcName} items`);
           }
-          const valueNode = value ? composeNode(ctx, value, valueProps, onError) : valueProps.found ? composeEmptyNode(ctx, valueProps.end, sep, null, valueProps, onError) : null;
+          const valueNode = value ? composeNode(ctx, value, valueProps, onError) : valueProps.found ? composeEmptyNode(ctx, valueProps.end, sep2, null, valueProps, onError) : null;
           if (valueNode) {
             if (isBlock(value))
               onError(valueNode.range, "BLOCK_IN_FLOW", blockMsg);
@@ -4573,7 +4573,7 @@ var require_resolve_block_scalar = __commonJS({
           chompStart = i + 1;
       }
       let value = "";
-      let sep = "";
+      let sep2 = "";
       let prevMoreIndented = false;
       for (let i = 0; i < contentStart; ++i)
         value += lines[i][0].slice(trimIndent) + "\n";
@@ -4590,24 +4590,24 @@ var require_resolve_block_scalar = __commonJS({
           indent = "";
         }
         if (type === Scalar.Scalar.BLOCK_LITERAL) {
-          value += sep + indent.slice(trimIndent) + content;
-          sep = "\n";
+          value += sep2 + indent.slice(trimIndent) + content;
+          sep2 = "\n";
         } else if (indent.length > trimIndent || content[0] === "	") {
-          if (sep === " ")
-            sep = "\n";
-          else if (!prevMoreIndented && sep === "\n")
-            sep = "\n\n";
-          value += sep + indent.slice(trimIndent) + content;
-          sep = "\n";
+          if (sep2 === " ")
+            sep2 = "\n";
+          else if (!prevMoreIndented && sep2 === "\n")
+            sep2 = "\n\n";
+          value += sep2 + indent.slice(trimIndent) + content;
+          sep2 = "\n";
           prevMoreIndented = true;
         } else if (content === "") {
-          if (sep === "\n")
+          if (sep2 === "\n")
             value += "\n";
           else
-            sep = "\n";
+            sep2 = "\n";
         } else {
-          value += sep + content;
-          sep = " ";
+          value += sep2 + content;
+          sep2 = " ";
           prevMoreIndented = false;
         }
       }
@@ -4789,25 +4789,25 @@ var require_resolve_flow_scalar = __commonJS({
       if (!match)
         return source;
       let res = match[1];
-      let sep = " ";
+      let sep2 = " ";
       let pos = first.lastIndex;
       line.lastIndex = pos;
       while (match = line.exec(source)) {
         if (match[1] === "") {
-          if (sep === "\n")
-            res += sep;
+          if (sep2 === "\n")
+            res += sep2;
           else
-            sep = "\n";
+            sep2 = "\n";
         } else {
-          res += sep + match[1];
-          sep = " ";
+          res += sep2 + match[1];
+          sep2 = " ";
         }
         pos = line.lastIndex;
       }
       const last = /[ \t]*(.*)/sy;
       last.lastIndex = pos;
       match = last.exec(source);
-      return res + sep + (match?.[1] ?? "");
+      return res + sep2 + (match?.[1] ?? "");
     }
     function doubleQuotedValue(source, onError) {
       let res = "";
@@ -5617,14 +5617,14 @@ var require_cst_stringify = __commonJS({
         }
       }
     }
-    function stringifyItem({ start, key, sep, value }) {
+    function stringifyItem({ start, key, sep: sep2, value }) {
       let res = "";
       for (const st of start)
         res += st.source;
       if (key)
         res += stringifyToken(key);
-      if (sep)
-        for (const st of sep)
+      if (sep2)
+        for (const st of sep2)
           res += st.source;
       if (value)
         res += stringifyToken(value);
@@ -6791,18 +6791,18 @@ var require_parser = __commonJS({
         if (this.type === "map-value-ind") {
           const prev = getPrevProps(this.peek(2));
           const start = getFirstKeyStartProps(prev);
-          let sep;
+          let sep2;
           if (scalar.end) {
-            sep = scalar.end;
-            sep.push(this.sourceToken);
+            sep2 = scalar.end;
+            sep2.push(this.sourceToken);
             delete scalar.end;
           } else
-            sep = [this.sourceToken];
+            sep2 = [this.sourceToken];
           const map = {
             type: "block-map",
             offset: scalar.offset,
             indent: scalar.indent,
-            items: [{ start, key: scalar, sep }]
+            items: [{ start, key: scalar, sep: sep2 }]
           };
           this.onKeyLine = true;
           this.stack[this.stack.length - 1] = map;
@@ -6955,15 +6955,15 @@ var require_parser = __commonJS({
                 } else if (isFlowToken(it.key) && !includesToken(it.sep, "newline")) {
                   const start2 = getFirstKeyStartProps(it.start);
                   const key = it.key;
-                  const sep = it.sep;
-                  sep.push(this.sourceToken);
+                  const sep2 = it.sep;
+                  sep2.push(this.sourceToken);
                   delete it.key;
                   delete it.sep;
                   this.stack.push({
                     type: "block-map",
                     offset: this.offset,
                     indent: this.indent,
-                    items: [{ start: start2, key, sep }]
+                    items: [{ start: start2, key, sep: sep2 }]
                   });
                 } else if (start.length > 0) {
                   it.sep = it.sep.concat(start, this.sourceToken);
@@ -7157,13 +7157,13 @@ var require_parser = __commonJS({
             const prev = getPrevProps(parent);
             const start = getFirstKeyStartProps(prev);
             fixFlowSeqItems(fc);
-            const sep = fc.end.splice(1, fc.end.length);
-            sep.push(this.sourceToken);
+            const sep2 = fc.end.splice(1, fc.end.length);
+            sep2.push(this.sourceToken);
             const map = {
               type: "block-map",
               offset: fc.offset,
               indent: fc.indent,
-              items: [{ start, key: fc, sep }]
+              items: [{ start, key: fc, sep: sep2 }]
             };
             this.onKeyLine = true;
             this.stack[this.stack.length - 1] = map;
@@ -7443,13 +7443,13 @@ var require_dist = __commonJS({
 
 // src/cli.ts
 var import_picocolors2 = __toESM(require_picocolors(), 1);
-import { writeFileSync as writeFileSync4, readFileSync as readFileSync7, existsSync as existsSync5 } from "node:fs";
-import { resolve as resolve4, join as join8, dirname as dirname4 } from "node:path";
+import { writeFileSync as writeFileSync4, readFileSync as readFileSync8, existsSync as existsSync6 } from "node:fs";
+import { resolve as resolve4, join as join9, dirname as dirname4 } from "node:path";
 import { fileURLToPath as fileURLToPath2 } from "node:url";
 
 // src/scan.ts
-import { resolve as resolve3, join as join7 } from "node:path";
-import { mkdirSync as mkdirSync4, existsSync as existsSync4 } from "node:fs";
+import { resolve as resolve3, join as join8 } from "node:path";
+import { mkdirSync as mkdirSync4, existsSync as existsSync5 } from "node:fs";
 
 // src/channels/source.ts
 import { readFileSync as readFileSync2, readdirSync as readdirSync2, statSync } from "node:fs";
@@ -11685,6 +11685,134 @@ function runTools(root, onProgress) {
   return { ran, missing, findings };
 }
 
+// src/channels/routes.ts
+import { readdirSync as readdirSync3, readFileSync as readFileSync5, statSync as statSync2, existsSync as existsSync2 } from "node:fs";
+import { join as join5, relative as relative2, sep } from "node:path";
+function frameworks(root) {
+  const found = /* @__PURE__ */ new Set();
+  for (const rel of ["package.json", "web/package.json", "frontend/package.json", "client/package.json"]) {
+    let pkg;
+    try {
+      pkg = JSON.parse(readFileSync5(join5(root, rel), "utf8"));
+    } catch {
+      continue;
+    }
+    const deps = Object.keys({
+      ...pkg.dependencies ?? {},
+      ...pkg.devDependencies ?? {}
+    });
+    for (const d of deps) {
+      if (d === "next") found.add("next-app"), found.add("next-pages");
+      if (d === "@sveltejs/kit") found.add("sveltekit");
+      if (d === "astro") found.add("astro");
+      if (d === "nuxt") found.add("nuxt");
+      if (d === "react-router" || d === "react-router-dom") found.add("react-router");
+      if (d === "vue-router") found.add("vue-router");
+    }
+  }
+  return found;
+}
+var DYNAMIC = /^[[:(]|^\.\.\.|\*$/;
+function walk2(root, dir, out, depth = 0) {
+  if (depth > 12) return;
+  let entries;
+  try {
+    entries = readdirSync3(dir);
+  } catch {
+    return;
+  }
+  for (const entry of entries) {
+    if (SKIP_DIRS.has(entry) || entry.startsWith(".")) continue;
+    const full = join5(dir, entry);
+    let stat;
+    try {
+      stat = statSync2(full);
+    } catch {
+      continue;
+    }
+    if (stat.isDirectory()) walk2(root, full, out, depth + 1);
+    else out.push(relative2(root, full));
+  }
+}
+var FILE_ROUTED = [
+  // The leaf is matched against the remainder after the base, so it has to
+  // tolerate sitting at position zero: `app/page.tsx` is the root route, and a
+  // leaf anchored on a leading slash left it named `/page.tsx`.
+  { framework: "next-app", base: /(^|\/)(src\/)?app\//, leaf: /(^|\/)page\.[jt]sx?$/ },
+  { framework: "next-pages", base: /(^|\/)(src\/)?pages\//, leaf: /\.[jt]sx?$/ },
+  { framework: "sveltekit", base: /(^|\/)src\/routes\//, leaf: /(^|\/)\+page\.svelte$/ },
+  { framework: "astro", base: /(^|\/)src\/pages\//, leaf: /\.(astro|md|mdx)$/ },
+  { framework: "nuxt", base: /(^|\/)pages\//, leaf: /\.vue$/ }
+];
+var NOT_A_PAGE = /(^|\/)(__tests__|__mocks__|__fixtures__)\/|\.(test|spec|stories|e2e)\.[jt]sx?$/;
+function fileRoute(rel, use) {
+  const path2 = rel.split(sep).join("/");
+  if (NOT_A_PAGE.test(path2)) return null;
+  for (const { framework, base, leaf } of FILE_ROUTED) {
+    if (!use.has(framework)) continue;
+    const m = base.exec(path2);
+    if (!m || !leaf.test(path2)) continue;
+    let route = path2.slice(m.index + m[0].length).replace(leaf, "");
+    route = route.split("/").filter((s) => s && !/^\(.*\)$/.test(s)).join("/");
+    if (framework === "next-pages" || framework === "astro" || framework === "nuxt") {
+      route = route.replace(/(^|\/)index$/, "");
+    }
+    if (route === "/") route = "";
+    if (route.split("/").some((s) => DYNAMIC.test(s))) return null;
+    return { path: "/" + route, from: path2, framework };
+  }
+  return null;
+}
+var DECLARED = [
+  { framework: "react-router", pattern: /\bpath\s*:\s*["'`]([^"'`]*)["'`]/g },
+  { framework: "react-router", pattern: /<Route\b[^>]*\bpath=["']([^"']*)["']/g },
+  { framework: "vue-router", pattern: /\bpath\s*:\s*["'`](\/[^"'`]*)["'`]/g }
+];
+function declaredRoutes(root, files, use) {
+  const out = [];
+  const candidates = files.filter((f) => {
+    const path2 = f.split(sep).join("/");
+    return !NOT_A_PAGE.test(path2) && /(^|\/)(routes?|router|App|main)\.[jt]sx?$/i.test(path2);
+  });
+  for (const file of candidates) {
+    let text;
+    try {
+      text = readFileSync5(join5(root, file), "utf8");
+    } catch {
+      continue;
+    }
+    for (const { framework, pattern } of DECLARED) {
+      if (!use.has(framework)) continue;
+      pattern.lastIndex = 0;
+      let m;
+      while ((m = pattern.exec(text)) !== null) {
+        const raw = (m[1] ?? "").trim();
+        if (!raw && raw !== "") continue;
+        if (raw.split("/").some((s) => DYNAMIC.test(s))) continue;
+        const path2 = raw.startsWith("/") ? raw : "/" + raw;
+        out.push({ path: path2, from: file.split(sep).join("/"), framework });
+      }
+    }
+  }
+  return out;
+}
+function discoverRoutes(root) {
+  if (!existsSync2(root)) return [];
+  const files = [];
+  walk2(root, root, files);
+  const use = frameworks(root);
+  if (!use.size) return [];
+  const found = /* @__PURE__ */ new Map();
+  for (const rel of files) {
+    const r = fileRoute(rel, use);
+    if (r && !found.has(r.path)) found.set(r.path, r);
+  }
+  for (const r of declaredRoutes(root, files, use)) {
+    if (!found.has(r.path)) found.set(r.path, r);
+  }
+  return [...found.values()].sort((a, b) => a.path.localeCompare(b.path));
+}
+
 // src/fingerprint/distance.ts
 var WEIGHTS = {
   macrostructure: 0.3,
@@ -11862,12 +11990,12 @@ function fingerprintFindings(prints, clashes, operatePages) {
 }
 
 // src/fingerprint/store.ts
-import { readFileSync as readFileSync6, writeFileSync as writeFileSync3, mkdirSync as mkdirSync3, existsSync as existsSync3 } from "node:fs";
-import { join as join6 } from "node:path";
+import { readFileSync as readFileSync7, writeFileSync as writeFileSync3, mkdirSync as mkdirSync3, existsSync as existsSync4 } from "node:fs";
+import { join as join7 } from "node:path";
 
 // src/config.ts
-import { readFileSync as readFileSync5, writeFileSync as writeFileSync2, mkdirSync as mkdirSync2, existsSync as existsSync2 } from "node:fs";
-import { join as join5, resolve as resolve2, dirname as dirname3, basename } from "node:path";
+import { readFileSync as readFileSync6, writeFileSync as writeFileSync2, mkdirSync as mkdirSync2, existsSync as existsSync3 } from "node:fs";
+import { join as join6, resolve as resolve2, dirname as dirname3, basename } from "node:path";
 import { homedir } from "node:os";
 var DEFAULT_CONFIG = {
   urls: [],
@@ -11892,7 +12020,7 @@ function stateRoot(scanRoot) {
   let dir = start;
   for (let i = 0; i < 12; i++) {
     const usable = dir === start || dir !== home && !dir.startsWith(`${home}/.`) && !basename(dir).startsWith(".");
-    if (usable && markers.some((m) => existsSync2(join5(dir, m)))) return dir;
+    if (usable && markers.some((m) => existsSync3(join6(dir, m)))) return dir;
     const parent = dirname3(dir);
     if (parent === dir || dir === home) break;
     dir = parent;
@@ -11900,10 +12028,10 @@ function stateRoot(scanRoot) {
   return start;
 }
 function loadConfig(root) {
-  const file = join5(stateRoot(root), DIR, CONFIG_FILE);
-  if (!existsSync2(file)) return { ...DEFAULT_CONFIG };
+  const file = join6(stateRoot(root), DIR, CONFIG_FILE);
+  if (!existsSync3(file)) return { ...DEFAULT_CONFIG };
   try {
-    const parsed = JSON.parse(readFileSync5(file, "utf8"));
+    const parsed = JSON.parse(readFileSync6(file, "utf8"));
     return {
       ...DEFAULT_CONFIG,
       ...parsed,
@@ -11915,26 +12043,26 @@ function loadConfig(root) {
   }
 }
 function saveConfig(root, config) {
-  mkdirSync2(join5(stateRoot(root), DIR), { recursive: true });
+  mkdirSync2(join6(stateRoot(root), DIR), { recursive: true });
   writeFileSync2(
-    join5(stateRoot(root), DIR, CONFIG_FILE),
+    join6(stateRoot(root), DIR, CONFIG_FILE),
     JSON.stringify(config, null, 2) + "\n",
     "utf8"
   );
 }
 function loadBaseline(root) {
-  const file = join5(stateRoot(root), DIR, BASELINE_FILE);
-  if (!existsSync2(file)) return null;
+  const file = join6(stateRoot(root), DIR, BASELINE_FILE);
+  if (!existsSync3(file)) return null;
   try {
-    return JSON.parse(readFileSync5(file, "utf8"));
+    return JSON.parse(readFileSync6(file, "utf8"));
   } catch {
     return null;
   }
 }
 function saveBaseline(root, baseline) {
-  mkdirSync2(join5(stateRoot(root), DIR), { recursive: true });
+  mkdirSync2(join6(stateRoot(root), DIR), { recursive: true });
   writeFileSync2(
-    join5(stateRoot(root), DIR, BASELINE_FILE),
+    join6(stateRoot(root), DIR, BASELINE_FILE),
     JSON.stringify(baseline, null, 2) + "\n",
     "utf8"
   );
@@ -11962,13 +12090,13 @@ function configIgnores(config) {
 var DIR2 = ".redpen";
 var FILE = "fingerprints.json";
 function path(root) {
-  return join6(stateRoot(root), DIR2, FILE);
+  return join7(stateRoot(root), DIR2, FILE);
 }
 function load(root) {
   const file = path(root);
-  if (!existsSync3(file)) return [];
+  if (!existsSync4(file)) return [];
   try {
-    const parsed = JSON.parse(readFileSync6(file, "utf8"));
+    const parsed = JSON.parse(readFileSync7(file, "utf8"));
     if (parsed.version !== 1) return [];
     return Object.values(parsed.pages);
   } catch {
@@ -11989,7 +12117,7 @@ function pageId(url) {
 }
 function save(root, prints) {
   if (!prints.length) return;
-  const dir = join6(stateRoot(root), DIR2);
+  const dir = join7(stateRoot(root), DIR2);
   mkdirSync3(dir, { recursive: true });
   const existing = load(root);
   const pages = {};
@@ -12096,11 +12224,43 @@ var CODE_CATEGORIES = /* @__PURE__ */ new Set(["craft", "residue"]);
 async function runScan(opts) {
   const root = resolve3(opts.root);
   const config = loadConfig(root);
-  const urls = opts.urls?.length ? opts.urls : config.urls;
+  const given = opts.urls?.length ? opts.urls : config.urls;
   const viewports = opts.viewports?.length ? opts.viewports : config.viewports;
   const warnings = [];
+  const MAX_EXPANDED = 20;
+  let urls = given;
+  let expandedFrom = null;
+  if (given.length === 1) {
+    const only = given[0];
+    let bare = false;
+    try {
+      const u = new URL(only);
+      bare = u.pathname === "/" && !u.search && !u.hash;
+    } catch {
+      bare = false;
+    }
+    if (bare) {
+      const routes = discoverRoutes(root);
+      if (routes.length > 1) {
+        const origin = only.replace(/\/$/, "");
+        urls = routes.slice(0, MAX_EXPANDED).map((r) => origin + (r.path === "/" ? "" : r.path));
+        if (!urls.includes(origin)) urls.unshift(origin);
+        expandedFrom = routes.length;
+      }
+    }
+  }
+  if (expandedFrom !== null) {
+    opts.onProgress?.(
+      `routes: ${expandedFrom} declared in the source, scanning ${urls.length}` + (expandedFrom > MAX_EXPANDED ? ` (capped at ${MAX_EXPANDED}; list urls in .redpen/config.json to choose)` : "")
+    );
+    if (expandedFrom > MAX_EXPANDED) {
+      warnings.push(
+        `${expandedFrom} routes were found in the source and the first ${MAX_EXPANDED} were scanned \u2014 the rest are not in this score. List the ones you care about in .redpen/config.json.`
+      );
+    }
+  }
   const state = stateRoot(root);
-  if (!existsSync4(join7(state, ".redpen", "config.json"))) {
+  if (!existsSync5(join8(state, ".redpen", "config.json"))) {
     warnings.push(
       `no .redpen/config.json found (looked in ${state}) \u2014 running with defaults, so every capability is assumed available and no surface is declared`
     );
@@ -12211,8 +12371,10 @@ async function runScan(opts) {
       }
     }
   } else if (!opts.codeCategories) {
+    const routes = discoverRoutes(root);
+    const listed = routes.slice(0, 8).map((r) => r.path).join(" ");
     warnings.push(
-      'no urls configured \u2014 the render channel did not run, so every source finding that render could confirm is capped at "possible". Add urls to .redpen/config.json or pass --url.'
+      'no urls configured \u2014 the render channel did not run, so every source finding that render could confirm is capped at "possible". ' + (routes.length ? `This project declares ${routes.length} route(s) (${routes[0].framework}): ${listed}` + (routes.length > 8 ? ` \u2026 and ${routes.length - 8} more.` : ".") + " Start the app and pass an origin \u2014 `redpen scan . http://localhost:3000` scans them all." : "Add urls to .redpen/config.json or pass --url.")
     );
   }
   let briefPath = null;
@@ -12953,7 +13115,7 @@ function packageVersion() {
   let dir = dirname4(fileURLToPath2(import.meta.url));
   for (let up = 0; up < 6; up++) {
     try {
-      const pkg = JSON.parse(readFileSync7(join8(dir, "package.json"), "utf8"));
+      const pkg = JSON.parse(readFileSync8(join9(dir, "package.json"), "utf8"));
       if (pkg.version) return pkg.version;
     } catch {
     }
@@ -12976,7 +13138,7 @@ async function main() {
   }
   const TAKES_A_PATH = /* @__PURE__ */ new Set(["scan", "code", "check", "baseline", "fingerprints", "brief", "init", "why-score"]);
   const root = resolve4(TAKES_A_PATH.has(args.command) ? args.positional[0] ?? "." : ".");
-  if (TAKES_A_PATH.has(args.command) && args.positional[0] && !existsSync5(root)) {
+  if (TAKES_A_PATH.has(args.command) && args.positional[0] && !existsSync6(root)) {
     fail(`no such directory: ${args.positional[0]}`);
   }
   switch (args.command) {
@@ -13368,11 +13530,11 @@ function cmdFingerprints(root) {
   }
 }
 function cmdBrief(root) {
-  const file = join8(stateRoot(root), ".redpen", "vision-brief.json");
-  if (!existsSync5(file)) {
+  const file = join9(stateRoot(root), ".redpen", "vision-brief.json");
+  if (!existsSync6(file)) {
     fail(`no brief at ${file} \u2014 run \`redpen scan <path> --url <url> --vision\` first`);
   }
-  const brief = JSON.parse(readFileSync7(file, "utf8"));
+  const brief = JSON.parse(readFileSync8(file, "utf8"));
   const w = process.stdout.write.bind(process.stdout);
   w(`
   ${import_picocolors2.default.bold("Vision brief")}  ${import_picocolors2.default.dim(file)}
@@ -13428,7 +13590,7 @@ function cmdInit(root) {
   saveConfig(root, { ...DEFAULT_CONFIG, ...existing });
   process.stdout.write(
     `
-  wrote ${import_picocolors2.default.bold(join8(stateRoot(root), ".redpen", "config.json"))}
+  wrote ${import_picocolors2.default.bold(join9(stateRoot(root), ".redpen", "config.json"))}
 
 ` + import_picocolors2.default.dim("  Two fields are worth filling in before anything else:\n\n") + import_picocolors2.default.dim('    "urls"    \u2014 without one the browser pass never runs and every\n') + import_picocolors2.default.dim('                finding it could confirm is capped at "possible".\n') + import_picocolors2.default.dim('    "product" \u2014 name, purpose, audience. The vision brief is meant to\n') + import_picocolors2.default.dim("                be answerable by someone who has not seen the project,\n") + import_picocolors2.default.dim("                and several questions are unfair without it.\n\n") + import_picocolors2.default.dim('  "schemes" defaults to "auto": redpen probes the first page for a dark\n') + import_picocolors2.default.dim('  theme and scans it too if there is one. Set ["light"] to skip that.\n\n')
   );

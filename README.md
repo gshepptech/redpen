@@ -381,6 +381,29 @@ likely    [vision]         vague-headline
 `vague-headline` is a rule no other channel can see at all. It exists only
 because someone looked.
 
+### It reads its own routes
+
+`redpen scan . http://localhost:3000` scans the whole app, not the home page.
+The routes are in the repository, so redpen reads them rather than asking you
+to retype them — Next's app and pages routers, SvelteKit, Astro, Nuxt, React
+Router and Vue Router. Pass a bare origin and it expands; pass an explicit path
+and that one page is what gets read.
+
+A convention only counts when the framework that defines it is installed. A
+directory called `pages/` in a React Router app holds components, and treating
+it as a router produced 188 routes on one project, `/__tests__/AuditLogPage.test`
+among them. Dynamic segments are dropped, because only a running app knows what
+fills `[slug]`.
+
+With no url at all, the run names what it found:
+
+```
+! no urls configured — the render channel did not run, so every source finding
+  that render could confirm is capped at "possible". This project declares 18
+  route(s) (next-app): / /admin /calendar /data /disclaimer /guide /habitat
+  /journal … and 10 more. Start the app and pass an origin.
+```
+
 **A channel that cannot run says so.** No Playwright, no screenshots, an
 unreadable or malformed answers file — each is reported as a warning and the
 affected findings stay unconfirmed. Nothing degrades into a clean report.
@@ -480,7 +503,7 @@ dashboard: `default-sans`, `monotonous-spacing`, `ghost-cards`, `over-rounding`,
 
 ## What this has and has not been proven against
 
-v0.1.0. The corpus is 170 rules across 15 categories, the suite is 230 tests,
+v0.1.0. The corpus is 170 rules across 15 categories, the suite is 238 tests,
 and it has been run end to end against five real projects plus its own
 fixtures. Nearly everything ever found wrong with redpen was found by pointing
 it at something real rather than by reading it: a first Go dashboard gave up six
