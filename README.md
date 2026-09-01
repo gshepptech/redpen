@@ -392,10 +392,11 @@ by a pattern, because each needs a parse of the whole project: whether a block
 is a copy of another block, whether an export has any caller, and whether the
 import graph has a cycle.
 
-Duplication is the most measured of the three. Across 600 million commits,
-block duplication rose 81% between 2023 and 2026 while the share of *moved* —
-that is, refactored — code fell from 21% to 3.8%. A second copy is cheaper to
-generate than a shared function is to find.
+Duplication is the most measured of the three. GitClear's analysis of 623
+million changes found block duplication rising from 40.3 to 73.0 per million
+changed lines between 2023 and 2026, while the share of *moved* — that is,
+refactored — code fell from 21% in 2022 to 3.8% in 2026. A second copy is
+cheaper to write than a shared function is to find.
 
 So `redpen code` runs the analysers the project already carries, the same way
 the render channel borrows a browser rather than shipping one:

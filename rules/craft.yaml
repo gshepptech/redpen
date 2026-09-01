@@ -558,12 +558,19 @@
     - { origin: study, ref: "gitclear:block-duplication" }
     - { origin: heuristics, ref: "dedup" }
   channels: [tools]
+  # The industry figures are deliberately not in `why`.
+  #
+  # `why` is printed directly under the finding, so a sentence about 623
+  # million changes across every codebase read as a claim about *this* one —
+  # the first person to see it asked whether redpen thought their repository
+  # had millions of commits and three years of history. The provenance line
+  # carries the study; the argument has to be about the code in front of you.
   why: >-
-    The most measured signal there is. Across 600 million commits, block
-    duplication rose 81% between 2023 and 2026 while the share of moved —
-    that is, refactored — code fell from 21% to 3.8%. A second copy is cheaper
-    to generate than a shared function is to find, and the cost lands on
-    whoever has to change both.
+    A second copy is cheaper to write than a shared function is to find, and
+    the cost lands on whoever has to change both — usually months later,
+    usually someone who does not know the other copy exists. It is the tell
+    that best separates code that was generated from code that was maintained,
+    because generating is cheap and consolidating never happens by itself.
   fix: >-
     Extract the block once both copies are in front of you, so you can see what
     actually varies between them. Two blocks that differ in one literal want a

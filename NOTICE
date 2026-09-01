@@ -54,11 +54,21 @@ severity weighting in rules/*.yaml are original work.
   vibecoded-design-tells (unslop-ui)
     https://github.com/JCarterJohnson/vibecoded-design-tells
     MIT License (code); harvested Reddit text belongs to its original authors
-    Contributed the only empirical ranking in the corpus. The `evidenceRank`
-    and `weight` fields derive from that study's comment-level tabulation of
+    Contributed the corpus's ranking of page tells. The `evidenceRank` and
+    `weight` fields derive from that study's comment-level tabulation of
     3,033 comments drawn from 3.2M posts across 47 subreddits. Where a rule
     carries an evidenceRank, that number is the study's; where it does not, the
     weight is redpen's own judgement of consequence and is documented as such.
+
+  GitClear — the Maintainability Gap
+    https://www.gitclear.com/the_ai_code_quality_maintainability_gap
+    Cited, not incorporated. No text or code is used.
+    The measurement behind `copy-paste-duplication`: across 623 million
+    analysed changes, block duplication rose from 40.3 to 73.0 per million
+    changed lines between 2023 and 2026, while moved — that is, refactored —
+    code fell from 21% of changed lines in 2022 to 3.8% in 2026. The figures
+    are industry-wide and describe no particular repository, which is why they
+    are recorded here and not in the rule's own argument.
 
   frontend-design-audit
     https://github.com/mistyhx/frontend-design-audit
