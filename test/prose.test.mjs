@@ -133,3 +133,48 @@ test('every prose rule reads documents and nothing else', () => {
     }
   }
 });
+
+test('a document is checked for em dashes; the page rule never saw one', async () => {
+  // The em-dash rule read markup only, so it never opened a .md — the format
+  // where the tell was named in the first place. redpen's own README carries 67
+  // of them and the corpus said nothing.
+  const dir = doc('README.md', 'A sentence — with an aside — and another one.\n'.repeat(8));
+  try {
+    const r = await runScan({ root: dir, codeCategories: true, ephemeral: true, tools: false });
+    const advisory = (r.advisory ?? []).map((f) => f.ruleId);
+    assert.ok(advisory.includes('em-dash-in-prose'), advisory.join(' '));
+    assert.ok(
+      !r.findings.some((f) => f.ruleId === 'em-dash-in-prose'),
+      'it is advisory, so it never scores — humans punctuate this way too',
+    );
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('a bolded lead term in a list is typography, not a prose splice', async () => {
+  // `- **Term** — description` is a definition list wearing markdown, and the
+  // catalogue carves it out by name. redpen was counting them.
+  const dir = doc(
+    'README.md',
+    Array.from({ length: 12 }, (_, i) => `- **Term ${i}** — what it means`).join('\n') + '\n',
+  );
+  try {
+    const r = await runScan({ root: dir, codeCategories: true, ephemeral: true, tools: false });
+    assert.ok(!(r.advisory ?? []).some((f) => f.ruleId === 'em-dash-in-prose'));
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('every writing tell borrowed from the catalogue is credited', async () => {
+  // Eighteen rules carried a `writing:` reference while NOTICE named no writing
+  // catalogue at all — an attribution gap in a corpus whose whole claim is
+  // provenance.
+  const { readFileSync } = await import('node:fs');
+  const notice = readFileSync(new URL('../NOTICE', import.meta.url), 'utf8');
+  const cited = loadCorpus().filter((r) => r.sources.some((s) => /^writing:/.test(s.ref)));
+  assert.ok(cited.length >= 15, `${cited.length} rules cite the writing catalogue`);
+  assert.match(notice, /avoid-ai-writing/, 'NOTICE must name the catalogue those rules came from');
+  assert.match(notice, /false-positive/, 'and carry the caveat it ships with');
+});

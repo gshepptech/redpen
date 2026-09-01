@@ -11,7 +11,7 @@ LICENSE-APACHE-2.0. Everything else in this repository is MIT.
 Upstream catalogues
 ------------------------------------------------------------------------------
 
-redpen's rule corpus (rules/*.yaml) is a merge of four prior catalogues. Every
+redpen's rule corpus (rules/*.yaml) is a merge of five prior catalogues. Every
 rule in the corpus carries a `sources:` list naming which of them described it
 and under what identifier; run `redpen sources` for the rollup and `redpen why
 <rule-id>` for a single rule's provenance.
@@ -60,6 +60,23 @@ severity weighting in rules/*.yaml are original work.
     carries an evidenceRank, that number is the study's; where it does not, the
     weight is redpen's own judgement of consequence and is documented as such.
 
+  avoid-ai-writing
+    https://github.com/conorbronsdon/avoid-ai-writing (skill v3.25.0)
+    MIT License
+    Contributed the prose catalogue: the frequency-marker and clarity word
+    lists, the tier split between them, and the named cadence and structure
+    tells that `rules/prose.yaml` and several `copy` rules are built from.
+    Eighteen rules carry a `writing:` reference.
+
+    Its epistemics are adopted with it. That catalogue is explicit that these
+    patterns are a writing-quality signal rather than a verdict on authorship —
+    independent audits of commercial AI detectors have found false-positive
+    rates above 60% on non-native English writers (Liang et al., Stanford,
+    Patterns 2023). redpen's advisory tier exists for exactly this class, and
+    `inflated-formality` is advisory because the source measured those words
+    against 257 paragraphs of verified pre-2023 human prose and found them
+    ordinary.
+
   GitClear — the Maintainability Gap
     https://www.gitclear.com/the_ai_code_quality_maintainability_gap
     Cited, not incorporated. No text or code is used.
@@ -80,7 +97,7 @@ severity weighting in rules/*.yaml are original work.
 What redpen added
 ------------------------------------------------------------------------------
 
-  - The unified schema and the merge itself: 178 rules collapsed from 304
+  - The unified schema and the merge itself: 179 rules collapsed from 306
     upstream references, each with provenance retained.
   - Cross-channel promotion (src/promote.ts). No upstream catalogue reconciles
     a source-level hit against a rendered-DOM hit, so none of them can tell a

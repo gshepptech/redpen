@@ -58,8 +58,12 @@ test('the prose agrees with the corpus it describes', () => {
     ['NOTICE', /collapsed from (\d+)\s*\n?\s*upstream references/, c.upstreamRefs],
     // Shipped metadata drifts too, and nobody reads it — both of these were
     // still advertising 113 rules six rules later.
-    ['.claude-plugin/plugin.json', /(\d+) design rules/, c.rules],
-    ['.claude-plugin/marketplace.json', /(\d+) design rules/, c.rules],
+    // `design rules` became `rules` when the corpus stopped being only about
+    // design — it reads code and documents now. The pattern tracks the wording
+    // rather than pinning it, so a future rename fails loudly instead of
+    // silently dropping the claim from the check.
+    ['.claude-plugin/plugin.json', /(\d+) (?:design )?rules merged/, c.rules],
+    ['.claude-plugin/marketplace.json', /(\d+) (?:design )?rules merged/, c.rules],
   ];
 
   const wrong = [];

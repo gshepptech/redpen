@@ -92,9 +92,16 @@
     # CSS block comment explaining why a list is keyboard-reachable, on the
     # continuation line, where no comment marker starts the line to suppress on.
     extensions: ['.html', '.htm', '.tsx', '.jsx', '.ts', '.js', '.mjs', '.vue', '.svelte', '.astro', '.mdx']
-    suppress: '^\s*(\{\s*/\*|//|\*|/\*|#|<!--)'
+    # A list item that opens with a bolded lead term or a link and separates it
+    # with a dash is typography, not a prose splice — `- **Term** — description`
+    # is a definition list wearing markdown. The catalogue this rule comes from
+    # carves those out by name, and redpen was counting them.
+    suppress: '^\s*(\{\s*/\*|//|\*|/\*|#|<!--)|^\s*[-*+]\s+(\*\*[^*]+\*\*|\[[^\]]+\]\([^)]*\))\s*—'
     patterns:
       - '—'
+      # The double-hyphen substitute is the same tell typed by someone whose
+      # editor does not make the character, and it is never carved out.
+      - '(?<=\w)\s--\s(?=\w)'
     minHits: 6
   why: >-
     The single most-named tell in AI *prose*, and it carries onto interface
@@ -698,3 +705,41 @@
   fix: >-
     Keep the best one or two and write the rest as ordinary sentences. A
     cadence only lands when it is not the only cadence in the document.
+
+- id: em-dash-in-prose
+  kind: slop
+  advisory: true
+  title: Em dashes throughout a document
+  category: prose
+  severity: low
+  weight: 44
+  evidenceRank: 11
+  sources:
+    - { origin: catalogue, ref: "writing:em-dashes" }
+    - { origin: study, ref: copy-tells }
+  channels: [source]
+  source:
+    # The page-side rule reads markup and never saw a .md, which is where this
+    # tell was named in the first place: it is a *prose* pattern that carries
+    # onto interface copy, and redpen only checked the copy.
+    extensions: ['.md', '.markdown', '.rst', '.txt', '.adoc']
+    # The catalogue puts the hard maximum at one per thousand words. Eight is
+    # the threshold at which a document of any ordinary length has crossed it,
+    # chosen so a long, carefully punctuated essay is not reported for being long.
+    minHits: 8
+    suppress: '^\s*[-*+]\s+(\*\*[^*]+\*\*|\[[^\]]+\]\([^)]*\))\s*—|^\s{4,}|^\s*(```|\|)'
+    patterns:
+      - '—'
+      - '(?<=\w)\s--\s(?=\w)'
+  legitimateWhen: >-
+    A writer who genuinely punctuates this way, and there are many. This is the
+    most-named tell in the sample and also the one humans use most legitimately,
+    which is why it is advisory and never costs a score.
+  why: >-
+    The most-named tell in the study, and the one that carries furthest into
+    documents. A dash earns its place by marking an interruption the sentence
+    could not survive without; eight in one document means the shape is being
+    used as a rhythm rather than for the interruption.
+  fix: >-
+    Most become commas or full stops. Keep the ones where the aside genuinely
+    breaks the sentence, and rewrite the rest as two sentences.
