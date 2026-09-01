@@ -608,7 +608,15 @@ const CHECKS_LIB = `
 
       var ch = measureCh(el);
       return ch < (p.minCh || 45) || ch > (p.maxCh || 78);
-    }).map(function (el) { return hit(el, 'measure ~' + Math.round(measureCh(el)) + 'ch'); });
+    }).map(function (el) {
+      // Which bound. This is a range check, so 44ch and 79ch are opposite
+      // problems with opposite fixes, and the finding printed them identically.
+      var ch = Math.round(measureCh(el));
+      var lo = p.minCh || 45;
+      return hit(el, ch < lo
+        ? 'measure ~' + ch + 'ch — narrower than ' + lo + 'ch, so the eye returns too often'
+        : 'measure ~' + ch + 'ch — wider than ' + (p.maxCh || 78) + 'ch, so the eye loses the line');
+    });
   };
 
   // Width of the text box in characters. Uses the rendered width of a real
@@ -785,8 +793,23 @@ const CHECKS_LIB = `
     var hero = document.querySelector('header + section, main > section:first-child, [class*="hero"]') ||
                topLevelSections()[0];
     if (!hero) return [];
+    // A hero does not contain the rest of the page. Height alone could not
+    // separate the two: the first section of one long route measured 271vh,
+    // and tightening the ceiling only moved the argument to 202vh. What makes
+    // it not a hero is that the other sections are inside it.
+    // topLevelSections only returns direct children of main, so a wrapper that
+    // holds every section has no sibling inside it and the check found nothing.
+    // Count the sections it contains instead: an opener holds none.
+    if (hero.querySelectorAll('section, article').length > 1) return [];
+
     var h = hero.getBoundingClientRect().height;
-    if (h / window.innerHeight < (p.minHeroVh || 0.85)) return [];
+    var vh = h / window.innerHeight;
+    // A hero is a screenful, or two. There was a floor and no ceiling, so on a
+    // long page the first section matched the whole content column — 271vh —
+    // where a centred prose measure naturally puts two dozen elements on one
+    // axis. Above the ceiling this is a page, and the check does not apply to
+    // pages.
+    if (vh < (p.minHeroVh || 0.85) || vh > (p.maxHeroVh || 2.5)) return [];
     var centered = Array.prototype.slice.call(hero.querySelectorAll('h1, h2, p, a, button, span'))
       .filter(visible)
       .filter(function (el) {
@@ -1487,6 +1510,15 @@ const CHECKS_LIB = `
 
   CHECKS['primitive-shape-cluster'] = function (p) {
     return all('svg').filter(function (svg) {
+      // Background texture is not an assembled illustration. A full-bleed svg
+      // that sits behind the content and cannot be clicked is chrome the author
+      // drew on purpose — a topographic contour wash was reported on every
+      // route of one project as 23 primitive shapes.
+      var cs = getComputedStyle(svg);
+      var behind = parseFloat(cs.zIndex) < 0;
+      var pinned = cs.position === 'fixed' || cs.position === 'absolute';
+      if (cs.pointerEvents === 'none' && pinned && behind) return false;
+
       var shapes = svg.querySelectorAll('circle, rect, ellipse, path[d]');
       if (shapes.length < (p.minShapes || 8)) return false;
       var kinds = {};
@@ -1882,10 +1914,25 @@ const CHECKS_LIB = `
       var f = getComputedStyle(el).fontFamily.split(',')[0].replace(/["']/g, '').trim().toLowerCase();
       if (f) used[f] = 1;
     });
+    // A face the page actually loads is part of the type system, however it was
+    // declared. next/font emits @font-face and a hashed family name and sets no
+    // font custom property at all, so a project using the framework's own
+    // recommended setup had its three deliberate faces — Oswald, Bitter, IBM
+    // Plex Mono — reported as drift. Reading the loaded set instead of only the
+    // token block makes the check framework-agnostic: shipping a webfont is as
+    // explicit a declaration as naming it in a root custom property.
+    var loaded = {};
+    try {
+      document.fonts.forEach(function (face) {
+        loaded[String(face.family).replace(/["']/g, '').trim().toLowerCase()] = 1;
+      });
+    } catch (e) { /* FontFaceSet is unavailable; fall back to tokens alone. */ }
+
     var off = Object.keys(used).filter(function (f) {
       // Generic and platform families are never "declared" and never drift.
       if (/^(ui-|system-|-apple-)/.test(f)) return false;
       if (/^(serif|sans-serif|monospace|cursive|fantasy|system-ui)$/.test(f)) return false;
+      if (f in loaded) return false;
       return !(f in tokens);
     });
     if (off.length < (p.minDrift || 1)) return [];

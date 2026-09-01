@@ -545,7 +545,7 @@ dashboard: `default-sans`, `monotonous-spacing`, `ghost-cards`, `over-rounding`,
 
 ## What this has and has not been proven against
 
-v0.1.0. The corpus is 170 rules across 15 categories, the suite is 246 tests,
+v0.1.0. The corpus is 170 rules across 15 categories, the suite is 251 tests,
 and it has been run end to end against five real projects plus its own
 fixtures. Nearly everything ever found wrong with redpen was found by pointing
 it at something real rather than by reading it: a first Go dashboard gave up six
@@ -563,14 +563,22 @@ there — professional copy, correctly left alone.
 
 Specifically not yet true:
 
-- **Validation is still thin, but no longer untested.** The code rules have now
-  been run against a 1,872-file repository by someone who could push back, and
-  that one report produced four false positives — a comment about a type read
-  as a type, `staleTime: 5 * 60 * 1000, // 5 minutes` reported as an unnamed
-  constant, a named re-export reported as a barrel, and Go's `interface{}`,
-  which turned out to be the language rather than a habit and was measured and
-  rejected. All four are fixed and each has a regression test. The page rules
-  have had no equivalent pass.
+- **Validation is thin, and now has two real passes behind it.** The code rules
+  were run against a 1,872-file repository and produced four false positives — a
+  comment about a type read as a type, `staleTime: 5 * 60 * 1000, // 5 minutes`
+  reported as an unnamed constant, a named re-export reported as a barrel, and
+  Go's `interface{}`, which turned out to be the language rather than a habit
+  and was measured and rejected.
+
+  The page rules were then run against a live 18-route Next.js app and produced
+  four more: the whole content column read as a 271vh hero, a topographic
+  background wash read as an assembled illustration, three deliberate faces
+  declared through `next/font` read as type-system drift — a false positive that
+  would fire on every project using the framework's own recommended setup — and
+  a measure range that printed 44ch and 79ch, opposite problems, identically.
+
+  All eight are fixed and each has a regression test. Two projects is still not
+  a corpus.
 - **The vision channel is hand-answered.** It writes a brief and folds answers
   back in; it does not look at the screenshots itself.
 - **Dark mode is one extra pass.** An emulated preference and, where the page

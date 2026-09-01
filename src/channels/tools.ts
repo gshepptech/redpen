@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { accessSync, constants, existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
-import { join } from 'node:path';
+import { delimiter, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import type { RawFinding } from '../types.js';
 import { SKIP_DIRS } from './source.js';
@@ -92,19 +92,36 @@ interface Analyser {
  * should be read by jscpd 4, not by whatever a global install happens to be.
  */
 export function resolveBin(root: string, bin: string): string | null {
-  const local = join(root, 'node_modules', '.bin', bin);
-  if (existsSync(local)) return local;
+  // On Windows the executable is `jscpd.cmd`, not `jscpd`, and PATH is
+  // semicolon-separated. Without this every analyser resolved to null there and
+  // the tools channel was permanently absent on a platform `engines` claims to
+  // support — reported as "not installed", which is the wrong reason.
+  const names = process.platform === 'win32' ? [`${bin}.cmd`, `${bin}.exe`, bin] : [bin];
+
+  for (const name of names) {
+    const local = join(root, 'node_modules', '.bin', name);
+    if (existsSync(local)) return local;
+  }
+
   // PATH walked directly rather than shelled out to `command -v`: passing args
   // with `shell: true` concatenates rather than escapes them, and a lookup does
   // not need a shell to begin with.
-  for (const dir of (process.env.PATH ?? '').split(':')) {
+  for (const dir of (process.env.PATH ?? '').split(delimiter)) {
     if (!dir) continue;
-    const candidate = join(dir, bin);
-    try {
-      accessSync(candidate, constants.X_OK);
-      return candidate;
-    } catch {
-      continue;
+    for (const name of names) {
+      const candidate = join(dir, name);
+      try {
+        // X_OK is meaningless on Windows — every readable file reports as
+        // executable — so existence is the check there.
+        if (process.platform === 'win32') {
+          if (existsSync(candidate)) return candidate;
+        } else {
+          accessSync(candidate, constants.X_OK);
+          return candidate;
+        }
+      } catch {
+        continue;
+      }
     }
   }
   return null;

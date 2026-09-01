@@ -45,3 +45,59 @@ test('it fits on a line rather than running to a call log', () => {
   ]);
   assert.ok(!out.includes('\n'), `still multi-line: ${JSON.stringify(out)}`);
 });
+
+/**
+ * Four findings plotguide was right to argue with.
+ *
+ * The first live run of the page rules by someone who could push back. Each of
+ * these is asserted against the detector source rather than a live browser,
+ * because the fix is the condition, and a test that needs a dev server running
+ * is a test nobody runs.
+ */
+
+test('a hero is a screenful, not a page that happens to start with one', async () => {
+  // `main > section:first-child` matched the whole content column — 271vh, then
+  // 202vh once a ceiling went in — where a centred prose measure naturally puts
+  // two dozen elements on one axis. What makes it not a hero is structural: an
+  // opener does not contain the rest of the sections.
+  const src = await import('node:fs').then((fs) =>
+    fs.readFileSync(new URL('../src/channels/detectors.ts', import.meta.url), 'utf8'),
+  );
+  const check = src.slice(src.indexOf("CHECKS['centered-axis-stack']"), src.indexOf("CHECKS['centered-axis-stack']") + 2200);
+  assert.match(check, /querySelectorAll\('section, article'\)\.length > 1/);
+  assert.match(check, /maxHeroVh/);
+});
+
+test('a face the page loads is declared, however the framework declared it', async () => {
+  // next/font emits @font-face and sets no font custom property, so a project
+  // using the framework's own recommended setup had Oswald, Bitter and IBM Plex
+  // Mono — its three deliberate faces — reported as type-system drift.
+  const src = await import('node:fs').then((fs) =>
+    fs.readFileSync(new URL('../src/channels/detectors.ts', import.meta.url), 'utf8'),
+  );
+  const check = src.slice(src.indexOf("CHECKS['font-family-drift']"));
+  assert.match(check.slice(0, 1600), /document\.fonts/);
+  assert.match(check.slice(0, 1600), /f in loaded/);
+});
+
+test('background texture is not an assembled illustration', async () => {
+  // A full-bleed topographic wash — pointer-events:none, fixed, behind the
+  // content — was reported on every route of one project as 23 primitive shapes.
+  const src = await import('node:fs').then((fs) =>
+    fs.readFileSync(new URL('../src/channels/detectors.ts', import.meta.url), 'utf8'),
+  );
+  const check = src.slice(src.indexOf("CHECKS['primitive-shape-cluster']"));
+  assert.match(check.slice(0, 900), /pointerEvents === 'none'/);
+  assert.match(check.slice(0, 900), /zIndex/);
+});
+
+test('a measure finding says which bound it crossed', async () => {
+  // It is a range check, so 44ch and 79ch are opposite problems with opposite
+  // fixes, and both printed as "measure ~Nch".
+  const src = await import('node:fs').then((fs) =>
+    fs.readFileSync(new URL('../src/channels/detectors.ts', import.meta.url), 'utf8'),
+  );
+  const check = src.slice(src.indexOf("CHECKS['measure-range']"));
+  assert.match(check.slice(0, 1600), /narrower than/);
+  assert.match(check.slice(0, 1600), /wider than/);
+});

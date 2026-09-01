@@ -185,3 +185,16 @@ test('the terminal report counts against the total, not the capped list', async 
   assert.ok(more, 'the report says something was elided');
   assert.equal(Number(more[1]), 200 - 3, 'counted against the 200, not against the capped 16');
 });
+
+test('the binary lookup is not posix-only', async () => {
+  // `PATH.split(':')` and a bare `jscpd` resolve to nothing on Windows, where
+  // the file is `jscpd.cmd` and the separator is `;`. Every analyser came back
+  // null there and was reported as "not installed", which is the wrong reason
+  // on a platform `engines` claims to support.
+  const src = await import('node:fs').then((fs) =>
+    fs.readFileSync(new URL('../src/channels/tools.ts', import.meta.url), 'utf8'),
+  );
+  assert.ok(!/PATH.*split\('?:'?\)/.test(src), 'PATH must not be split on a literal colon');
+  assert.match(src, /delimiter/, 'PATH is split on the platform delimiter');
+  assert.match(src, /win32/, 'the .cmd shim is looked for on Windows');
+});
