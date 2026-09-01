@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 import { writeFileSync, readFileSync, existsSync } from 'node:fs';
-import { resolve, join, dirname } from 'node:path';
+import { resolve, join, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import pc from 'picocolors';
 import { runScan, ruleIds } from './scan.js';
+import { loadPlaywright } from './channels/render.js';
+import { captureLogin } from './channels/login.js';
 import { meetsThreshold } from './promote.js';
 import { renderTerminal } from './report/terminal.js';
 import { renderMarkdown } from './report/markdown.js';
@@ -34,6 +36,7 @@ ${pc.bold('redpen')} — one verdict on your UI
   ${pc.bold('redpen sources')}            provenance rollup across upstream catalogues
   ${pc.bold('redpen fingerprints')}       show recorded page signatures
   ${pc.bold('redpen brief')} [path]       print the vision brief so nobody has to open JSON
+  ${pc.bold('redpen login')} <url>        log in in a real browser; save the session
   ${pc.bold('redpen init')} [path]        write .redpen/config.json
 
 ${pc.dim('Options')}
@@ -132,7 +135,7 @@ export function parseArgs(argv: string[]): Args {
     if (a.startsWith('--')) {
       fail(`unknown option ${a}`);
     }
-    if (first && ['scan', 'code', 'check', 'baseline', 'rules', 'why', 'sources', 'fingerprints', 'brief', 'init', 'why-score', 'help', 'version'].includes(a)) {
+    if (first && ['scan', 'code', 'check', 'baseline', 'rules', 'why', 'sources', 'fingerprints', 'brief', 'init', 'login', 'why-score', 'help', 'version'].includes(a)) {
       args.command = a;
       first = false;
       continue;
@@ -220,6 +223,9 @@ async function main(): Promise<void> {
       return cmdInit(root);
     case 'baseline':
       return cmdBaseline(root, args);
+    case 'login':
+      await cmdLogin(root, args);
+      return;
     case 'code':
       return cmdScan(root, args, false, true);
     case 'check':
@@ -658,6 +664,65 @@ function wrapAt(text: string, width: number, indent: string): string {
   }
   if (line.trim()) lines.push(line.trim());
   return lines.join('\n' + indent);
+}
+
+/**
+ * Capture a session by opening a browser and waiting.
+ *
+ * redpen automates none of the logging in. Every app's flow is different —
+ * OAuth, SSO, a magic link, a second factor — and a config schema covering
+ * them would be a browser automation language redpen then owns forever. What
+ * every flow produces is the same cookie jar, so that is the only part
+ * automated.
+ */
+async function cmdLogin(root: string, args: Args): Promise<void> {
+  const url = args.urls[0];
+  if (!url) {
+    fail('redpen login needs the url to log in at, e.g. `redpen login http://localhost:3000/login`');
+  }
+
+  const pw = await loadPlaywright(root);
+  if (!pw) {
+    fail(
+      'playwright is not installed here or in the project being scanned — ' +
+        '`npm i -D playwright && npx playwright install chromium`',
+    );
+  }
+
+  const out = join(stateRoot(root), '.redpen', 'auth.json');
+
+  const result = await captureLogin(
+    async () => pw as never,
+    url,
+    out,
+    {
+      say: (m) => process.stderr.write(pc.dim(`  ${m}\n`)),
+      waitForOperator: () =>
+        new Promise<void>((done) => {
+          process.stderr.write(pc.bold('\n  Press Enter here once you are logged in. '));
+          process.stdin.resume();
+          process.stdin.once('data', () => {
+            process.stdin.pause();
+            done();
+          });
+        }),
+    },
+  );
+
+  process.stdout.write(
+    `\n  session saved to ${pc.bold(relative(root, result.path) || result.path)}\n` +
+      pc.dim(`  ${result.cookies} cookie(s), ${result.origins} stored origin(s), captured at ${result.landedOn}\n`),
+  );
+  process.stderr.write(
+    pc.yellow('\n  This file is a live credential. Keep it out of git — `redpen init` adds\n') +
+      pc.yellow('  .redpen/ to .gitignore, and it will expire when the session does.\n'),
+  );
+
+  const config = loadConfig(root);
+  if (!config.storageState) {
+    saveConfig(root, { ...config, storageState: '.redpen/auth.json' });
+    process.stderr.write(pc.dim('\n  .redpen/config.json now points at it; scans will use it automatically.\n'));
+  }
 }
 
 function cmdInit(root: string): void {

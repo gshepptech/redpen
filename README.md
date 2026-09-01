@@ -413,6 +413,43 @@ With no url at all, the run names what it found:
 unreadable or malformed answers file — each is reported as a warning and the
 affected findings stay unconfirmed. Nothing degrades into a clean report.
 
+### Behind a login
+
+The whole `operate` surface — dashboards, settings, the app itself — sits behind
+a session, and until recently redpen could not see any of it. Worse, it did not
+say so: asking for `/dashboard` on a gated app landed on `/login`, and the
+report came back clean, confident and fully scored, labelled with the
+dashboard's url.
+
+Two things fix that.
+
+**Nothing is reported from a page you did not ask for.** If the browser lands on
+a different path than the one requested, that url is refused and named. A
+trailing slash, an added query string or a host change is not a different page;
+a different path is.
+
+**`redpen login` captures a session, and automates none of the logging in:**
+
+```
+redpen login http://localhost:3000/login
+```
+
+A real browser opens. You log in however the app works — password, OAuth, SSO,
+a magic link, a code on your phone — and press Enter. redpen writes the cookies
+and localStorage to `.redpen/auth.json` and points the config at it; every later
+scan renders as you.
+
+This is deliberately the only mechanism. Every app's login page is somewhere
+different, wants different fields, and is often not a form at all, so a config
+schema describing them would be a browser automation language redpen owns
+forever. What every flow produces is the same artefact — a cookie jar — so that
+is the only part worth automating. redpen never sees a credential; it only keeps
+what comes out the other side.
+
+`.redpen/auth.json` is a live credential and expires when the session does.
+`redpen init` puts `.redpen/` in .gitignore for that reason, and a configured
+session that is missing from disk is reported rather than silently skipped.
+
 ### The tools channel
 
 Three of the tells that most mark a codebase as machine-written cannot be seen
@@ -508,7 +545,7 @@ dashboard: `default-sans`, `monotonous-spacing`, `ghost-cards`, `over-rounding`,
 
 ## What this has and has not been proven against
 
-v0.1.0. The corpus is 170 rules across 15 categories, the suite is 241 tests,
+v0.1.0. The corpus is 170 rules across 15 categories, the suite is 246 tests,
 and it has been run end to end against five real projects plus its own
 fixtures. Nearly everything ever found wrong with redpen was found by pointing
 it at something real rather than by reading it: a first Go dashboard gave up six

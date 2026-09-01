@@ -61,6 +61,14 @@ export interface RedpenConfig {
    * someone who was not there, and this is what makes that possible.
    */
   product: Product;
+  /**
+   * Path to a Playwright storage state — the cookie jar `redpen login` writes.
+   *
+   * Relative to the project root. Null means every scan is anonymous, which on
+   * an app that requires a session means the render channel reads the login
+   * page, so redpen refuses those urls rather than reporting them.
+   */
+  storageState: string | null;
 }
 
 export interface Product {
@@ -99,6 +107,7 @@ export const DEFAULT_CONFIG: RedpenConfig = {
   ignore: {},
   capabilities: { javascript: true, externalAssets: true },
   product: { name: '', purpose: '', audience: '' },
+  storageState: null,
 };
 
 const DIR = '.redpen';

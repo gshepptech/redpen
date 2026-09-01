@@ -7444,7 +7444,7 @@ var require_dist = __commonJS({
 // src/cli.ts
 var import_picocolors2 = __toESM(require_picocolors(), 1);
 import { writeFileSync as writeFileSync4, readFileSync as readFileSync8, existsSync as existsSync6 } from "node:fs";
-import { resolve as resolve4, join as join9, dirname as dirname4 } from "node:path";
+import { resolve as resolve4, join as join9, dirname as dirname5, relative as relative3 } from "node:path";
 import { fileURLToPath as fileURLToPath2 } from "node:url";
 
 // src/scan.ts
@@ -11002,6 +11002,16 @@ var MIN_SURFACE_CONFIDENCE = 0.6;
 import { createRequire } from "node:module";
 import { join as join3, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+function differentPage(requested, landed) {
+  const path2 = (u) => {
+    try {
+      return new URL(u).pathname.replace(/\/+$/, "") || "/";
+    } catch {
+      return u;
+    }
+  };
+  return path2(requested) !== path2(landed);
+}
 function summariseErrors(errors) {
   const byMessage = /* @__PURE__ */ new Map();
   for (const e of errors) {
@@ -11084,6 +11094,7 @@ async function scanRender(opts) {
   const screenshots = /* @__PURE__ */ new Map();
   const detectedSurfaces = /* @__PURE__ */ new Map();
   const detectorErrors = [];
+  const redirected = /* @__PURE__ */ new Map();
   const widest = Math.max(...opts.viewports);
   let wantsDark = opts.schemes?.includes("dark") ?? false;
   let stamp = null;
@@ -11104,7 +11115,8 @@ async function scanRender(opts) {
           viewport: { width, height: 900 },
           deviceScaleFactor: 1,
           reducedMotion: "no-preference",
-          colorScheme: scheme
+          colorScheme: scheme,
+          ...opts.storageState ? { storageState: opts.storageState } : {}
         });
         const page = await context.newPage();
         await page.addInitScript(ERROR_TRAP);
@@ -11130,6 +11142,15 @@ async function scanRender(opts) {
             await context.close();
             continue;
           }
+        }
+        const landed = page.url();
+        if (differentPage(url, landed)) {
+          redirected.set(url, landed);
+          detectorErrors.push(
+            `${url} redirected to ${landed} \u2014 not scanned. A page that sends the browser somewhere else is not the page you asked about; if it needs a session, capture one with \`redpen login\`.`
+          );
+          await context.close();
+          continue;
         }
         let observedStamp = null;
         if (stampFor) {
@@ -12008,7 +12029,8 @@ var DEFAULT_CONFIG = {
   tolerance: 0,
   ignore: {},
   capabilities: { javascript: true, externalAssets: true },
-  product: { name: "", purpose: "", audience: "" }
+  product: { name: "", purpose: "", audience: "" },
+  storageState: null
 };
 var DIR = ".redpen";
 var CONFIG_FILE = "config.json";
@@ -12293,11 +12315,18 @@ async function runScan(opts) {
     const wantShots = opts.screenshots || opts.vision;
     const screenshotDir = wantShots ? resolve3(stateRoot(root), ".redpen", "screenshots") : null;
     if (screenshotDir) mkdirSync4(screenshotDir, { recursive: true });
+    const authPath = config.storageState ? resolve3(root, config.storageState) : null;
+    if (authPath && !existsSync5(authPath)) {
+      warnings.push(
+        `storageState "${config.storageState}" is configured but not on disk \u2014 scanning anonymously. Run \`redpen login <url>\` to capture one, or clear the setting.`
+      );
+    }
     const render = await scanRender({
       root,
       urls,
       viewports,
       screenshotDir,
+      storageState: authPath && existsSync5(authPath) ? authPath : null,
       ...config.schemes === "auto" ? { autoScheme: true } : { schemes: config.schemes }
     });
     timing.render = Date.now() - t1;
@@ -12553,6 +12582,39 @@ async function runScan(opts) {
 }
 function ruleIds(findings) {
   return [...new Set(findings.map((f) => f.ruleId))].sort();
+}
+
+// src/channels/login.ts
+import { mkdirSync as mkdirSync5 } from "node:fs";
+import { dirname as dirname4 } from "node:path";
+async function captureLogin(loadPlaywright2, url, out, prompt) {
+  const pw = await loadPlaywright2();
+  const browser = await pw.chromium.launch({ headless: false });
+  try {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 6e4 });
+    prompt.say(
+      "A browser window is open. Log in however this app works \u2014 password, SSO, a code, whatever it takes. redpen is not watching the form and never sees your credentials; it only keeps the session that comes out the other side."
+    );
+    await prompt.waitForOperator();
+    mkdirSync5(dirname4(out), { recursive: true });
+    await context.storageState({ path: out });
+    const landedOn = page.url();
+    await context.close();
+    const { readFileSync: readFileSync9 } = await import("node:fs");
+    const state = JSON.parse(readFileSync9(out, "utf8"));
+    const cookies = (state.cookies ?? []).length;
+    const origins = (state.origins ?? []).length;
+    if (!cookies && !origins) {
+      throw new Error(
+        `nothing to save: the browser held no cookies and no stored origins at ${landedOn}. If the login did complete, this app may keep its session somewhere a browser profile does not carry, and redpen cannot scan behind it.`
+      );
+    }
+    return { path: out, landedOn, cookies, origins };
+  } finally {
+    await browser.close();
+  }
 }
 
 // src/report/terminal.ts
@@ -12986,6 +13048,7 @@ ${import_picocolors2.default.bold("redpen")} \u2014 one verdict on your UI
   ${import_picocolors2.default.bold("redpen sources")}            provenance rollup across upstream catalogues
   ${import_picocolors2.default.bold("redpen fingerprints")}       show recorded page signatures
   ${import_picocolors2.default.bold("redpen brief")} [path]       print the vision brief so nobody has to open JSON
+  ${import_picocolors2.default.bold("redpen login")} <url>        log in in a real browser; save the session
   ${import_picocolors2.default.bold("redpen init")} [path]        write .redpen/config.json
 
 ${import_picocolors2.default.dim("Options")}
@@ -13092,7 +13155,7 @@ function parseArgs(argv) {
     if (a.startsWith("--")) {
       fail(`unknown option ${a}`);
     }
-    if (first && ["scan", "code", "check", "baseline", "rules", "why", "sources", "fingerprints", "brief", "init", "why-score", "help", "version"].includes(a)) {
+    if (first && ["scan", "code", "check", "baseline", "rules", "why", "sources", "fingerprints", "brief", "init", "login", "why-score", "help", "version"].includes(a)) {
       args.command = a;
       first = false;
       continue;
@@ -13112,14 +13175,14 @@ function fail(message) {
   process.exit(2);
 }
 function packageVersion() {
-  let dir = dirname4(fileURLToPath2(import.meta.url));
+  let dir = dirname5(fileURLToPath2(import.meta.url));
   for (let up = 0; up < 6; up++) {
     try {
       const pkg = JSON.parse(readFileSync8(join9(dir, "package.json"), "utf8"));
       if (pkg.version) return pkg.version;
     } catch {
     }
-    const parent = dirname4(dir);
+    const parent = dirname5(dir);
     if (parent === dir) break;
     dir = parent;
   }
@@ -13158,6 +13221,9 @@ async function main() {
       return cmdInit(root);
     case "baseline":
       return cmdBaseline(root, args);
+    case "login":
+      await cmdLogin(root, args);
+      return;
     case "code":
       return cmdScan(root, args, false, true);
     case "check":
@@ -13584,6 +13650,50 @@ function wrapAt(text, width, indent) {
   }
   if (line.trim()) lines.push(line.trim());
   return lines.join("\n" + indent);
+}
+async function cmdLogin(root, args) {
+  const url = args.urls[0];
+  if (!url) {
+    fail("redpen login needs the url to log in at, e.g. `redpen login http://localhost:3000/login`");
+  }
+  const pw = await loadPlaywright(root);
+  if (!pw) {
+    fail(
+      "playwright is not installed here or in the project being scanned \u2014 `npm i -D playwright && npx playwright install chromium`"
+    );
+  }
+  const out = join9(stateRoot(root), ".redpen", "auth.json");
+  const result = await captureLogin(
+    async () => pw,
+    url,
+    out,
+    {
+      say: (m) => process.stderr.write(import_picocolors2.default.dim(`  ${m}
+`)),
+      waitForOperator: () => new Promise((done) => {
+        process.stderr.write(import_picocolors2.default.bold("\n  Press Enter here once you are logged in. "));
+        process.stdin.resume();
+        process.stdin.once("data", () => {
+          process.stdin.pause();
+          done();
+        });
+      })
+    }
+  );
+  process.stdout.write(
+    `
+  session saved to ${import_picocolors2.default.bold(relative3(root, result.path) || result.path)}
+` + import_picocolors2.default.dim(`  ${result.cookies} cookie(s), ${result.origins} stored origin(s), captured at ${result.landedOn}
+`)
+  );
+  process.stderr.write(
+    import_picocolors2.default.yellow("\n  This file is a live credential. Keep it out of git \u2014 `redpen init` adds\n") + import_picocolors2.default.yellow("  .redpen/ to .gitignore, and it will expire when the session does.\n")
+  );
+  const config = loadConfig(root);
+  if (!config.storageState) {
+    saveConfig(root, { ...config, storageState: ".redpen/auth.json" });
+    process.stderr.write(import_picocolors2.default.dim("\n  .redpen/config.json now points at it; scans will use it automatically.\n"));
+  }
 }
 function cmdInit(root) {
   const existing = loadConfig(root);

@@ -40,6 +40,17 @@ export interface RenderOptions {
   schemes?: Array<'light' | 'dark'>;
   /** Probe the page for a dark theme and add the pass only if it has one. */
   autoScheme?: boolean;
+  /**
+   * A Playwright storage state — cookies and localStorage captured after a
+   * successful login, by `redpen login`.
+   *
+   * This is the one universal thing about authentication. Every app's login
+   * page lives somewhere different, wants different fields, and may not be a
+   * form at all — OAuth, a magic link, SSO, a second factor. What every one of
+   * them produces is the same artefact: a cookie jar the browser can be handed.
+   * So redpen automates none of the logging in and all of the remembering.
+   */
+  storageState?: string | null;
 }
 
 /**
@@ -80,10 +91,13 @@ interface BrowserLike {
 
 interface ContextLike {
   newPage(): Promise<PageLike>;
+  storageState(opts?: Record<string, unknown>): Promise<unknown>;
   close(): Promise<void>;
 }
 
 interface PageLike {
+  /** Where the browser actually ended up, which is not always where it was sent. */
+  url(): string;
   setViewportSize(size: { width: number; height: number }): Promise<void>;
   goto(url: string, opts?: Record<string, unknown>): Promise<unknown>;
   waitForTimeout(ms: number): Promise<void>;
@@ -92,6 +106,23 @@ interface PageLike {
   screenshot(opts: Record<string, unknown>): Promise<Buffer>;
   on(event: string, handler: (payload: unknown) => void): void;
   close(): Promise<void>;
+}
+
+/**
+ * Whether a redirect landed somewhere that is a different page.
+ *
+ * Normalised so the ordinary ones do not trip it: a trailing slash, a change of
+ * host or port behind a proxy, an added query string. What counts is the path.
+ */
+export function differentPage(requested: string, landed: string): boolean {
+  const path = (u: string) => {
+    try {
+      return new URL(u).pathname.replace(/\/+$/, '') || '/';
+    } catch {
+      return u;
+    }
+  };
+  return path(requested) !== path(landed);
 }
 
 /**
@@ -116,7 +147,7 @@ export function summariseErrors(errors: string[]): string {
     .join('; ');
 }
 
-async function loadPlaywright(root?: string): Promise<PlaywrightModule | null> {
+export async function loadPlaywright(root?: string): Promise<PlaywrightModule | null> {
   // Indirect specifier so the compiler does not require playwright to be
   // installed — it is an optional peer dependency, and a source-only scan must
   // keep working without a browser on the machine.
@@ -224,6 +255,8 @@ export async function scanRender(opts: RenderOptions): Promise<RenderResult> {
   const screenshots = new Map<string, string>();
   const detectedSurfaces = new Map<string, SurfaceVerdict>();
   const detectorErrors: string[] = [];
+  /** url -> where it actually went, so the caller can say so once per url. */
+  const redirected = new Map<string, string>();
 
   const widest = Math.max(...opts.viewports);
 
@@ -267,6 +300,7 @@ export async function scanRender(opts: RenderOptions): Promise<RenderResult> {
           deviceScaleFactor: 1,
           reducedMotion: 'no-preference',
           colorScheme: scheme,
+          ...(opts.storageState ? { storageState: opts.storageState } : {}),
         });
         const page = await context.newPage();
         await page.addInitScript(ERROR_TRAP);
@@ -306,6 +340,32 @@ export async function scanRender(opts: RenderOptions): Promise<RenderResult> {
             await context.close();
             continue;
           }
+        }
+
+        /**
+         * Where the browser actually landed.
+         *
+         * Asking for `/dashboard` on an app that requires a session lands on
+         * `/login`, and nothing here compared the two — so redpen produced a
+         * clean, confident, fully scored report about a login page, labelled
+         * with the dashboard's url, and classified it as a `persuade` surface
+         * for good measure. Silently answering a different question is the
+         * worst failure this tool has, because every safeguard downstream is
+         * working correctly on the wrong page.
+         *
+         * A same-path redirect is normal — a trailing slash, a locale prefix,
+         * a canonical host. A different path is a different page.
+         */
+        const landed = page.url();
+        if (differentPage(url, landed)) {
+          redirected.set(url, landed);
+          detectorErrors.push(
+            `${url} redirected to ${landed} — not scanned. ` +
+              'A page that sends the browser somewhere else is not the page you asked about; ' +
+              'if it needs a session, capture one with `redpen login`.',
+          );
+          await context.close();
+          continue;
         }
 
         // Read the stamp back off the page rather than trusting that setting

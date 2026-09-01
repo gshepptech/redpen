@@ -168,11 +168,22 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
     const screenshotDir = wantShots ? resolve(stateRoot(root), '.redpen', 'screenshots') : null;
     if (screenshotDir) mkdirSync(screenshotDir, { recursive: true });
 
+    // A stored session, if one was captured. Resolved against the project root
+    // so the config can hold a relative path and stay portable.
+    const authPath = config.storageState ? resolve(root, config.storageState) : null;
+    if (authPath && !existsSync(authPath)) {
+      warnings.push(
+        `storageState "${config.storageState}" is configured but not on disk — ` +
+          'scanning anonymously. Run `redpen login <url>` to capture one, or clear the setting.',
+      );
+    }
+
     const render = await scanRender({
       root,
       urls,
       viewports,
       screenshotDir,
+      storageState: authPath && existsSync(authPath) ? authPath : null,
       ...(config.schemes === 'auto'
         ? { autoScheme: true }
         : { schemes: config.schemes }),

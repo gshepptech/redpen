@@ -57,6 +57,19 @@ report says so. If the user did not give you a URL:
 3. If you cannot start it, run source-only and **say clearly in your report that
    the render pass did not run** — never present that as a clean page.
 
+**If a url redirects, redpen refuses it and says so.** That is almost always a
+login. The app's own screens are the ones most worth auditing, so capture a
+session rather than settling for the marketing pages:
+
+```bash
+run login <login-url>    # opens a real browser; the user logs in, presses Enter
+```
+
+Ask the user to do it — it needs a person at the keyboard, and redpen never
+sees the credential. The session lands in `.redpen/auth.json` and every later
+scan uses it. If a scan warns that a configured session is missing from disk,
+it has expired; capture another.
+
 One bare origin is usually all you need: redpen reads the project's own routes
 and expands, so `run scan . http://localhost:3000` reads the whole app. That is
 also how sameness detection earns its keep — it needs at least two pages to
