@@ -74,7 +74,7 @@ Several good catalogues already describe what AI-generated UI looks like, and
 
 Running them together is worse than running one. They use different
 vocabularies, they contradict each other, and concatenating ~200 rules doubles
-the false positives without doubling the truth. redpen merges them into 177 rules
+the false positives without doubling the truth. redpen merges them into 178 rules
 with provenance intact, then does three things none of them does.
 
 **It cross-checks before it reports.** The four catalogues inspect three
@@ -498,7 +498,7 @@ turns out to be the most useful distinction in the corpus.
   quality   88   2 findings — broken regardless of taste
 ```
 
-102 slop rules, 75 quality. A page can be immaculate taste over a broken form, or
+103 slop rules, 75 quality. A page can be immaculate taste over a broken form, or
 flawless mechanics wearing every default in the catalogue, and you should be
 able to see which.
 
@@ -520,7 +520,7 @@ decides which rules are true there.**
 On an operate surface familiarity is a *feature*. A single type family is the
 right answer there and a tell on a landing page; uniform spacing is consistency
 in a settings panel and monotony on a marketing site; identical repeating
-components are the point of a data table. 37 rules are scoped accordingly, and
+components are the point of a data table. 38 rules are scoped accordingly, and
 firing them on the wrong surface is a false positive by construction.
 
 redpen detects the surface from the rendered DOM — controls and data rows versus
@@ -545,7 +545,7 @@ dashboard: `default-sans`, `monotonous-spacing`, `ghost-cards`, `over-rounding`,
 
 ## What this has and has not been proven against
 
-v0.1.0. The corpus is 177 rules across 16 categories, the suite is 260 tests,
+v0.1.0. The corpus is 178 rules across 16 categories, the suite is 261 tests,
 and it has been run end to end against five real projects plus its own
 fixtures. Nearly everything ever found wrong with redpen was found by pointing
 it at something real rather than by reading it: a first Go dashboard gave up six
@@ -645,11 +645,11 @@ taste. See [NOTICE](NOTICE) for the projects behind each and their licences.
 `redpen sources`:
 
 ```
-  177 rules merged from:
-     212  catalogue     curated lists of design tells
+  178 rules merged from:
+     214  catalogue     curated lists of design tells
       68  heuristics    the usability and a11y tradition
       22  study         two measurements: 3,033 Reddit comments, 600M commits
-      21  redpen        named here first
+      22  redpen        named here first
 ```
 
 The counts exceed the rule total because most rules were named by more than one

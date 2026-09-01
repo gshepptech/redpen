@@ -648,3 +648,53 @@
   fix: >-
     Put an ISO date beside every version heading. It costs eight characters and
     it is the first thing anyone opening the file is looking for.
+
+- id: couplet-cadence
+  kind: slop
+  surfaces: [persuade]
+  title: Setup and payoff, over and over
+  category: copy
+  severity: low
+  weight: 47
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: aphoristic-cadence }
+    - { origin: catalogue, ref: "writing:aphorism-formulas" }
+    - { origin: redpen, ref: couplet-density }
+  channels: [source]
+  source:
+    extensions: ['.html', '.htm', '.tsx', '.jsx', '.ts', '.js', '.mjs', '.vue', '.svelte', '.astro', '.mdx']
+    caseSensitive: true
+    # Functional microcopy is not a cadence.
+    #
+    # "No expeditions found. Create your first one." and "Export failed. Please
+    # try again." are the correct shape for an empty state and a status message
+    # — a statement of what happened and the next action — and one app produced
+    # twelve of them. What separates them from display copy is that the first
+    # half reports a state rather than making a claim.
+    suppress: '^\s*(\{\s*/\*|//|\*|/\*|#|<!--)|\bNo [a-z]+ (found|available|yet|attached|configured|selected)|\b(failed|succeeded|imported|exported|saved|deleted|updated|created|copied|removed|cancelled|canceled)\.|\b(Nothing|Please)\b|\.{3}'
+    # Density is the whole finding. One "Push a button. Get the site." is a good
+    # line; the tell is that every slide closes on one, so a single couplet must
+    # never fire. Four in a document is a house cadence nobody chose.
+    minHits: 4
+    patterns:
+      # Two short sentences, back to back, each three to five words. The second
+      # is the payoff, and the shape is what survives when a model needs a line
+      # to sound decisive.
+      - '(?<=^|>|\s)[A-Z][a-z]+(?: [a-z]+){1,3}\.\s+[A-Z][a-z]+(?: [a-z]+){1,3}\.'
+      # The negative form of the same beat: "No scripts. No playbooks."
+      - '\bNo [a-z]+\.\s+No [a-z]+\.'
+  legitimateWhen: >-
+    A slide, a headline, or anything read in a glance. Short couplets are how
+    display copy works, and one is a good line. The finding is only ever the
+    density — every slide closing on the same beat — so a deck that uses two
+    deliberately is not what this is about.
+  why: >-
+    "Push a button. Get the site." is a good sentence. Six of them across eight
+    slides is a rhythm rather than a set of sentences, and the reader stops
+    hearing the claims and starts hearing the metre. It is the cadence a model
+    reaches for when a line has to sound decisive, and it does not vary because
+    nothing in the writing is varying it.
+  fix: >-
+    Keep the best one or two and write the rest as ordinary sentences. A
+    cadence only lands when it is not the only cadence in the document.

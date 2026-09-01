@@ -123,3 +123,54 @@ test('a single-field newsletter form is not flagged for missing validation', () 
   });
   assert.ok(hits(realForm).has('no-inline-validation'));
 });
+
+test('a couplet is a good line; six of them is a cadence', async () => {
+  // Reported from a slide deck: `aphoristic-cadence` only matches the literal
+  // "not just X, but Y", so the two-beat setup/payoff couplet — "Push a button.
+  // Get the site." — went unseen across eight slides that each closed on one.
+  const { runScan } = await import('../dist/scan.js');
+  const { mkdtempSync, writeFileSync, rmSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const { join } = await import('node:path');
+
+  const page = (body) => {
+    const dir = mkdtempSync(join(tmpdir(), 'redpen-couplet-'));
+    writeFileSync(join(dir, 'package.json'), '{"name":"c","private":true}');
+    // Newline-separated: the scanner skips any line past MAX_LINE_LENGTH, so a
+    // single-line fixture tests the line cap rather than the rule.
+    writeFileSync(join(dir, 'index.html'), `<!doctype html>\n<title>x</title>\n${body}`, 'utf8');
+    return dir;
+  };
+  const fired = async (dir) => {
+    const r = await runScan({ root: dir, ephemeral: true });
+    return r.findings.some((f) => f.ruleId === 'couplet-cadence');
+  };
+
+  // One is display copy doing its job.
+  const one = page('<h2>Push a button. Get the site.</h2><p>The provisioner reads the manifest and applies it in order, which is what the wizard was writing all along.</p>');
+  // Every slide closing on the same beat is the finding.
+  const many = page([
+    '<h2>Push a button. Get the site.</h2>',
+    '<h3>Do it once. Reuse it.</h3>',
+    '<p>No scripts. No playbooks.</p>',
+    '<p>Less to configure. More that connects itself.</p>',
+    '<h3>Pick the region. We wire the rest.</h3>',
+  ].join('\n'));
+  // Functional microcopy is a statement and the next action, not a cadence —
+  // one app produced twelve of these.
+  const microcopy = page([
+    '<p>No expeditions found. Create your first one.</p>',
+    '<p>Export failed. Please try again.</p>',
+    '<p>No scenarios available. Create scenarios first.</p>',
+    '<p>No environments found. Create your first one.</p>',
+    '<p>No exercises found. Create your first one.</p>',
+  ].join('\n'));
+
+  try {
+    assert.equal(await fired(one), false, 'a single couplet is a good line');
+    assert.equal(await fired(many), true, 'the density is the finding');
+    assert.equal(await fired(microcopy), false, 'an empty state is not a cadence');
+  } finally {
+    for (const d of [one, many, microcopy]) rmSync(d, { recursive: true, force: true });
+  }
+});
