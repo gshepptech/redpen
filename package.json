@@ -8,7 +8,7 @@
     "node": ">=20.11"
   },
   "bin": {
-    "redpen": "./dist/cli.js"
+    "redpen": "./bundle/redpen.mjs"
   },
   "files": [
     "dist",

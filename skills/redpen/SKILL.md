@@ -13,21 +13,41 @@ catalogues — the corpus below is those merged, deduplicated, and cross-checked
 
 ## Run it
 
+Resolve the binary first. A plugin install carries `bundle/redpen.mjs`; a
+checkout has `dist/cli.js`; a linked install puts `redpen` on PATH. There is no
+`npx @gshepptech/redpen` — the package is not published, and `npx redpen` is somebody
+else's package.
+
 ```bash
-npx @gshepptech/redpen scan . --url http://localhost:3000
+REDPEN="${CLAUDE_PLUGIN_ROOT:-$(npm root -g)/@gshepptech/redpen}"
+if   [ -f "$REDPEN/bundle/redpen.mjs" ]; then run() { node "$REDPEN/bundle/redpen.mjs" "$@"; }
+elif [ -f "$REDPEN/dist/cli.js" ];      then run() { node "$REDPEN/dist/cli.js" "$@"; }
+else                                         run() { redpen "$@"; }
+fi
+run --help    # confirm it resolved before doing anything else
 ```
 
-Add every route worth judging. Without a `--url` the render channel never runs,
-every finding it could have confirmed is capped at `possible`, and the report
-says so. **Never read a source-only run as a clean page.**
+One bare origin scans the whole app: redpen reads the project's own routes —
+Next, SvelteKit, Astro, Nuxt, React Router, Vue Router — and expands. An
+explicit path is obeyed exactly.
 
 ```bash
-npx @gshepptech/redpen scan . --url http://localhost:3000 --url http://localhost:3000/pricing
-npx @gshepptech/redpen scan . --url http://localhost:3000 --vision   # writes a brief for you to answer
-npx @gshepptech/redpen why ai-purple          # what a rule means and who said so
-npx @gshepptech/redpen rules color            # the corpus, by category
-npx @gshepptech/redpen fingerprints           # every page signature on record
-npx @gshepptech/redpen scan . --json report.json --url http://localhost:3000
+run scan . http://localhost:3000
+```
+
+Without a url the render channel never runs, every finding it could have
+confirmed is capped at `possible`, and the report says so. **Never read a
+source-only run as a clean page** — the same fixture scored 76 with no url and
+3 with one.
+
+```bash
+run scan . http://localhost:3000/pricing   # one page, exactly
+run scan . http://localhost:3000 --vision  # writes a brief for you to answer
+run code .                                 # the source, not the page
+run why ai-purple                          # what a rule means and who said so
+run rules color                            # the corpus, by category
+run fingerprints                           # every page signature on record
+run scan . http://localhost:3000 --json report.json
 ```
 
 ### The vision channel is you
@@ -38,10 +58,10 @@ row for each. **You** open the PNGs and fill them in, then re-run with
 `--answers`:
 
 ```bash
-npx @gshepptech/redpen scan . --url http://localhost:3000 --vision
+run scan . http://localhost:3000 --vision
 # Read every file under .redpen/screenshots/ with your image-reading tool.
 # Fill in each row of .redpen/vision-brief.json: present, confidence, evidence.
-npx @gshepptech/redpen scan . --url http://localhost:3000 --answers .redpen/vision-brief.json
+run scan . http://localhost:3000 --answers .redpen/vision-brief.json
 ```
 
 Rules for answering — the channel enforces all of them:

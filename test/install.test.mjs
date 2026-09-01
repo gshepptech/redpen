@@ -162,3 +162,56 @@ test('the version is answered, and answered from every install shape', () => {
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('nothing tells a reader to run a command that does not exist', () => {
+  // `@gshepptech/redpen` is not published, so `npx @gshepptech/redpen scan …` fails at the
+  // first line — and it was the first line of the README, the skill's Run It
+  // section, and three command fallbacks. A doc that cannot be followed is
+  // worse than a missing one, because it looks like it works.
+  const files = [
+    'README.md',
+    'skills/redpen/SKILL.md',
+    ...execFileSync('ls', [join(ROOT, 'commands')], { encoding: 'utf8' })
+      .split('\n')
+      .filter((f) => f.endsWith('.md'))
+      .map((f) => join('commands', f)),
+  ];
+  const offenders = [];
+  for (const file of files) {
+    for (const line of readFileSync(join(ROOT, file), 'utf8').split('\n')) {
+      // Naming it to say it does not work is the point; invoking it is not.
+      if (/npx\s+@gshepptech/redpen\s+\w/.test(line)) offenders.push(`${file}: ${line.trim()}`);
+    }
+  }
+  assert.deepEqual(offenders, [], `\n${offenders.join('\n')}\n`);
+});
+
+test('the packaged binary is one a plugin install actually carries', () => {
+  // `bin` pointed at ./dist/cli.js, which .gitignore ignores — so installing
+  // from the git url produced a binary aimed at a file that was never shipped.
+  const pkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
+  const target = pkg.bin.redpen.replace(/^\.\//, '');
+  assert.ok(existsSync(join(ROOT, target)), `${target} does not exist`);
+  assert.ok(
+    pkg.files.some((f) => target.startsWith(f.replace(/\/$/, ''))),
+    `${target} is not in package.json "files"`,
+  );
+  // git check-ignore exits 1 when the path is *not* ignored, which is the case
+  // this test wants: a gitignored bin is one no install ever carries.
+  let isIgnored = true;
+  try {
+    execFileSync('git', ['check-ignore', '-q', target], { cwd: ROOT, stdio: 'ignore' });
+  } catch {
+    isIgnored = false;
+  }
+  assert.equal(isIgnored, false, `${target} is gitignored, so no install carries it`);
+});
+
+test('the audit command drives the visual channel rather than mentioning it', () => {
+  // Eight rules are vision-only. The flagship command ran source and render and
+  // stopped, so the only automated entry point silently skipped all of them.
+  const body = readFileSync(join(ROOT, 'commands', 'audit.md'), 'utf8');
+  assert.match(body, /--vision/, 'audit must capture a brief');
+  assert.match(body, /--answers/, 'audit must fold the answers back in');
+  assert.match(body, /\.redpen\/screenshots/, 'audit must say to read the images');
+});

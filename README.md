@@ -15,7 +15,7 @@ defects that are just broken. It reads your source, drives the real page in a
 browser, and only calls something a fact when more than one of them agrees.
 
 ```
-npx @gshepptech/redpen scan . --url http://localhost:3000
+redpen scan . http://localhost:3000
 ```
 
 ```
@@ -108,10 +108,15 @@ variety; the metric is weighted so that it barely moves.
 
 ## Install
 
-> **Not released yet.** @gshepptech/redpen is not on npm and this repository is
-> private, so `npx` will fail today. The plugin path does work from a clone or a
-> git install — `bundle/redpen.mjs` is tracked, carries its dependencies inlined,
-> and needs no build step or `npm install` on the machine that runs it.
+> **Not released yet.** @gshepptech/redpen is not on npm, so `npx @gshepptech/redpen` fails
+> today — and `npx redpen` is an unrelated package, so never reach for it. What
+> works now is the plugin and a git install: `bin` points at the tracked
+> `bundle/redpen.mjs`, which carries its dependencies inlined and needs no build
+> step on the machine that runs it.
+>
+> ```
+> npm i -D github:gshepptech/redpen && npx redpen --help
+> ```
 
 **As a Claude Code plugin** — gives you `/redpen:audit`, `/redpen:why`,
 `/redpen:gate`, and a skill that fires whenever you build or review UI:
@@ -273,8 +278,8 @@ should not have to reach 90 before CI goes green — it has to stop getting wors
 
 ```yaml
 - run: npm run build && npm run preview &
-- run: npx @gshepptech/redpen baseline . --url http://localhost:4173   # once, committed
-- run: npx @gshepptech/redpen check . --url http://localhost:4173
+- run: npx redpen baseline . --url http://localhost:4173   # once, committed
+- run: npx redpen check . --url http://localhost:4173
 ```
 
 `check` fails when the score drops below the baseline by more than `tolerance`,
@@ -503,7 +508,7 @@ dashboard: `default-sans`, `monotonous-spacing`, `ghost-cards`, `over-rounding`,
 
 ## What this has and has not been proven against
 
-v0.1.0. The corpus is 170 rules across 15 categories, the suite is 238 tests,
+v0.1.0. The corpus is 170 rules across 15 categories, the suite is 241 tests,
 and it has been run end to end against five real projects plus its own
 fixtures. Nearly everything ever found wrong with redpen was found by pointing
 it at something real rather than by reading it: a first Go dashboard gave up six

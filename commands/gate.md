@@ -25,8 +25,9 @@ unrelated package.
 run --help    # confirm the binary resolved before doing anything else
 ```
 
-If that path does not exist, the plugin is not installed; fall back to
-`npx @gshepptech/redpen` (note the `-cli`) and say which one you used.
+`@gshepptech/redpen` is not on npm, so there is no `npx` fallback to reach for. If the
+resolver above finds nothing, say the plugin is not installed rather than
+inventing a way to run it.
 
 Wire redpen into this project's CI as a regression gate.
 

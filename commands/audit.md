@@ -25,8 +25,9 @@ unrelated package.
 run --help    # confirm the binary resolved before doing anything else
 ```
 
-If that path does not exist, the plugin is not installed; fall back to
-`npx @gshepptech/redpen` (note the `-cli`) and say which one you used.
+`@gshepptech/redpen` is not on npm, so there is no `npx` fallback to reach for. If the
+resolver above finds nothing, say the plugin is not installed rather than
+inventing a way to run it.
 
 Audit the UI at `$ARGUMENTS` (default: this project) using redpen.
 
@@ -56,9 +57,53 @@ report says so. If the user did not give you a URL:
 3. If you cannot start it, run source-only and **say clearly in your report that
    the render pass did not run** — never present that as a clean page.
 
-Add every route worth judging: `--url http://localhost:3000 --url http://localhost:3000/pricing`.
-More routes is also how sameness detection earns its keep — it needs at least
-two pages to compare.
+One bare origin is usually all you need: redpen reads the project's own routes
+and expands, so `run scan . http://localhost:3000` reads the whole app. That is
+also how sameness detection earns its keep — it needs at least two pages to
+compare, so a single explicit path silences it. Pass an explicit path only when
+you mean exactly that page.
+
+## Then look at it
+
+**A scan that skips this is not an audit.** Eight rules in the corpus are
+vision-only — hierarchy, focal point, the squint test, whether the icons mean
+anything. No regex and no computed style reaches them, and skipping them is how
+a page with nothing measurably wrong still reads as generated.
+
+redpen does not call a vision model. It captures the screenshots and writes the
+questions; **you** are the channel, and you can already read a PNG.
+
+```bash
+run scan <path> <url> --vision      # writes .redpen/vision-brief.json + screenshots
+```
+
+Then, in order:
+
+1. **Read every PNG under `.redpen/screenshots/`** with your image tool. Not the
+   markup — the image. If you skip this and fill the brief from the DOM you have
+   answered a different question, and the answers will be confidently wrong.
+2. **Fill in each row of `.redpen/vision-brief.json`**: `present`, `confidence`,
+   `evidence`. The brief is written to be answerable by someone who has never
+   seen the project, and the questions are deliberately not named after their
+   rules so the label cannot lead you.
+3. **Re-run with the answers folded in:**
+
+```bash
+run scan <path> <url> --answers .redpen/vision-brief.json
+```
+
+Four rules the channel enforces, so answer to them rather than around them:
+
+- `present: true` always means **the tell IS there**. Read the direction.
+- Answer only from what is visible. Not from what a page like this usually does.
+- `confidence` under 0.7 is discarded. A question you cannot settle from the
+  image gets a low number, not a guess — discarding is the correct outcome.
+- `evidence` names the thing you saw: "the three cards each open with a rounded
+  icon square", never "it looks AI-generated". A `true` with no evidence is
+  rejected as a guess.
+
+Leave `present: null` on anything you did not judge. Null rows are ignored and
+are not an error.
 
 ## Report
 
