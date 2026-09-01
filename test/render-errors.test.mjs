@@ -101,3 +101,21 @@ test('a measure finding says which bound it crossed', async () => {
   assert.match(check.slice(0, 1600), /narrower than/);
   assert.match(check.slice(0, 1600), /wider than/);
 });
+
+test('framework dev tooling is not the product', async () => {
+  // redpen is pointed at a dev server by design, and every stack mounts
+  // something there. TanStack Query's devtools button is a 64px svg of 31
+  // primitive shapes, and it was reported as an assembled illustration on every
+  // route of one app — a finding about a button the product does not ship.
+  const src = await import('node:fs').then((fs) =>
+    fs.readFileSync(new URL('../src/channels/detectors.ts', import.meta.url), 'utf8'),
+  );
+  assert.match(src, /DEV_TOOL_SELECTOR/);
+  for (const marker of ['tsqd-', 'nextjs-portal', 'vite-error-overlay']) {
+    assert.ok(src.includes(marker), `${marker} must be excluded`);
+  }
+  // The exclusion has to sit in all(), or it only covers the rules that
+  // remembered to ask for it.
+  const allFn = src.slice(src.indexOf('function all(sel)'), src.indexOf('function all(sel)') + 300);
+  assert.match(allFn, /isDevTooling/);
+});

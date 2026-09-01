@@ -18,6 +18,11 @@
     - { origin: catalogue, ref: theater-slop-phrase }
   channels: [source, vision]
   source:
+    # `{/* … */}` is the only way to write a comment inside JSX, and the
+    # suppression here matched `//`, `/*` and `<!--` but not the braced form —
+    # so on a React codebase `{/* Renders only for super admins; no-op for
+    # everyone else. */}` was reported as marketing copy, at confirmed.
+    #
     # A comment is addressed to whoever opens the file, not to a reader of
     # the page. These fired on a CSS comment explaining a design decision, a
     # code comment about "today's conditions" in a weather panel, and a help
@@ -26,7 +31,7 @@
     # CSS block comment explaining why a list is keyboard-reachable, on the
     # continuation line, where no comment marker starts the line to suppress on.
     extensions: ['.html', '.htm', '.tsx', '.jsx', '.ts', '.js', '.mjs', '.vue', '.svelte', '.astro', '.mdx']
-    suppress: '^\s*(//|\*|/\*|#|<!--)'
+    suppress: '^\s*(\{\s*/\*|//|\*|/\*|#|<!--)'
     patterns:
       - '\b(supercharge|unleash|revolutionize|revolutionise|seamlessly|effortlessly|game-changer|cutting-edge|next-level|10x your|unlock the power|take .{1,20} to the next level)\b'
       - '\bthe future of \w+ is here\b'
@@ -87,7 +92,7 @@
     # CSS block comment explaining why a list is keyboard-reachable, on the
     # continuation line, where no comment marker starts the line to suppress on.
     extensions: ['.html', '.htm', '.tsx', '.jsx', '.ts', '.js', '.mjs', '.vue', '.svelte', '.astro', '.mdx']
-    suppress: '^\s*(//|\*|/\*|#|<!--)'
+    suppress: '^\s*(\{\s*/\*|//|\*|/\*|#|<!--)'
     patterns:
       - '—'
     minHits: 6
@@ -119,7 +124,7 @@
     # CSS block comment explaining why a list is keyboard-reachable, on the
     # continuation line, where no comment marker starts the line to suppress on.
     extensions: ['.html', '.htm', '.tsx', '.jsx', '.ts', '.js', '.mjs', '.vue', '.svelte', '.astro', '.mdx']
-    suppress: '^\s*(//|\*|/\*|#|<!--)'
+    suppress: '^\s*(\{\s*/\*|//|\*|/\*|#|<!--)'
     patterns:
       - '\bnot just \w+[^.]{0,40}\bbut\b'
       - '\bit''?s not (about|just) [^.]{0,40}\bit''?s\b'
@@ -152,7 +157,7 @@
     # CSS block comment explaining why a list is keyboard-reachable, on the
     # continuation line, where no comment marker starts the line to suppress on.
     extensions: ['.html', '.htm', '.tsx', '.jsx', '.ts', '.js', '.mjs', '.vue', '.svelte', '.astro', '.mdx']
-    suppress: '^\s*(//|\*|/\*|#|<!--)'
+    suppress: '^\s*(\{\s*/\*|//|\*|/\*|#|<!--)'
     patterns:
       - '>\s*(Get Started|Learn More|Sign Up Free|Try It Now|Get Started Free|Start Free Trial)\s*<'
     minHits: 3
@@ -186,7 +191,7 @@
     # CSS block comment explaining why a list is keyboard-reachable, on the
     # continuation line, where no comment marker starts the line to suppress on.
     extensions: ['.html', '.htm', '.tsx', '.jsx', '.ts', '.js', '.mjs', '.vue', '.svelte', '.astro', '.mdx']
-    suppress: '^\s*(//|\*|/\*|#|<!--)'
+    suppress: '^\s*(\{\s*/\*|//|\*|/\*|#|<!--)'
     patterns:
       - '\b(Jane|John) (Doe|Smith)\b'
       - '\b(Acme|Acme Corp|Lorem ipsum|Example Corp|Widget Co)\b'
@@ -218,7 +223,7 @@
     # CSS block comment explaining why a list is keyboard-reachable, on the
     # continuation line, where no comment marker starts the line to suppress on.
     extensions: ['.html', '.htm', '.tsx', '.jsx', '.ts', '.js', '.mjs', '.vue', '.svelte', '.astro', '.mdx']
-    suppress: '^\s*(//|\*|/\*|#|<!--)'
+    suppress: '^\s*(\{\s*/\*|//|\*|/\*|#|<!--)'
     patterns:
       # The first version listed the numbers and the nouns it would accept, so
       # "Trusted by 50,000+ land managers" and "cut scouting time by 40%" both
@@ -266,7 +271,7 @@
     # CSS block comment explaining why a list is keyboard-reachable, on the
     # continuation line, where no comment marker starts the line to suppress on.
     extensions: ['.html', '.htm', '.tsx', '.jsx', '.ts', '.js', '.mjs', '.vue', '.svelte', '.astro', '.mdx']
-    suppress: '^\s*(//|\*|/\*|#|<!--)'
+    suppress: '^\s*(\{\s*/\*|//|\*|/\*|#|<!--)'
     patterns:
       - '>[^<]*\b\w+''\w+[^<]*<'
       - '\w\s--\s\w'
@@ -299,7 +304,7 @@
     # CSS block comment explaining why a list is keyboard-reachable, on the
     # continuation line, where no comment marker starts the line to suppress on.
     extensions: ['.html', '.htm', '.tsx', '.jsx', '.ts', '.js', '.mjs', '.vue', '.svelte', '.astro', '.mdx']
-    suppress: '^\s*(//|\*|/\*|#|<!--)'
+    suppress: '^\s*(\{\s*/\*|//|\*|/\*|#|<!--)'
     patterns:
       - '\b(fast|simple|reliable|secure|powerful|flexible|modern|clean|smart|scalable), (fast|simple|reliable|secure|powerful|flexible|modern|clean|smart|scalable),? and (fast|simple|reliable|secure|powerful|flexible|modern|clean|smart|scalable)\b'
       - '\b(plan|design|build|ship|develop|deploy|create|launch|track|measure), (plan|design|build|ship|develop|deploy|create|launch|track|measure),? and (plan|design|build|ship|develop|deploy|create|launch|track|measure)\b'
@@ -332,7 +337,7 @@
     # CSS block comment explaining why a list is keyboard-reachable, on the
     # continuation line, where no comment marker starts the line to suppress on.
     extensions: ['.html', '.htm', '.tsx', '.jsx', '.ts', '.js', '.mjs', '.vue', '.svelte', '.astro', '.mdx']
-    suppress: '^\s*(//|\*|/\*|#|<!--)'
+    suppress: '^\s*(\{\s*/\*|//|\*|/\*|#|<!--)'
     patterns:
       - '\bis designed to (help|improve|reduce|increase|make|ensure|enable)\b'
       - '\b(may|might|could) (potentially|eventually|ultimately|significantly) \w+'
@@ -368,7 +373,7 @@
     # CSS block comment explaining why a list is keyboard-reachable, on the
     # continuation line, where no comment marker starts the line to suppress on.
     extensions: ['.html', '.htm', '.tsx', '.jsx', '.ts', '.js', '.mjs', '.vue', '.svelte', '.astro', '.mdx']
-    suppress: '^\s*(//|\*|/\*|#|<!--)'
+    suppress: '^\s*(\{\s*/\*|//|\*|/\*|#|<!--)'
     patterns:
       # An audience, not any either/or. "whether it's in testing or live" is a
       # real distinction in help text about NODE_ENV, and it was reported as a
@@ -404,7 +409,7 @@
     # CSS block comment explaining why a list is keyboard-reachable, on the
     # continuation line, where no comment marker starts the line to suppress on.
     extensions: ['.html', '.htm', '.tsx', '.jsx', '.ts', '.js', '.mjs', '.vue', '.svelte', '.astro', '.mdx']
-    suppress: '^\s*(//|\*|/\*|#|<!--)'
+    suppress: '^\s*(\{\s*/\*|//|\*|/\*|#|<!--)'
     patterns:
       - '(^|>|\s)(moreover|furthermore|additionally|in conclusion|in summary|to summari[sz]e)\b'
       - '\b(it''s|it is) worth noting that\b'
@@ -439,7 +444,7 @@
     # CSS block comment explaining why a list is keyboard-reachable, on the
     # continuation line, where no comment marker starts the line to suppress on.
     extensions: ['.html', '.htm', '.tsx', '.jsx', '.ts', '.js', '.mjs', '.vue', '.svelte', '.astro', '.mdx']
-    suppress: '^\s*(//|\*|/\*|#|<!--)'
+    suppress: '^\s*(\{\s*/\*|//|\*|/\*|#|<!--)'
     patterns:
       - '\b(pivotal|watershed|defining|landmark|seminal) (moment|shift|change)\b'
       - '\bmark(s|ing)? a new (era|chapter|age)\b'
@@ -473,7 +478,7 @@
     # CSS block comment explaining why a list is keyboard-reachable, on the
     # continuation line, where no comment marker starts the line to suppress on.
     extensions: ['.html', '.htm', '.tsx', '.jsx', '.ts', '.js', '.mjs', '.vue', '.svelte', '.astro', '.mdx']
-    suppress: '^\s*(//|\*|/\*|#|<!--)'
+    suppress: '^\s*(\{\s*/\*|//|\*|/\*|#|<!--)'
     patterns:
       - '\b(serves as|stands as|represents a|boasts (a|an|over|more than)|is poised to)\b'
       - '\b(leverages?|utili[sz]es?) (the power of|cutting-edge|advanced)\b'
@@ -567,7 +572,7 @@
   channels: [source]
   source:
     extensions: ['.html', '.htm', '.tsx', '.jsx', '.ts', '.js', '.mjs', '.vue', '.svelte', '.astro', '.mdx']
-    suppress: '^\s*(//|\*|/\*|#|<!--)'
+    suppress: '^\s*(\{\s*/\*|//|\*|/\*|#|<!--)'
     patterns:
       # Universality asserted outright. A page that claims everyone is a page
       # that has not chosen anyone.
@@ -598,7 +603,7 @@
   channels: [source]
   source:
     extensions: ['.html', '.htm', '.tsx', '.jsx', '.ts', '.js', '.mjs', '.vue', '.svelte', '.astro', '.mdx']
-    suppress: '^\s*(//|\*|/\*|#|<!--)'
+    suppress: '^\s*(\{\s*/\*|//|\*|/\*|#|<!--)'
     patterns:
       - '\b(In (conclusion|summary|short)|To (summari[sz]e|sum up|recap)|All in all|At the end of the day|Ultimately,)\b'
       # The apostrophe is written as a character class rather than escaped: a

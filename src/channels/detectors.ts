@@ -224,8 +224,41 @@ const HELPERS_LIB = `
     return (el.textContent || '').replace(/\\s+/g, ' ').trim().slice(0, 80);
   }
 
+  /**
+   * Dev tooling the framework injects, which is not the product.
+   *
+   * redpen is pointed at a dev server by design, and every modern stack mounts
+   * something into the page there: TanStack Query's devtools button, Next's
+   * build indicator and error portal, Vite's error overlay. The Query devtools
+   * button alone is a 64px svg of 31 primitive shapes, and it was reported as
+   * an assembled illustration on every route of one app — a finding about a
+   * button the product does not ship.
+   */
+  var DEV_TOOL_SELECTOR = [
+    '[class*="tsqd-"]',
+    '[id*="tsqd"]',
+    'nextjs-portal',
+    '[data-nextjs-dialog]',
+    '[data-nextjs-toast]',
+    '#__next-build-watcher',
+    'vite-error-overlay',
+    'vite-plugin-checker-error-overlay',
+    '#react-refresh-overlay',
+    '[data-vite-dev-id]',
+  ].join(',');
+
+  function isDevTooling(el) {
+    try {
+      return !!el.closest(DEV_TOOL_SELECTOR);
+    } catch (e) {
+      return false;
+    }
+  }
+
   function all(sel) {
-    return Array.prototype.slice.call(document.querySelectorAll(sel || '*')).filter(visible);
+    return Array.prototype.slice.call(document.querySelectorAll(sel || '*'))
+      .filter(function (el) { return !isDevTooling(el); })
+      .filter(visible);
   }
 
   function hit(el, excerpt) {

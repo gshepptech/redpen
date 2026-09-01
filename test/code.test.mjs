@@ -577,3 +577,33 @@ test('a named re-export is a public surface; only the star form is a barrel', as
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('a JSX comment is a comment', async () => {
+  // `{/* ... */}` is the only way to write a comment inside JSX, and the copy
+  // rules suppressed `//`, `/*` and `<!--` but not the braced form — so
+  // `{/* Renders only for super admins; no-op for everyone else. */}` was
+  // reported as marketing copy, at confirmed, on a React codebase.
+  const { runScan } = await import('../dist/scan.js');
+  const dir = mkdtempSync(join(tmpdir(), 'redpen-jsx-'));
+  try {
+    writeFileSync(join(dir, 'package.json'), '{"name":"j","private":true}');
+    writeFileSync(
+      join(dir, 'App.tsx'),
+      [
+        'export const App = () => (',
+        '  <div>',
+        '    {/* Renders only for super admins; no-op for everyone else. */}',
+        '    {/* Works with anything you throw at it, for every team. */}',
+        '    <p>Hourly and award-based pay in Australia only.</p>',
+        '  </div>',
+        ');',
+      ].join('\n'),
+      'utf8',
+    );
+    const result = await runScan({ root: dir, ephemeral: true, tools: false });
+    const copy = result.findings.filter((f) => f.category === 'copy');
+    assert.deepEqual(copy.map((f) => f.ruleId), [], 'a comment is not copy');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});

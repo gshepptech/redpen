@@ -545,7 +545,7 @@ dashboard: `default-sans`, `monotonous-spacing`, `ghost-cards`, `over-rounding`,
 
 ## What this has and has not been proven against
 
-v0.1.0. The corpus is 170 rules across 15 categories, the suite is 251 tests,
+v0.1.0. The corpus is 170 rules across 15 categories, the suite is 253 tests,
 and it has been run end to end against five real projects plus its own
 fixtures. Nearly everything ever found wrong with redpen was found by pointing
 it at something real rather than by reading it: a first Go dashboard gave up six
@@ -577,8 +577,18 @@ Specifically not yet true:
   would fire on every project using the framework's own recommended setup — and
   a measure range that printed 44ch and 79ch, opposite problems, identically.
 
-  All eight are fixed and each has a regression test. Two projects is still not
-  a corpus.
+  A third project — a 81-route React SPA behind a login, written by someone
+  else — produced two more, both whole classes rather than one-offs. `{/* … */}`
+  is the only way to write a comment inside JSX, and all fifteen copy rules
+  suppressed `//`, `/*` and `<!--` but not the braced form, so a comment about
+  super admins was reported as marketing copy at `confirmed`. And redpen is
+  pointed at a dev server by design, where every stack mounts something into the
+  page: TanStack Query's devtools button is a 64px svg of 31 primitive shapes,
+  and it was reported as an assembled illustration on every route.
+
+  All ten are fixed and each has a regression test. Three projects is still not
+  a corpus, and the last two classes were both found in the first hour of
+  pointing it at something new.
 - **The vision channel is hand-answered.** It writes a brief and folds answers
   back in; it does not look at the screenshots itself.
 - **Dark mode is one extra pass.** An emulated preference and, where the page
