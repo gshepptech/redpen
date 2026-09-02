@@ -4,6 +4,7 @@ import { rulesForChannel } from '../corpus/load.js';
 import { CODE_CATEGORIES } from '../scan.js';
 import type { RawFinding, Evidence, Rule } from '../types.js';
 import { findCancelledFloors } from './cascade.js';
+import { burstiness } from './stylometry.js';
 
 /**
  * The source channel: regex over the repo.
@@ -41,6 +42,9 @@ const CODE_EXTENSIONS = new Set([
 ]);
 
 const SCANNED_EXTENSIONS = CODE_EXTENSIONS;
+
+/** Where a whole-document measure is meaningful. */
+const DOC_EXTENSIONS = new Set(['.md', '.markdown', '.rst', '.txt', '.adoc']);
 
 export const SKIP_DIRS = new Set([
   'node_modules', '.git', 'dist', 'build', '.next', 'out', 'vendor',
@@ -298,7 +302,8 @@ export function scanSource(opts: SourceScanOptions): {
   filesScanned: number;
 } {
   const compiled = compile(rulesForChannel('source'));
-  const cascadeRules = rulesForChannel('source').filter((r) => r.cascade);
+  const cascadeRules = rulesForChannel('source').filter((r) => r.cascade?.check === 'cancelled-floor');
+  const metricRules = rulesForChannel('source').filter((r) => r.cascade?.check === 'sentence-burstiness');
   const files = opts.files ?? walk(opts.root);
 
   // ruleId -> evidence collected across every file
@@ -332,6 +337,25 @@ export function scanSource(opts: SourceScanOptions): {
     for (const c of compiled) {
       if (c.suppressProject && !projectSuppressed.has(c.rule.id) && c.suppressProject.test(text)) {
         projectSuppressed.add(c.rule.id);
+      }
+    }
+
+    // Measures over the whole document, for the rules no pattern reaches.
+    if (DOC_EXTENSIONS.has(ext)) {
+      for (const rule of metricRules) {
+        const params = (rule.cascade!.params ?? {}) as { maxCv?: number };
+        const b = burstiness(text);
+        if (!b || b.cv > (params.maxCv ?? 0.32)) continue;
+        const list = hits.get(rule.id) ?? [];
+        list.push({
+          channel: 'source',
+          location: rel,
+          line: 1,
+          excerpt:
+            `sentence length varies by ${b.cv.toFixed(2)} across ${b.sentences} sentences ` +
+            `(mean ${b.meanLength.toFixed(0)} words); the median document varies by 0.53`,
+        });
+        hits.set(rule.id, list);
       }
     }
 
@@ -460,7 +484,12 @@ export function scanSource(opts: SourceScanOptions): {
   // Cascade rules have no compiled patterns, so the loop above never sees
   // them. Their hits are already exact — each one is a named pair of rules,
   // not an aggregate — so there is no minHits threshold to clear.
-  for (const rule of cascadeRules) {
+  //
+  // Whole-document measures are the same shape and were missed the same way:
+  // narrowing `cascadeRules` to the floor check left the metric rules with
+  // nowhere to be emitted, so the measure ran on every file and reported
+  // nothing.
+  for (const rule of [...cascadeRules, ...metricRules]) {
     const evidence = hits.get(rule.id);
     if (!evidence?.length) continue;
     findings.push({

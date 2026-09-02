@@ -360,3 +360,41 @@
   fix: >-
     Give the number, or drop the adverb. "Faster" and "significantly faster"
     carry exactly the same information when neither is quantified.
+
+- id: uniform-sentence-length
+  kind: slop
+  advisory: true
+  title: Every sentence the same length
+  category: prose
+  severity: low
+  weight: 43
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "writing:cross-para-burstiness" }
+    - { origin: redpen, ref: burstiness-threshold }
+  channels: [source]
+  cascade:
+    check: sentence-burstiness
+    params:
+      # Measured, not chosen. Across 1,113 markdown files from four real
+      # repositories the coefficient of variation runs p10 0.38, median 0.53,
+      # p90 0.68. Below 0.35 sit 23 documents, 18 of them machine-written on
+      # evidence independent of this measure — twelve code reviews whose own
+      # front matter names an AI agent as the reviewer, two agent-written plans,
+      # three from a docs generator's evidence directory, one whose filename is
+      # a prompt. 0.32 keeps the strongest of those and drops the tail.
+      maxCv: 0.32
+  legitimateWhen: >-
+    Reference documentation. API pages, a getting-started guide, a table of
+    parameter descriptions — every human-written document that fell below the
+    threshold was one of these, and uniform sentence length is the correct
+    register there rather than a tell.
+  why: >-
+    Human prose alternates: a long sentence carrying a qualification, then a
+    short one landing it. Prose that comes out at one length has had that
+    rhythm averaged away, and a reader feels it as flatness long before they
+    can name it.
+  fix: >-
+    Read it aloud. Where you run out of breath, split the sentence; where two
+    short ones say one thing, join them. The variation is the point, not the
+    average length.

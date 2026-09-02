@@ -124,6 +124,9 @@ test('wordiness is advisory, because people have always written that way', async
 test('every prose rule reads documents and nothing else', () => {
   for (const r of loadCorpus().filter((x) => x.category === 'prose')) {
     assert.deepEqual(r.channels, ['source'], `${r.id} is source-only`);
+    // A whole-document measure has no patterns to carry an extension list; the
+    // scanner confines it to document types instead. See stylometry.test.mjs.
+    if (r.cascade && !r.source) continue;
     assert.ok(r.source?.extensions?.includes('.md'), `${r.id} must read .md`);
     for (const ext of r.source.extensions) {
       assert.ok(

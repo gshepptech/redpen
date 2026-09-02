@@ -105,7 +105,7 @@ severity weighting in rules/*.yaml are original work.
 What redpen added
 ------------------------------------------------------------------------------
 
-  - The unified schema and the merge itself: 183 rules collapsed from 315
+  - The unified schema and the merge itself: 184 rules collapsed from 316
     upstream references, each with provenance retained.
   - Cross-channel promotion (src/promote.ts). No upstream catalogue reconciles
     a source-level hit against a rendered-DOM hit, so none of them can tell a

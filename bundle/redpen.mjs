@@ -7834,6 +7834,30 @@ function findCancelledFloors(css, opts = {}) {
   return conflicts;
 }
 
+// src/channels/stylometry.ts
+function proseOnly(text) {
+  return text.replace(/```[\s\S]*?```/g, " ").replace(/^\s{4,}.*$/gm, " ").replace(/`[^`]*`/g, " ").replace(/\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/^\s*[|>#].*$/gm, " ").replace(/^\s*[-*+]\s+.*$/gm, " ").replace(/[*_#>|]/g, " ");
+}
+function sentencesOf(text) {
+  return text.split(/(?<=[.!?])\s+/).map((s) => s.trim()).filter((s) => s.split(/\s+/).length >= 3);
+}
+function burstiness(text) {
+  const p = proseOnly(text);
+  const words = p.toLowerCase().match(/\b[a-z']{2,}\b/g) ?? [];
+  const sentences = sentencesOf(p);
+  if (words.length < 300 || sentences.length < 12) return null;
+  const lengths = sentences.map((s) => s.split(/\s+/).length);
+  const mean = lengths.reduce((a, b) => a + b, 0) / lengths.length;
+  if (mean <= 0) return null;
+  const variance = lengths.reduce((a, b) => a + (b - mean) ** 2, 0) / lengths.length;
+  return {
+    cv: Math.sqrt(variance) / mean,
+    sentences: sentences.length,
+    words: words.length,
+    meanLength: mean
+  };
+}
+
 // src/channels/source.ts
 var UI_EXTENSIONS = /* @__PURE__ */ new Set([
   ".html",
@@ -7894,6 +7918,7 @@ var CODE_EXTENSIONS = /* @__PURE__ */ new Set([
   ".adoc"
 ]);
 var SCANNED_EXTENSIONS = CODE_EXTENSIONS;
+var DOC_EXTENSIONS = /* @__PURE__ */ new Set([".md", ".markdown", ".rst", ".txt", ".adoc"]);
 var SKIP_DIRS = /* @__PURE__ */ new Set([
   "node_modules",
   ".git",
@@ -8026,7 +8051,8 @@ function parseIgnore(line) {
 }
 function scanSource(opts) {
   const compiled = compile(rulesForChannel("source"));
-  const cascadeRules = rulesForChannel("source").filter((r) => r.cascade);
+  const cascadeRules = rulesForChannel("source").filter((r) => r.cascade?.check === "cancelled-floor");
+  const metricRules = rulesForChannel("source").filter((r) => r.cascade?.check === "sentence-burstiness");
   const files = opts.files ?? walk(opts.root);
   const hits = /* @__PURE__ */ new Map();
   const ignored = /* @__PURE__ */ new Map();
@@ -8047,6 +8073,21 @@ function scanSource(opts) {
     for (const c of compiled) {
       if (c.suppressProject && !projectSuppressed.has(c.rule.id) && c.suppressProject.test(text)) {
         projectSuppressed.add(c.rule.id);
+      }
+    }
+    if (DOC_EXTENSIONS.has(ext)) {
+      for (const rule of metricRules) {
+        const params = rule.cascade.params ?? {};
+        const b = burstiness(text);
+        if (!b || b.cv > (params.maxCv ?? 0.32)) continue;
+        const list = hits.get(rule.id) ?? [];
+        list.push({
+          channel: "source",
+          location: rel,
+          line: 1,
+          excerpt: `sentence length varies by ${b.cv.toFixed(2)} across ${b.sentences} sentences (mean ${b.meanLength.toFixed(0)} words); the median document varies by 0.53`
+        });
+        hits.set(rule.id, list);
       }
     }
     if (ext === ".css") {
@@ -8126,7 +8167,7 @@ function scanSource(opts) {
       evidence: dedupe(evidence).slice(0, 12)
     });
   }
-  for (const rule of cascadeRules) {
+  for (const rule of [...cascadeRules, ...metricRules]) {
     const evidence = hits.get(rule.id);
     if (!evidence?.length) continue;
     findings.push({
