@@ -74,7 +74,7 @@ Several good catalogues already describe what AI-generated work looks like, and
 
 Running them together is worse than running one. They use different
 vocabularies, they contradict each other, and concatenating ~200 rules doubles
-the false positives without doubling the truth. redpen merges them into 179 rules
+the false positives without doubling the truth. redpen merges them into 183 rules
 with provenance intact, then does three things none of them does.
 
 **It cross-checks before it reports.** The catalogues inspect three
@@ -498,13 +498,13 @@ turns out to be the most useful distinction in the corpus.
   quality   88   2 findings — broken regardless of taste
 ```
 
-104 slop rules, 75 quality. A page can be immaculate taste over a broken form, or
+106 slop rules, 77 quality. A page can be immaculate taste over a broken form, or
 flawless mechanics wearing every default in the catalogue, and you should be
 able to see which.
 
 **Advisory rules** are reported and never scored. Some tells — em dashes being
 the canonical case — humans use legitimately often enough that counting them is
-noise rather than signal. 10 rules are marked this way.
+noise rather than signal. 11 rules are marked this way.
 
 ## Surfaces
 
@@ -545,7 +545,7 @@ dashboard: `default-sans`, `monotonous-spacing`, `ghost-cards`, `over-rounding`,
 
 ## What this has and has not been proven against
 
-v0.1.0. The corpus is 179 rules across 16 categories, the suite is 264 tests,
+v0.1.0. The corpus is 183 rules across 16 categories, the suite is 265 tests,
 and it has been run end to end against five real projects plus its own
 fixtures. Nearly everything ever found wrong with redpen was found by pointing
 it at something real rather than by reading it: a first Go dashboard gave up six
@@ -645,8 +645,8 @@ taste. See [NOTICE](NOTICE) for the projects behind each and their licences.
 `redpen sources`:
 
 ```
-  179 rules merged from:
-     215  catalogue     curated lists of design tells
+  183 rules merged from:
+     224  catalogue     curated lists of design tells
       68  heuristics    the usability and a11y tradition
       23  study         two measurements: 3,033 Reddit comments, 623M changes
       22  redpen        named here first

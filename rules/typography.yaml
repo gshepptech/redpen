@@ -314,7 +314,10 @@
   channels: [source, render]
   source:
     patterns:
-      - '>\s*0[1-9]\s*(?:—|–|-|/)\s*[A-Z]'
+      # `\w`, not `[A-Z]`: patterns compile case-insensitively, so the class
+      # was already matching lowercase, and a numbered eyebrow is the tell
+      # whatever case follows it.
+      - '>\s*0[1-9]\s*(?:—|–|-|/)\s*\w'
       - 'class="[^"]*(eyebrow|kicker|section-label)[^"]*"'
     minHits: 3
   render:

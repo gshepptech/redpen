@@ -86,7 +86,10 @@
       #
       # delete, destroy and wipe are what a codebase says when the data is real,
       # and the labels below are what a button says when it means it.
-      - 'onClick=\{[^}]*\b(delete|destroy|wipe|purge)[A-Z]\w*\('
+      # `\w`, not `[A-Z]`: the camelCase hump was never enforced under the
+      # default case-insensitive compile, and a lowercase handler name is the
+      # same unguarded delete.
+      - 'onClick=\{[^}]*\b(delete|destroy|wipe|purge)\w*\('
       - '>\s*(Delete|Delete all|Clear all|Discard|Wipe)\s*<'
     # The suppress list was right and could not see anything. Without a window
     # it read the hit's own line only, and a confirmation is never written on

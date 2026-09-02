@@ -238,3 +238,125 @@
     around it, and it stops proper nouns from disappearing into the capitals.
   fix: >-
     Sentence case. Capitalise the first word and anything that is a name.
+
+- id: ai-artefact-markup
+  kind: quality
+  title: Markup only a chat client produces
+  category: prose
+  severity: high
+  weight: 84
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "writing:ai-citation-markup" }
+    - { origin: catalogue, ref: "writing:ai-utm-source" }
+    - { origin: catalogue, ref: "writing:ai-placeholder" }
+  channels: [source]
+  source:
+    extensions: ['.md', '.markdown', '.rst', '.txt', '.adoc']
+    # Case-sensitive, or `[X]` matches a `- [x]` task-list checkbox and two
+    # projects' planning documents report as chat transcripts. Third time this
+    # flag has silently inverted a rule; `test/corpus.test.mjs` now refuses the
+    # combination outright.
+    caseSensitive: true
+    patterns:
+      # A citation marker from a chat transcript. Nothing else emits these.
+      - '【[^】]*†[^】]*】'
+      # A link copied out of a chat client, tracking parameter and all.
+      - 'utm_source=(chatgpt|claude|perplexity|copilot|gemini)'
+      # A slot the template never filled. The bare single-letter forms — `[X]`,
+      # `[N]` — are gone: a checkbox, a citation and a redaction all wear them,
+      # and none of that is a chat artefact.
+      - '\[(Your Name|Your Company|Your Email|Insert [^\]]{2,30}|Add [^\]]{2,30} here)\]'
+  why: >-
+    Not a style. These are strings only a chat client emits — a citation marker
+    from a transcript, a tracking parameter on a link someone copied, a bracket
+    the template never filled — and every one of them is proof the document was
+    pasted rather than read. A reader who finds one stops trusting the rest.
+  fix: >-
+    Delete the marker, strip the tracking parameter from the link, and fill or
+    remove the placeholder. Then reread the paragraph around it, because
+    whatever produced the artefact produced the sentence too.
+
+- id: sycophantic-opener
+  kind: slop
+  title: A reply to the reader, at the top of a document
+  category: prose
+  severity: medium
+  weight: 69
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "writing:sycophantic" }
+    - { origin: catalogue, ref: "writing:acknowledgment-loop" }
+  channels: [source]
+  source:
+    extensions: ['.md', '.markdown', '.rst', '.txt', '.adoc']
+    patterns:
+      - '\b(Great|Excellent|Good) (question|point|catch|call|observation)\b'
+      - '\bYou.?re (absolutely |completely |quite )?right\b'
+      - '\b(That.?s|This is) (a )?(great|excellent|fantastic|really good) (point|question|idea|catch)\b'
+      - '\b(Thanks for|Thank you for) (the |your )?(question|clarification|catching|pointing)\b'
+      - '\bYou.?re right to (push back|question|be sceptical|be skeptical|ask)\b'
+  why: >-
+    Praise addressed to whoever asked, left in a file that will outlive the
+    conversation. It is the same failure as a chatbot sign-off and it is more
+    embarrassing, because it reads as the document flattering its reader.
+  fix: >-
+    Delete the sentence. It is never load-bearing — the paragraph after it says
+    the same thing without the compliment.
+
+- id: cutoff-disclaimer
+  kind: quality
+  title: A document dated by a model rather than a calendar
+  category: prose
+  severity: medium
+  weight: 72
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "writing:cutoff-disclaimer" }
+    - { origin: catalogue, ref: "writing:confidence-calibration" }
+  channels: [source]
+  source:
+    extensions: ['.md', '.markdown', '.rst', '.txt', '.adoc']
+    patterns:
+      - '\bas of my (last |knowledge |training )?(update|cutoff|cut-off)\b'
+      - '\bmy (training data|knowledge) (only )?(goes|extends|includes)\b'
+      - '\bI (don.?t|do not) have access to (real-?time|current|up-to-date)\b'
+      - '\b(as of|up to) my (knowledge|training) cut-?off\b'
+  why: >-
+    A hedge about what a model knew, in a document a person is expected to
+    rely on. It dates the page to a training run rather than to a release, and
+    the reader cannot tell which facts it was meant to cover.
+  fix: >-
+    Delete it and put a real date on the document. If the currency of a claim
+    genuinely matters, say when it was last checked and against what.
+
+- id: hollow-intensifier
+  kind: slop
+  advisory: true
+  title: Intensifiers doing the work of evidence
+  category: prose
+  severity: low
+  weight: 40
+  evidenceRank: null
+  sources:
+    - { origin: catalogue, ref: "writing:hollow-intensifier" }
+    - { origin: catalogue, ref: "writing:real-actual-inflation" }
+  channels: [source]
+  source:
+    extensions: ['.md', '.markdown', '.rst', '.txt', '.adoc']
+    minHits: 5
+    patterns:
+      - '\b(truly|incredibly|remarkably|extraordinarily|profoundly|immensely)\b'
+      - '\b(real|actual|genuine) (value|impact|difference|benefit|insight|results?)\b'
+      - '\b(significantly|substantially|dramatically) (better|faster|improved|easier|more)\b(?![^.\n]{0,40}\d)'
+    suppress: '^\s{4,}|^\s*(```|>|\|)'
+  # Advisory. An intensifier is ordinary English and people reach for them under
+  # deadline; five in a document is a habit, and even then it is a note about
+  # the prose rather than a claim about who wrote it.
+  why: >-
+    "Significantly faster" without a number is the shape of evidence with none
+    inside it. One is emphasis; five is a document that keeps insisting because
+    it has nothing to measure.
+  fix: >-
+    Give the number, or drop the adverb. "Faster" and "significantly faster"
+    carry exactly the same information when neither is quantified.

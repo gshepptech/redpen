@@ -189,3 +189,33 @@ test('every render check named by a rule exists in the bundle', async () => {
     .filter((check) => !src.includes(`CHECKS['${check}']`));
   assert.deepEqual(missing, [], 'rules name render checks that do not exist');
 });
+
+test('no rule depends on case while compiling case-insensitively', () => {
+  // Three rules have now been silently inverted by this: `const food` read as a
+  // SCREAMING_CASE constant, every sentence-case heading read as Title Case,
+  // and `- [x]` task checkboxes read as chat-transcript markup. Patterns compile
+  // with the `i` flag unless a rule opts out, so an uppercase-only class or
+  // literal means the opposite of what it says.
+  const offenders = [];
+  for (const rule of loadCorpus()) {
+    const m = rule.source;
+    if (!m || m.caseSensitive) continue;
+    for (const field of ['patterns', 'paths']) {
+      for (const pattern of m[field] ?? []) {
+        // An uppercase-only character class, or a bracketed alternation of
+        // single uppercase letters. Both are meaningless under `i`.
+        if (/\[A-Z[^\]]*\]/.test(pattern) || /\[\^?[A-Z](\|[A-Z])+\]/.test(pattern)) {
+          offenders.push(`${rule.id}: ${pattern}`);
+        }
+      }
+    }
+    if (m.suppress && /\[A-Z[^\]]*\]/.test(m.suppress)) {
+      offenders.push(`${rule.id} (suppress): ${m.suppress}`);
+    }
+  }
+  assert.deepEqual(
+    offenders,
+    [],
+    `these rules need caseSensitive: true, or the [A-Z] means nothing:\n${offenders.join('\n')}`,
+  );
+});

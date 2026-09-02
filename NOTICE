@@ -63,6 +63,14 @@ severity weighting in rules/*.yaml are original work.
   avoid-ai-writing
     https://github.com/conorbronsdon/avoid-ai-writing (skill v3.25.0)
     MIT License
+    That repository also ships a deterministic zero-dependency detector
+    (detector/patterns.js) and a rule-to-category map covering 51 detector
+    types. redpen borrows neither: the corpus here is an independent
+    reimplementation, and `detector/CATEGORIES.md` was read only to find which
+    named tells were missing. Four of its stylometric checks — punctuation
+    distribution, function-word trigram entropy, cross-paragraph burstiness and
+    type-token ratio — are computed measures rather than patterns, and redpen
+    has no equivalent.
     Contributed the prose catalogue: the frequency-marker and clarity word
     lists, the tier split between them, and the named cadence and structure
     tells that `rules/prose.yaml` and several `copy` rules are built from.
@@ -97,7 +105,7 @@ severity weighting in rules/*.yaml are original work.
 What redpen added
 ------------------------------------------------------------------------------
 
-  - The unified schema and the merge itself: 179 rules collapsed from 306
+  - The unified schema and the merge itself: 183 rules collapsed from 315
     upstream references, each with provenance retained.
   - Cross-channel promotion (src/promote.ts). No upstream catalogue reconciles
     a source-level hit against a rendered-DOM hit, so none of them can tell a

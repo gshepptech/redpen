@@ -104,9 +104,13 @@
     - { origin: redpen, ref: orchestration-residue }
   channels: [source]
   source:
+    caseSensitive: true
     patterns:
       - '(//|#|\*)\s*(See|see|Refer to|refer to)\s+[\w./-]+\.(md|txt|yaml|yml|json)\b[^\n]{0,30}\b(for (details|context|the plan|why))'
-      - '(//|#|\*)[^\n]{0,30}\b(described|documented|specified|planned) in\s+[A-Z_]{3,}\.md\b'
+      # Case-sensitive: the tell is a SCREAMING_CASE plan document, and under
+      # the default `i` flag [A-Z_]{3,} matched `readme.md` and `notes.md` —
+      # every filename, which is every comment that mentions one.
+      - '(//|#|\*)[^\n]{0,30}\b([Dd]escribed|[Dd]ocumented|[Ss]pecified|[Pp]lanned) in\s+[A-Z][A-Z_0-9]{2,}\.md\b'
       - '(//|#|\*)\s*(TODO|NOTE)[^\n]{0,20}\bsee\s+(the\s+)?(plan|spec|roadmap|handoff|brief)\b'
   why: >-
     A comment pointing at ROADMAP.md or a handoff note is only as good as the
