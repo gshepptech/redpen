@@ -439,12 +439,48 @@ a magic link, a code on your phone — and press Enter. redpen writes the cookie
 and localStorage to `.redpen/auth.json` and points the config at it; every later
 scan renders as you.
 
-This is deliberately the only mechanism. Every app's login page is somewhere
-different, wants different fields, and is often not a form at all, so a config
-schema describing them would be a browser automation language redpen owns
-forever. What every flow produces is the same artefact — a cookie jar — so that
-is the only part worth automating. redpen never sees a credential; it only keeps
-what comes out the other side.
+That is the general mechanism, and it is general because it automates nothing.
+Every app's login page is somewhere different, wants different fields, and is
+often not a form at all, so a config schema describing them would be a browser
+automation language redpen owns forever. What every flow produces is the same
+artefact — a cookie jar — so that is the only part worth automating. redpen
+never sees a credential; it only keeps what comes out the other side.
+
+**`--headless` covers the one shape that has to run unattended.** A headed
+browser needs a person, and the place a session is most needed is CI, where
+`redpen check` runs and nobody can press Enter. So there is a second, narrow
+mode: a form with a username field, a password field and a submit.
+
+```
+REDPEN_LOGIN_USER=ci@example.com \
+REDPEN_LOGIN_PASSWORD=... \
+redpen login http://localhost:3000/login --headless \
+  --user-selector '#email' --password-selector '#password' \
+  --expect '[data-testid=app-shell]'
+```
+
+Three details are load-bearing.
+
+There is no `--user` or `--password`. A credential passed as an argument is in
+the process table, the shell history and the CI log; these come from the
+environment or not at all. The progress line prints `c***@example.com`, enough
+to tell which account a failed run used and not enough to reuse.
+
+`--expect` is required, and it is the whole reason this is safe. A *refused*
+password still sets cookies — a CSRF token, an anonymous session id — so the
+empty-jar check that guards the headed flow passes happily on a login that
+failed, and the saved file would then scan every authenticated route as a login
+page. Naming something that only exists once you are through is the only thing
+that separates the two. `--expect-url` does the same job against the url.
+
+Nothing is written unless that check passes. A failed login leaves no file, and
+says where the browser ended up and what the page was called — never what was
+typed into it.
+
+Selectors are never guessed. Guessing wrong types an account into whatever
+field matched first. And anything that is not a form — OAuth, SSO, a magic
+link, a second factor — fails here rather than half-working, and is still the
+headed flow.
 
 `.redpen/auth.json` is a live credential and expires when the session does.
 `redpen login` adds `.redpen/` to .gitignore itself, because the command that
@@ -546,7 +582,7 @@ dashboard: `default-sans`, `monotonous-spacing`, `ghost-cards`, `over-rounding`,
 
 ## What this has and has not been proven against
 
-v0.1.0. The corpus is 184 rules across 16 categories, the suite is 275 tests,
+v0.1.0. The corpus is 184 rules across 16 categories, the suite is 283 tests,
 and it has been run end to end against five real projects plus its own
 fixtures. Nearly everything ever found wrong with redpen was found by pointing
 it at something real rather than by reading it: a first Go dashboard gave up six

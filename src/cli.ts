@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import pc from 'picocolors';
 import { runScan, ruleIds } from './scan.js';
 import { loadPlaywright } from './channels/render.js';
-import { captureLogin } from './channels/login.js';
+import { captureLogin, captureLoginHeadless } from './channels/login.js';
 import { meetsThreshold } from './promote.js';
 import { renderTerminal } from './report/terminal.js';
 import { renderMarkdown } from './report/markdown.js';
@@ -57,6 +57,23 @@ ${pc.dim('Options')}
   --version, -V      print the version and exit
   --quiet            suppress progress output
 
+${pc.dim('Logging in without a person (redpen login --headless)')}
+  Covers one shape of login: a form with a username field, a password field
+  and a submit. Anything else — SSO, a magic link, a second factor — is the
+  headed \`redpen login\`, and this fails rather than pretending.
+
+  --headless         fill the form instead of waiting for you
+  --user-selector    the username or email field, e.g. '#email'
+  --password-selector  the password field, e.g. '#password'
+  --submit-selector  the submit button. Omitted presses Enter in the password
+  --expect <sel>     a selector that only exists once logged in (required,
+                     unless --expect-url: a refused password still sets cookies)
+  --expect-url <s>   a substring the url must contain once logged in
+  --timeout <ms>     per-step timeout. Default 30000
+
+  The account comes from REDPEN_LOGIN_USER and REDPEN_LOGIN_PASSWORD. There is
+  no flag for either, because a credential in an argument is in the CI log.
+
 ${pc.dim('Suppressing a finding')}
   Add ${pc.bold('redpen-ignore <reason>')} in a comment on or above the line, or
   ${pc.bold('redpen-ignore:<rule-id> <reason>')} to suppress just one rule. The reason is
@@ -78,6 +95,17 @@ interface Args {
   verbose: boolean;
   showIgnored: boolean;
   quiet: boolean;
+  /**
+   * `redpen login --headless`: fill a password form from the environment so a
+   * session can be captured in CI, where nobody can complete a headed flow.
+   */
+  headless: boolean;
+  userSelector: string | null;
+  passwordSelector: string | null;
+  submitSelector: string | null;
+  expectSelector: string | null;
+  expectUrl: string | null;
+  timeoutMs: number | null;
 }
 
 export function parseArgs(argv: string[]): Args {
@@ -96,6 +124,13 @@ export function parseArgs(argv: string[]): Args {
     verbose: false,
     showIgnored: false,
     quiet: false,
+    headless: false,
+    userSelector: null,
+    passwordSelector: null,
+    submitSelector: null,
+    expectSelector: null,
+    expectUrl: null,
+    timeoutMs: null,
   };
 
   let first = true;
@@ -132,6 +167,16 @@ export function parseArgs(argv: string[]): Args {
     if (a === '--verbose' || a === '-v') { args.verbose = true; continue; }
     if (a === '--show-ignored') { args.showIgnored = true; continue; }
     if (a === '--quiet' || a === '-q') { args.quiet = true; continue; }
+    if (a === '--headless') { args.headless = true; continue; }
+    if (a === '--user-selector') { args.userSelector = argv[++i] ?? null; continue; }
+    if (a === '--password-selector') { args.passwordSelector = argv[++i] ?? null; continue; }
+    if (a === '--submit-selector') { args.submitSelector = argv[++i] ?? null; continue; }
+    if (a === '--expect') { args.expectSelector = argv[++i] ?? null; continue; }
+    if (a === '--expect-url') { args.expectUrl = argv[++i] ?? null; continue; }
+    if (a === '--timeout') { args.timeoutMs = Number(argv[++i]); continue; }
+    // There is deliberately no --user or --password. A credential passed as an
+    // argument is in the process table, the shell history and, on the machine
+    // this matters most, the CI log. They come from the environment or not at all.
     if (a.startsWith('--')) {
       fail(`unknown option ${a}`);
     }
@@ -691,23 +736,20 @@ async function cmdLogin(root: string, args: Args): Promise<void> {
 
   const out = join(stateRoot(root), '.redpen', 'auth.json');
 
-  const result = await captureLogin(
-    async () => pw as never,
-    url,
-    out,
-    {
-      say: (m) => process.stderr.write(pc.dim(`  ${m}\n`)),
-      waitForOperator: () =>
-        new Promise<void>((done) => {
-          process.stderr.write(pc.bold('\n  Press Enter here once you are logged in. '));
-          process.stdin.resume();
-          process.stdin.once('data', () => {
-            process.stdin.pause();
-            done();
-          });
-        }),
-    },
-  );
+  const result = args.headless
+    ? await headlessLogin(pw, url, out, args)
+    : await captureLogin(async () => pw as never, url, out, {
+        say: (m) => process.stderr.write(pc.dim(`  ${m}\n`)),
+        waitForOperator: () =>
+          new Promise<void>((done) => {
+            process.stderr.write(pc.bold('\n  Press Enter here once you are logged in. '));
+            process.stdin.resume();
+            process.stdin.once('data', () => {
+              process.stdin.pause();
+              done();
+            });
+          }),
+      });
 
   process.stdout.write(
     `\n  session saved to ${pc.bold(relative(root, result.path) || result.path)}\n` +
@@ -734,6 +776,72 @@ async function cmdLogin(root: string, args: Args): Promise<void> {
     saveConfig(root, { ...config, storageState: '.redpen/auth.json' });
     process.stderr.write(pc.dim('\n  .redpen/config.json now points at it; scans will use it automatically.\n'));
   }
+}
+
+/**
+ * The flags and environment a headless login needs, checked before a browser opens.
+ *
+ * Every one of these is refused here rather than deep in Playwright, because
+ * the failure a CI run gets from a missing selector is a timeout screenshot
+ * nobody will look at, and the failure it gets from here is a sentence.
+ */
+async function headlessLogin(
+  pw: unknown,
+  url: string,
+  out: string,
+  args: Args,
+): Promise<{ path: string; landedOn: string; cookies: number; origins: number }> {
+  const user = process.env.REDPEN_LOGIN_USER;
+  const password = process.env.REDPEN_LOGIN_PASSWORD;
+  if (!user || !password) {
+    fail(
+      'redpen login --headless reads the account from REDPEN_LOGIN_USER and ' +
+        'REDPEN_LOGIN_PASSWORD, and one of them is not set. There is no flag for either: ' +
+        'a credential passed as an argument ends up in the process table and the CI log.',
+    );
+  }
+  if (!args.userSelector || !args.passwordSelector) {
+    fail(
+      'redpen login --headless needs --user-selector and --password-selector, e.g. ' +
+        '`--user-selector "#email" --password-selector "#password"`. redpen does not guess ' +
+        'at field names; guessing wrong types an account into whatever field matched first.',
+    );
+  }
+  if (!args.expectSelector && !args.expectUrl) {
+    fail(
+      'redpen login --headless needs --expect <selector> or --expect-url <substring> — ' +
+        'something that is only there once you are through. A refused password still sets ' +
+        'cookies, so without this redpen would save a logged-out session and every ' +
+        'authenticated scan after it would silently read the login page.',
+    );
+  }
+
+  process.stderr.write(pc.dim(`  logging in at ${url} as ${maskAccount(user)}\n`));
+
+  return captureLoginHeadless(async () => pw as never, {
+    url,
+    user,
+    password,
+    userSelector: args.userSelector,
+    passwordSelector: args.passwordSelector,
+    submitSelector: args.submitSelector,
+    expectSelector: args.expectSelector,
+    expectUrl: args.expectUrl,
+    timeoutMs: args.timeoutMs && args.timeoutMs > 0 ? args.timeoutMs : 30_000,
+  }, out);
+}
+
+/**
+ * Enough of the account to recognise, not enough to reuse.
+ *
+ * The progress line exists so a CI log says which account a failed login was
+ * for. Printing the whole address defeats the point of never accepting it as
+ * a flag.
+ */
+export function maskAccount(user: string): string {
+  const at = user.indexOf('@');
+  if (at > 0) return `${user.slice(0, 1)}***${user.slice(at)}`;
+  return user.length <= 2 ? '***' : `${user.slice(0, 1)}***`;
 }
 
 /**

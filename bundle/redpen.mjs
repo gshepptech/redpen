@@ -12756,6 +12756,62 @@ async function captureLogin(loadPlaywright2, url, out, prompt) {
     await browser.close();
   }
 }
+async function captureLoginHeadless(loadPlaywright2, login, out) {
+  if (!login.expectSelector && !login.expectUrl) {
+    throw new Error(
+      "a headless login needs something to check for. A rejected password still sets cookies, so without --expect or --expect-url this would save a refused session and every authenticated scan would quietly read the login page."
+    );
+  }
+  const pw = await loadPlaywright2();
+  const browser = await pw.chromium.launch({ headless: true });
+  try {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await page.goto(login.url, { waitUntil: "domcontentloaded", timeout: login.timeoutMs });
+    await page.fill(login.userSelector, login.user, { timeout: login.timeoutMs });
+    await page.fill(login.passwordSelector, login.password, { timeout: login.timeoutMs });
+    if (login.submitSelector) {
+      await page.click(login.submitSelector, { timeout: login.timeoutMs });
+    } else {
+      await page.press(login.passwordSelector, "Enter");
+    }
+    try {
+      if (login.expectSelector) {
+        await page.waitForSelector(login.expectSelector, { timeout: login.timeoutMs });
+      }
+      if (login.expectUrl) {
+        const wanted = login.expectUrl;
+        await page.waitForURL((u) => String(u).includes(wanted), { timeout: login.timeoutMs });
+      }
+    } catch {
+      const where = page.url();
+      let title = "";
+      try {
+        title = await page.title();
+      } catch {
+      }
+      throw new Error(
+        `the login did not complete: ${login.expectSelector ? `no element matched ${login.expectSelector}` : `the url never contained ${login.expectUrl}`} within ${login.timeoutMs}ms. The browser was left at ${where}${title ? ` (${title})` : ""}. Nothing was saved. Either the credentials were refused, or this app needs a step a form fill cannot do \u2014 in which case use the headed \`redpen login\`.`
+      );
+    }
+    mkdirSync5(dirname4(out), { recursive: true });
+    await context.storageState({ path: out });
+    const landedOn = page.url();
+    await context.close();
+    const { readFileSync: readFileSync9 } = await import("node:fs");
+    const state = JSON.parse(readFileSync9(out, "utf8"));
+    const cookies = (state.cookies ?? []).length;
+    const origins = (state.origins ?? []).length;
+    if (!cookies && !origins) {
+      throw new Error(
+        `nothing to save: the browser held no cookies and no stored origins at ${landedOn}, even though the login appeared to succeed. This app keeps its session somewhere a browser profile does not carry, and redpen cannot scan behind it.`
+      );
+    }
+    return { path: out, landedOn, cookies, origins };
+  } finally {
+    await browser.close();
+  }
+}
 
 // src/report/terminal.ts
 var import_picocolors = __toESM(require_picocolors(), 1);
@@ -13209,6 +13265,23 @@ ${import_picocolors2.default.dim("Options")}
   --version, -V      print the version and exit
   --quiet            suppress progress output
 
+${import_picocolors2.default.dim("Logging in without a person (redpen login --headless)")}
+  Covers one shape of login: a form with a username field, a password field
+  and a submit. Anything else \u2014 SSO, a magic link, a second factor \u2014 is the
+  headed \`redpen login\`, and this fails rather than pretending.
+
+  --headless         fill the form instead of waiting for you
+  --user-selector    the username or email field, e.g. '#email'
+  --password-selector  the password field, e.g. '#password'
+  --submit-selector  the submit button. Omitted presses Enter in the password
+  --expect <sel>     a selector that only exists once logged in (required,
+                     unless --expect-url: a refused password still sets cookies)
+  --expect-url <s>   a substring the url must contain once logged in
+  --timeout <ms>     per-step timeout. Default 30000
+
+  The account comes from REDPEN_LOGIN_USER and REDPEN_LOGIN_PASSWORD. There is
+  no flag for either, because a credential in an argument is in the CI log.
+
 ${import_picocolors2.default.dim("Suppressing a finding")}
   Add ${import_picocolors2.default.bold("redpen-ignore <reason>")} in a comment on or above the line, or
   ${import_picocolors2.default.bold("redpen-ignore:<rule-id> <reason>")} to suppress just one rule. The reason is
@@ -13229,7 +13302,14 @@ function parseArgs(argv) {
     min: null,
     verbose: false,
     showIgnored: false,
-    quiet: false
+    quiet: false,
+    headless: false,
+    userSelector: null,
+    passwordSelector: null,
+    submitSelector: null,
+    expectSelector: null,
+    expectUrl: null,
+    timeoutMs: null
   };
   let first = true;
   for (let i = 0; i < argv.length; i++) {
@@ -13290,6 +13370,34 @@ function parseArgs(argv) {
     }
     if (a === "--quiet" || a === "-q") {
       args.quiet = true;
+      continue;
+    }
+    if (a === "--headless") {
+      args.headless = true;
+      continue;
+    }
+    if (a === "--user-selector") {
+      args.userSelector = argv[++i] ?? null;
+      continue;
+    }
+    if (a === "--password-selector") {
+      args.passwordSelector = argv[++i] ?? null;
+      continue;
+    }
+    if (a === "--submit-selector") {
+      args.submitSelector = argv[++i] ?? null;
+      continue;
+    }
+    if (a === "--expect") {
+      args.expectSelector = argv[++i] ?? null;
+      continue;
+    }
+    if (a === "--expect-url") {
+      args.expectUrl = argv[++i] ?? null;
+      continue;
+    }
+    if (a === "--timeout") {
+      args.timeoutMs = Number(argv[++i]);
       continue;
     }
     if (a.startsWith("--")) {
@@ -13803,23 +13911,18 @@ async function cmdLogin(root, args) {
     );
   }
   const out = join9(stateRoot(root), ".redpen", "auth.json");
-  const result = await captureLogin(
-    async () => pw,
-    url,
-    out,
-    {
-      say: (m) => process.stderr.write(import_picocolors2.default.dim(`  ${m}
+  const result = args.headless ? await headlessLogin(pw, url, out, args) : await captureLogin(async () => pw, url, out, {
+    say: (m) => process.stderr.write(import_picocolors2.default.dim(`  ${m}
 `)),
-      waitForOperator: () => new Promise((done) => {
-        process.stderr.write(import_picocolors2.default.bold("\n  Press Enter here once you are logged in. "));
-        process.stdin.resume();
-        process.stdin.once("data", () => {
-          process.stdin.pause();
-          done();
-        });
-      })
-    }
-  );
+    waitForOperator: () => new Promise((done) => {
+      process.stderr.write(import_picocolors2.default.bold("\n  Press Enter here once you are logged in. "));
+      process.stdin.resume();
+      process.stdin.once("data", () => {
+        process.stdin.pause();
+        done();
+      });
+    })
+  });
   process.stdout.write(
     `
   session saved to ${import_picocolors2.default.bold(relative3(root, result.path) || result.path)}
@@ -13837,6 +13940,43 @@ async function cmdLogin(root, args) {
     saveConfig(root, { ...config, storageState: ".redpen/auth.json" });
     process.stderr.write(import_picocolors2.default.dim("\n  .redpen/config.json now points at it; scans will use it automatically.\n"));
   }
+}
+async function headlessLogin(pw, url, out, args) {
+  const user = process.env.REDPEN_LOGIN_USER;
+  const password = process.env.REDPEN_LOGIN_PASSWORD;
+  if (!user || !password) {
+    fail(
+      "redpen login --headless reads the account from REDPEN_LOGIN_USER and REDPEN_LOGIN_PASSWORD, and one of them is not set. There is no flag for either: a credential passed as an argument ends up in the process table and the CI log."
+    );
+  }
+  if (!args.userSelector || !args.passwordSelector) {
+    fail(
+      'redpen login --headless needs --user-selector and --password-selector, e.g. `--user-selector "#email" --password-selector "#password"`. redpen does not guess at field names; guessing wrong types an account into whatever field matched first.'
+    );
+  }
+  if (!args.expectSelector && !args.expectUrl) {
+    fail(
+      "redpen login --headless needs --expect <selector> or --expect-url <substring> \u2014 something that is only there once you are through. A refused password still sets cookies, so without this redpen would save a logged-out session and every authenticated scan after it would silently read the login page."
+    );
+  }
+  process.stderr.write(import_picocolors2.default.dim(`  logging in at ${url} as ${maskAccount(user)}
+`));
+  return captureLoginHeadless(async () => pw, {
+    url,
+    user,
+    password,
+    userSelector: args.userSelector,
+    passwordSelector: args.passwordSelector,
+    submitSelector: args.submitSelector,
+    expectSelector: args.expectSelector,
+    expectUrl: args.expectUrl,
+    timeoutMs: args.timeoutMs && args.timeoutMs > 0 ? args.timeoutMs : 3e4
+  }, out);
+}
+function maskAccount(user) {
+  const at = user.indexOf("@");
+  if (at > 0) return `${user.slice(0, 1)}***${user.slice(at)}`;
+  return user.length <= 2 ? "***" : `${user.slice(0, 1)}***`;
 }
 function ensureGitignored(root, entry) {
   const gitDir = join9(stateRoot(root), ".git");
@@ -13877,5 +14017,6 @@ main().catch((err) => {
 });
 export {
   ensureGitignored,
+  maskAccount,
   parseArgs
 };
