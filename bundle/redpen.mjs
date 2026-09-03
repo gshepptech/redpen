@@ -13826,13 +13826,35 @@ async function cmdLogin(root, args) {
 ` + import_picocolors2.default.dim(`  ${result.cookies} cookie(s), ${result.origins} stored origin(s), captured at ${result.landedOn}
 `)
   );
+  const ignored = ensureGitignored(root, ".redpen/");
   process.stderr.write(
-    import_picocolors2.default.yellow("\n  This file is a live credential. Keep it out of git \u2014 `redpen init` adds\n") + import_picocolors2.default.yellow("  .redpen/ to .gitignore, and it will expire when the session does.\n")
+    import_picocolors2.default.yellow("\n  This file is a live credential, and it expires when the session does.\n") + import_picocolors2.default.yellow(
+      ignored === "added" ? "  Added .redpen/ to .gitignore so it cannot be committed.\n" : ignored === "present" ? "  .gitignore already covers .redpen/.\n" : "  This is not a git repository, so nothing was ignored \u2014 keep the file out of any archive you share.\n"
+    )
   );
   const config = loadConfig(root);
   if (!config.storageState) {
     saveConfig(root, { ...config, storageState: ".redpen/auth.json" });
     process.stderr.write(import_picocolors2.default.dim("\n  .redpen/config.json now points at it; scans will use it automatically.\n"));
+  }
+}
+function ensureGitignored(root, entry) {
+  const gitDir = join9(stateRoot(root), ".git");
+  const file = join9(stateRoot(root), ".gitignore");
+  if (!existsSync6(gitDir)) return "no-repo";
+  let body = "";
+  try {
+    body = readFileSync8(file, "utf8");
+  } catch {
+    body = "";
+  }
+  const covered = body.split("\n").map((l) => l.trim()).some((l) => l === entry || l === entry.replace(/\/$/, "") || l === `/${entry}`);
+  if (covered) return "present";
+  try {
+    writeFileSync4(file, (body && !body.endsWith("\n") ? body + "\n" : body) + entry + "\n", "utf8");
+    return "added";
+  } catch {
+    return "no-repo";
   }
 }
 function cmdInit(root) {
@@ -13854,5 +13876,6 @@ main().catch((err) => {
   process.exit(2);
 });
 export {
+  ensureGitignored,
   parseArgs
 };

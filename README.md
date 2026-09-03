@@ -447,8 +447,9 @@ is the only part worth automating. redpen never sees a credential; it only keeps
 what comes out the other side.
 
 `.redpen/auth.json` is a live credential and expires when the session does.
-`redpen init` puts `.redpen/` in .gitignore for that reason, and a configured
-session that is missing from disk is reported rather than silently skipped.
+`redpen login` adds `.redpen/` to .gitignore itself, because the command that
+writes a credential is the one that should protect it. A configured session
+missing from disk is reported rather than silently skipped.
 
 ### The tools channel
 
@@ -545,7 +546,7 @@ dashboard: `default-sans`, `monotonous-spacing`, `ghost-cards`, `over-rounding`,
 
 ## What this has and has not been proven against
 
-v0.1.0. The corpus is 184 rules across 16 categories, the suite is 272 tests,
+v0.1.0. The corpus is 184 rules across 16 categories, the suite is 275 tests,
 and it has been run end to end against five real projects plus its own
 fixtures. Nearly everything ever found wrong with redpen was found by pointing
 it at something real rather than by reading it: a first Go dashboard gave up six

@@ -713,15 +713,56 @@ async function cmdLogin(root: string, args: Args): Promise<void> {
     `\n  session saved to ${pc.bold(relative(root, result.path) || result.path)}\n` +
       pc.dim(`  ${result.cookies} cookie(s), ${result.origins} stored origin(s), captured at ${result.landedOn}\n`),
   );
+  // The command that writes a credential is the command that protects it.
+  // This used to print "`redpen init` adds .redpen/ to .gitignore" — which
+  // nothing did. A session file sat untracked-but-committable in a repository
+  // that had never run init, under a message saying it was handled.
+  const ignored = ensureGitignored(root, '.redpen/');
   process.stderr.write(
-    pc.yellow('\n  This file is a live credential. Keep it out of git — `redpen init` adds\n') +
-      pc.yellow('  .redpen/ to .gitignore, and it will expire when the session does.\n'),
+    pc.yellow('\n  This file is a live credential, and it expires when the session does.\n') +
+      pc.yellow(
+        ignored === 'added'
+          ? '  Added .redpen/ to .gitignore so it cannot be committed.\n'
+          : ignored === 'present'
+            ? '  .gitignore already covers .redpen/.\n'
+            : '  This is not a git repository, so nothing was ignored — keep the file out of any archive you share.\n',
+      ),
   );
 
   const config = loadConfig(root);
   if (!config.storageState) {
     saveConfig(root, { ...config, storageState: '.redpen/auth.json' });
     process.stderr.write(pc.dim('\n  .redpen/config.json now points at it; scans will use it automatically.\n'));
+  }
+}
+
+/**
+ * Put `.redpen/` in .gitignore, if there is one and it is not covered already.
+ *
+ * Appends rather than rewrites, and never touches a file it cannot parse: an
+ * ignore file is the user's, and a tool that reformats one to add a line has
+ * done more than it was asked.
+ */
+export function ensureGitignored(root: string, entry: string): 'added' | 'present' | 'no-repo' {
+  const gitDir = join(stateRoot(root), '.git');
+  const file = join(stateRoot(root), '.gitignore');
+  if (!existsSync(gitDir)) return 'no-repo';
+  let body = '';
+  try {
+    body = readFileSync(file, 'utf8');
+  } catch {
+    body = '';
+  }
+  const covered = body
+    .split('\n')
+    .map((l) => l.trim())
+    .some((l) => l === entry || l === entry.replace(/\/$/, '') || l === `/${entry}`);
+  if (covered) return 'present';
+  try {
+    writeFileSync(file, (body && !body.endsWith('\n') ? body + '\n' : body) + entry + '\n', 'utf8');
+    return 'added';
+  } catch {
+    return 'no-repo';
   }
 }
 

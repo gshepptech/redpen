@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { differentPage } from '../dist/channels/render.js';
@@ -132,6 +132,59 @@ test('a configured session that is not on disk is said out loud', async () => {
       result.warnings.some((w) => /storageState .* is configured but not on disk/.test(w)),
       result.warnings.join(' | '),
     );
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('the command that writes a credential is the one that protects it', async () => {
+  // `redpen login` printed "`redpen init` adds .redpen/ to .gitignore". Nothing
+  // did. A session file sat committable in a repository that had never run
+  // init, under a message saying it was handled — found on a real project.
+  const { ensureGitignored } = await import('../dist/cli.js');
+  const { execFileSync } = await import('node:child_process');
+
+  const repo = mkdtempSync(join(tmpdir(), 'redpen-ignore-'));
+  try {
+    execFileSync('git', ['init', '-q', repo], { stdio: 'ignore' });
+    writeFileSync(join(repo, 'package.json'), '{"name":"g","private":true}');
+    writeFileSync(join(repo, '.gitignore'), 'node_modules\n');
+
+    assert.equal(ensureGitignored(repo, '.redpen/'), 'added');
+    assert.match(readFileSync(join(repo, '.gitignore'), 'utf8'), /^\.redpen\/$/m);
+
+    // Idempotent, and it never rewrites what was already there.
+    assert.equal(ensureGitignored(repo, '.redpen/'), 'present');
+    const after = readFileSync(join(repo, '.gitignore'), 'utf8');
+    assert.equal(after.match(/\.redpen/g).length, 1);
+    assert.match(after, /^node_modules$/m, 'the existing file is preserved');
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
+  }
+});
+
+test('an existing ignore line in any of its spellings is left alone', async () => {
+  const { ensureGitignored } = await import('../dist/cli.js');
+  const { execFileSync } = await import('node:child_process');
+  for (const spelling of ['.redpen', '.redpen/', '/.redpen/']) {
+    const repo = mkdtempSync(join(tmpdir(), 'redpen-ignore-'));
+    try {
+      execFileSync('git', ['init', '-q', repo], { stdio: 'ignore' });
+      writeFileSync(join(repo, 'package.json'), '{"name":"g","private":true}');
+      writeFileSync(join(repo, '.gitignore'), `${spelling}\n`);
+      assert.equal(ensureGitignored(repo, '.redpen/'), 'present', spelling);
+    } finally {
+      rmSync(repo, { recursive: true, force: true });
+    }
+  }
+});
+
+test('somewhere that is not a repository is said, not silently skipped', async () => {
+  const { ensureGitignored } = await import('../dist/cli.js');
+  const dir = mkdtempSync(join(tmpdir(), 'redpen-norepo-'));
+  try {
+    writeFileSync(join(dir, 'package.json'), '{"name":"n","private":true}');
+    assert.equal(ensureGitignored(dir, '.redpen/'), 'no-repo');
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
