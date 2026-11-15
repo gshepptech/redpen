@@ -445,7 +445,7 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
    * back.
    *
    * They never became findings, so there is nothing to demote; they are
-   * reported from the rule and the line that carried the directive.
+   * listed by the rule and the line that carried the directive.
    */
   for (const [ruleId, directives] of src.ignored) {
     const rule = ruleById(ruleId);
