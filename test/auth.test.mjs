@@ -189,3 +189,18 @@ test('somewhere that is not a repository is said, not silently skipped', async (
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('a repository whose ignore file cannot be written is not called a non-repository', async () => {
+  const { ensureGitignored } = await import('../dist/cli.js');
+  const { execFileSync } = await import('node:child_process');
+  const repo = mkdtempSync(join(tmpdir(), 'redpen-ignore-'));
+  try {
+    execFileSync('git', ['init', '-q', repo], { stdio: 'ignore' });
+    writeFileSync(join(repo, 'package.json'), '{"name":"g","private":true}');
+    // A directory where the file should be: readable as nothing, never writable.
+    mkdirSync(join(repo, '.gitignore'));
+    assert.equal(ensureGitignored(repo, '.redpen/'), 'unwritable');
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
+  }
+});

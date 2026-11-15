@@ -761,7 +761,9 @@ async function cmdLogin(root: string, args: Args): Promise<void> {
           ? '  Added .redpen/ to .gitignore so it cannot be committed.\n'
           : ignored === 'present'
             ? '  .gitignore already covers .redpen/.\n'
-            : '  This is not a git repository, so nothing was ignored — keep the file out of any archive you share.\n',
+            : ignored === 'unwritable'
+              ? '  Could not write .gitignore — add .redpen/ to it yourself before committing.\n'
+              : '  This is not a git repository, so nothing was ignored — keep the file out of any archive you share.\n',
       ),
   );
 
@@ -845,7 +847,10 @@ export function maskAccount(user: string): string {
  * ignore file is the user's, and a tool that reformats one to add a line has
  * done more than it was asked.
  */
-export function ensureGitignored(root: string, entry: string): 'added' | 'present' | 'no-repo' {
+export function ensureGitignored(
+  root: string,
+  entry: string,
+): 'added' | 'present' | 'no-repo' | 'unwritable' {
   const gitDir = join(stateRoot(root), '.git');
   const file = join(stateRoot(root), '.gitignore');
   if (!existsSync(gitDir)) return 'no-repo';
@@ -864,7 +869,7 @@ export function ensureGitignored(root: string, entry: string): 'added' | 'presen
     writeFileSync(file, (body && !body.endsWith('\n') ? body + '\n' : body) + entry + '\n', 'utf8');
     return 'added';
   } catch {
-    return 'no-repo';
+    return 'unwritable';
   }
 }
 

@@ -208,7 +208,7 @@ fires that was not present at baseline.
 
 ## Scope and limits
 
-The corpus is 184 rules across 16 categories, and the suite is 283 tests.
+The corpus is 184 rules across 16 categories, and the suite is 284 tests.
 
 The upstream catalogues use different vocabularies and overlap heavily, so
 running them side by side doubles the false positives.

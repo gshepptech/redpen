@@ -13910,7 +13910,7 @@ async function cmdLogin(root, args) {
   const ignored = ensureGitignored(root, ".redpen/");
   process.stderr.write(
     import_picocolors2.default.yellow("\n  This file is a live credential, and it expires when the session does.\n") + import_picocolors2.default.yellow(
-      ignored === "added" ? "  Added .redpen/ to .gitignore so it cannot be committed.\n" : ignored === "present" ? "  .gitignore already covers .redpen/.\n" : "  This is not a git repository, so nothing was ignored \u2014 keep the file out of any archive you share.\n"
+      ignored === "added" ? "  Added .redpen/ to .gitignore so it cannot be committed.\n" : ignored === "present" ? "  .gitignore already covers .redpen/.\n" : ignored === "unwritable" ? "  Could not write .gitignore \u2014 add .redpen/ to it yourself before committing.\n" : "  This is not a git repository, so nothing was ignored \u2014 keep the file out of any archive you share.\n"
     )
   );
   const config = loadConfig(root);
@@ -13972,7 +13972,7 @@ function ensureGitignored(root, entry) {
     writeFileSync4(file, (body && !body.endsWith("\n") ? body + "\n" : body) + entry + "\n", "utf8");
     return "added";
   } catch {
-    return "no-repo";
+    return "unwritable";
   }
 }
 function cmdInit(root) {
