@@ -147,16 +147,6 @@ failure mode as an unevidenced finding, which this tool rejects on the way in.
 - Loading causes no reflow and no invisible text.
 - Re-run the scan, then `run why-score <path> --url <url> --only typography,chrome,system`.
   The scan says what is wrong; why-score says what is left and what it is worth.
-  On the first real run that was the difference between finishing and believing
-  I had finished.
-
-## What this looked like the first time it was run
-
-On a deliberately-bad fixture: **31 → 100**, ten findings to zero. Two survived
-the first pass and both were mistakes by the person following the steps rather
-than gaps in the rules — a font token declared but not applied to every element,
-and negative tracking left after the positive tracking was fixed. Both are
-called out above now.
 
 ## Hand off
 

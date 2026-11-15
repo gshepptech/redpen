@@ -35,7 +35,6 @@ unrelated package.
 Parse `$ARGUMENTS` for urls and a path. Never interpolate it raw: it is prose,
 and it may carry a path, several urls, and a sentence of context in any order.
 
-
 **Polish is refinement, never concealed redesign.** Preserve the incumbent
 visual world, content, behaviour and everything outside scope. If the concept
 itself is wrong, *say so and recommend a redesign* rather than smuggling one in.
@@ -129,19 +128,6 @@ failure mode as an unevidenced finding, which this tool rejects on the way in.
 - Re-run. Report quality before and after; **the slop score should be
   unchanged**, and if it moved you did something outside the brief.
 - Finish with a source diff: remove accidental churn and temporary artefacts.
-
-## What this looked like the first time it was run
-
-On a deliberately-bad fixture: **quality 6 → 45**, twenty-three findings to
-four, with the **slop score at exactly 4 before and after** — the contract, and
-it held.
-
-Two things the run taught, both since fixed in the detectors: adding a skip link
-and a visually-hidden label used to *create* two findings, because the standard
-clip-rect recipe looks like clipped text sitting off-canvas; and `low-contrast`
-reported a confident 1.00:1 for white text on a gradient button, because a
-gradient leaves `backgroundColor` transparent and the walk-up found the white
-page behind it.
 
 ---
 
