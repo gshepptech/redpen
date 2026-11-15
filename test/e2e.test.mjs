@@ -4,7 +4,7 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { join, extname, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { rmSync } from 'node:fs';
+import { rmSync, readFileSync, writeFileSync } from 'node:fs';
 import { runScan } from '../dist/scan.js';
 
 /**
@@ -66,6 +66,27 @@ async function playwrightAvailable() {
 const HAS_BROWSER = await playwrightAvailable();
 const opts = { skip: HAS_BROWSER ? false : 'playwright not installed' };
 
+// pricing.html is the sloppy page with every hue swapped and nothing else
+// changed. It is written here rather than checked in so the two pages cannot
+// drift apart in structure.
+const HUE_SWAP = {
+  '#7c3aed': '#0f766e',
+  '#6366f1': '#0d9488',
+  '#3b82f6': '#14b8a6',
+  '#8b5cf6': '#0f766e',
+  '#ec4899': '#f59e0b',
+  '#a855f7': '#2dd4bf',
+  'rgba(124, 58, 237, 0.1)': 'rgba(15, 118, 110, 0.1)',
+};
+
+function writePaletteSwap(dir) {
+  const html = readFileSync(join(dir, 'index.html'), 'utf8').replace('style.css', 'pricing.css');
+  let css = readFileSync(join(dir, 'style.css'), 'utf8');
+  for (const [from, to] of Object.entries(HUE_SWAP)) css = css.split(from).join(to);
+  writeFileSync(join(dir, 'pricing.html'), html);
+  writeFileSync(join(dir, 'pricing.css'), css);
+}
+
 let cleanUrl;
 let sloppyUrl;
 let appUrl;
@@ -75,6 +96,7 @@ before(async () => {
   cleanUrl = await serve(join(HERE, 'fixtures', 'clean'));
   sloppyUrl = await serve(join(HERE, 'fixtures', 'sloppy'));
   appUrl = await serve(join(HERE, 'fixtures', 'app'));
+  writePaletteSwap(join(HERE, 'fixtures', 'sloppy'));
   for (const d of ['clean', 'sloppy', 'app']) {
     rmSync(join(HERE, 'fixtures', d, '.redpen'), { recursive: true, force: true });
   }
