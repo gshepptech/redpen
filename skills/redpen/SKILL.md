@@ -15,7 +15,7 @@ catalogues — the corpus below is those merged, deduplicated, and cross-checked
 
 Resolve the binary first. A plugin install carries `bundle/redpen.mjs`; a
 checkout has `dist/cli.js`; a linked install puts `redpen` on PATH. There is no
-`npx @gshepptech/redpen` — the package is not published, and `npx redpen` is somebody
+`npx @gshepptech/redpen` — the package is not published yet, and `npx redpen` is somebody
 else's package.
 
 ```bash

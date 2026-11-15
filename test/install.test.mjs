@@ -164,10 +164,9 @@ test('the version is answered, and answered from every install shape', () => {
 });
 
 test('nothing tells a reader to run a command that does not exist', () => {
-  // `@gshepptech/redpen` is not published, so `npx @gshepptech/redpen scan …` fails at the
-  // first line — and it was the first line of the README, the skill's Run It
-  // section, and three command fallbacks. A doc that cannot be followed is
-  // worse than a missing one, because it looks like it works.
+  // `@gshepptech/redpen` is not published, so `npx @gshepptech/redpen scan …`
+  // fails on its first line. A doc that cannot be followed is worse than a
+  // missing one, because it looks like it works.
   const files = [
     'README.md',
     'skills/redpen/SKILL.md',
@@ -180,7 +179,7 @@ test('nothing tells a reader to run a command that does not exist', () => {
   for (const file of files) {
     for (const line of readFileSync(join(ROOT, file), 'utf8').split('\n')) {
       // Naming it to say it does not work is the point; invoking it is not.
-      if (/npx\s+@gshepptech/redpen\s+\w/.test(line)) offenders.push(`${file}: ${line.trim()}`);
+      if (/npx\s+@gshepptech\/redpen\s+\w/.test(line)) offenders.push(`${file}: ${line.trim()}`);
     }
   }
   assert.deepEqual(offenders, [], `\n${offenders.join('\n')}\n`);

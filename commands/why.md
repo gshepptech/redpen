@@ -25,7 +25,7 @@ unrelated package.
 run --help    # confirm the binary resolved before doing anything else
 ```
 
-`@gshepptech/redpen` is not on npm, so there is no `npx` fallback to reach for. If the
+`@gshepptech/redpen` is not on npm yet, so there is no `npx` fallback. If the
 resolver above finds nothing, say the plugin is not installed rather than
 inventing a way to run it.
 
