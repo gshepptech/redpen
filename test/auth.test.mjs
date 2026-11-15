@@ -10,10 +10,10 @@ import { runScan } from '../dist/scan.js';
 /**
  * Scanning something that needs a session.
  *
- * The failure this guards against is the worst one redpen has had: asking for
+ * The failure this guards against is the worst one redpen can have: asking for
  * `/dashboard`, being sent to `/login`, and reporting a clean confident score
  * about the login page under the dashboard's url. Every safeguard downstream
- * worked correctly — on the wrong page.
+ * would work correctly — on the wrong page.
  */
 
 test('a redirect to a different path is a different page', () => {
@@ -138,9 +138,9 @@ test('a configured session that is not on disk is said out loud', async () => {
 });
 
 test('the command that writes a credential is the one that protects it', async () => {
-  // `redpen login` printed "`redpen init` adds .redpen/ to .gitignore". Nothing
-  // did. A session file sat committable in a repository that had never run
-  // init, under a message saying it was handled — found on a real project.
+  // The command that writes the session file is the one that ignores it. A
+  // repository that never ran init must not be left with a committable
+  // credential under a message saying it was handled.
   const { ensureGitignored } = await import('../dist/cli.js');
   const { execFileSync } = await import('node:child_process');
 

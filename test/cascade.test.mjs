@@ -46,10 +46,9 @@ test('a restore under @supports covers everywhere the promise does', () => {
 });
 
 test('a restore that only matches coarse pointers still leaves the desktop short', () => {
-  // The production case this rule was built from. The restore is real, so the
-  // first version treated the conflict as resolved — and declined to report a
-  // control that is 44px on a phone and 32px on every desktop, which is where
-  // almost everyone uses it.
+  // The restore is real, but treating the conflict as resolved would decline
+  // to report a control that is 44px on a phone and 32px on every desktop,
+  // which is where almost everyone uses it.
   const css = `
     .btn { min-height: 44px }
     .qacts .btn { height: 32px }
@@ -64,9 +63,8 @@ test('a restore that only matches coarse pointers still leaves the desktop short
 });
 
 test('one restored selector does not excuse its siblings', () => {
-  // The bug that made this rule necessary: three components pinned the height
-  // and only one was fixed, so a check keyed on the shared trailing class
-  // reported none of them.
+  // Three components pin the height and only one is restored, so a check keyed
+  // on the shared trailing class would report none of them.
   const css = `
     .btn { min-height: 44px }
     .qacts .btn { height: 32px }
@@ -137,11 +135,9 @@ test('comments cannot hide a conflict and do not shift line numbers', () => {
 /**
  * The stylesheet parser underneath all of the above.
  *
- * Twelve tests covered the cascade logic and none covered the thing that feeds
- * it, so three parser bugs sat under a green suite. Each one silently reported
- * *less* than it was asked to look at, which is this project's recurring
- * failure and the hardest kind to notice: the run succeeds, the count is just
- * quietly wrong.
+ * A parser bug here silently reports *less* than it was asked to look at,
+ * which is the hardest failure to notice: the run succeeds, the count is just
+ * quietly wrong. The cascade tests above cannot catch it on their own.
  *
  * Every case here is a stylesheet shape that occurs in ordinary CSS, not a
  * contrived one.
@@ -152,10 +148,9 @@ const CONFLICT = `.btn { min-height: 44px; }
 `;
 
 test('a statement at-rule does not swallow the rule after it', () => {
-  // `@import` opens no block. The scanner ran past its semicolon to the next
-  // rule's brace and read `@import url("base.css"); .btn` as one at-rule head,
-  // pushed it as a condition, and lost `.btn`. Since `@import` opens a great
-  // many stylesheets, this rule reported nothing at all on them.
+  // `@import` opens no block. A scanner that runs past its semicolon to the
+  // next rule's brace reads `@import url("base.css"); .btn` as one at-rule head
+  // and loses `.btn`, on the first line of a great many stylesheets.
   for (const statement of ['@import url("base.css");', '@charset "utf-8";', '@namespace svg url(http://www.w3.org/2000/svg);']) {
     const css = `${statement}\n${CONFLICT}`;
     assert.deepEqual(
@@ -168,8 +163,8 @@ test('a statement at-rule does not swallow the rule after it', () => {
 });
 
 test('a brace inside a string is not a brace', () => {
-  // `content: "{"` is ordinary CSS. Counting it desynchronised the brace depth
-  // and every rule after it in the file was dropped without a word.
+  // `content: "{"` is ordinary CSS. Counting it would desynchronise the brace
+  // depth and drop every rule after it in the file without a word.
   for (const decl of ['content: "{";', "content: '}';", 'content: "a{b}c";']) {
     const css = `.x::after { ${decl} }\n${CONFLICT}`;
     assert.equal(find(css).length, 1, `${decl} swallowed the rest of the sheet`);
@@ -177,8 +172,8 @@ test('a brace inside a string is not a brace', () => {
 });
 
 test('the last declaration in a block is the one that counts', () => {
-  // One bug facing both ways: taking the first value reported a cancelled floor
-  // where the browser uses the larger second value, and passed a page clean
+  // One bug facing both ways: taking the first value would report a cancelled
+  // floor where the browser uses the larger second value, and pass a page clean
   // where it uses the smaller one.
   assert.equal(
     find('.btn { min-height: 44px; }\n.acts .btn { height: 32px; height: 48px; }\n').length,

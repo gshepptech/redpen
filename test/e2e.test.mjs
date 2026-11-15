@@ -19,9 +19,9 @@ import { runScan } from '../dist/scan.js';
  */
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-// An unlisted type fell through to text/plain, so an <img src="*.svg"> never
-// decoded and naturalWidth stayed 0 — which silently disabled every rule that
-// reasons about image size. The fixture had the defect; the harness hid it.
+// An unlisted type falls through to text/plain, so an <img src="*.svg"> never
+// decodes and naturalWidth stays 0, which silently disables every rule that
+// reasons about image size.
 const MIME = {
   '.html': 'text/html',
   '.css': 'text/css',
@@ -212,9 +212,8 @@ test('a source-only run says so instead of reporting a clean page', opts, async 
 });
 
 /* ---- surface detection --------------------------------------------------
- * Both shapes below were misclassified in the field and the reason string gave
- * the bug away: per-row action buttons were being counted as "repeated CTAs",
- * so a list of records read as a landing page.
+ * Per-row action buttons are not "repeated CTAs". Counting them would make a
+ * list of records read as a landing page.
  * --------------------------------------------------------------------- */
 
 test('a list of records with per-row controls is an operate surface', opts, async () => {
@@ -259,10 +258,8 @@ test('an app surface raises no slop findings and still catches real defects', op
 });
 
 test('scan and why-score report the same number', opts, async () => {
-  // They disagreed by nine points and a whole verdict band, because why-score
-  // scored everything in scope while scan scores only what meets the
-  // confidence floor — so the command you run to improve the score was the
-  // pessimistic one.
+  // why-score must score only what meets the confidence floor, as scan does,
+  // or the command you run to improve the score reports a different number.
   const { explainScore } = await import('../dist/score.js');
   const { meetsThreshold } = await import('../dist/promote.js');
 
@@ -280,9 +277,8 @@ test('scan and why-score report the same number', opts, async () => {
 
 test('visually-hidden content is not a finding', opts, async () => {
   // The standard clip-rect recipe looks like clipped text sitting off-canvas.
-  // Flagging it means adding a skip link or an sr-only label *creates* two
-  // findings — the tool punishing the correct accessibility pattern. Found by
-  // running /redpen:polish for the first time.
+  // Flagging it would mean adding a skip link or an sr-only label *creates* two
+  // findings — the tool punishing the correct accessibility pattern.
   const dir = join(HERE, 'fixtures', 'clean');
   const result = await runScan({ root: dir, urls: [cleanUrl], viewports: [1440], ephemeral: true });
   for (const id of ['text-overflow', 'body-text-viewport-edge']) {
@@ -296,9 +292,9 @@ test('visually-hidden content is not a finding', opts, async () => {
 });
 
 test('bare urls on the command line are urls, not a root path', opts, async () => {
-  // They were taken as the root, so the source channel scanned a directory that
-  // cannot exist while the config's urls silently stood in for what was typed —
-  // and the report described pages the command never named.
+  // Taken as the root, the source channel would scan a directory that cannot
+  // exist while the config's urls silently stood in for what was typed, and
+  // the report would describe pages the command never named.
   const { parseArgs } = await import('../dist/cli.js');
   const args = parseArgs(['scan', 'http://127.0.0.1:9/', './src']);
   assert.deepEqual(args.urls, ['http://127.0.0.1:9/']);
@@ -318,9 +314,9 @@ test('a source pass that read nothing says so', opts, async () => {
 });
 
 test('a run whose urls are unreachable says so rather than scoring blind', opts, async () => {
-  // why-score printed a confident number twenty points off the scan's, with
-  // nothing to say its browser had never reached the pages. The warning has to
-  // exist on the result for every command to be able to print it.
+  // A confident number with nothing to say the browser never reached the
+  // pages is wrong. The warning has to exist on the result for every command
+  // to be able to print it.
   const result = await runScan({
     root: join(HERE, 'fixtures', 'clean'),
     // Port 9 is discard: nothing listens, so every navigation is refused.
@@ -336,10 +332,9 @@ test('a run whose urls are unreachable says so rather than scoring blind', opts,
 });
 
 test('content clipped past the viewport edge is found, not passed', opts, async () => {
-  // redpen's own fix text used to recommend `overflow-x: clip` on the root.
-  // A project took that advice and put three of five nav destinations past
-  // the right edge at 375px — unreachable, and measuring clean by every
-  // overflow metric, because clip sets scrollWidth equal to clientWidth.
+  // `overflow-x: clip` on the root can put nav destinations past the right
+  // edge at 375px — unreachable, and measuring clean by every overflow metric,
+  // because clip sets scrollWidth equal to clientWidth.
   const url = await serve(join(HERE, 'fixtures', 'clipped'));
   const result = await runScan({
     root: join(HERE, 'fixtures', 'clipped'),
@@ -363,7 +358,7 @@ test('content clipped past the viewport edge is found, not passed', opts, async 
 });
 
 test('a filled mark beside stroked icons is not two icon libraries', opts, async () => {
-  // Three false positives with one cause each, all reported from the field.
+  // Three false positives with one cause each.
   const url = await serve(join(HERE, 'fixtures', 'marks'));
   const result = await runScan({
     root: join(HERE, 'fixtures', 'marks'),
@@ -392,11 +387,9 @@ test('a filled mark beside stroked icons is not two icon libraries', opts, async
 });
 
 test('a contrast failure that only exists in dark mode is found', opts, async () => {
-  // Every render pass before this opened a default context, so
-  // prefers-color-scheme: dark never applied and half of a themed app went
-  // unscanned. Reported from a project whose only destructive control measured
-  // 6.15:1 light and 3.14:1 dark — below AA, on a confirmation page — and
-  // scanned clean.
+  // A default context never applies prefers-color-scheme: dark, so half of a
+  // themed app would go unscanned. A destructive control at 6.15:1 light and
+  // 3.14:1 dark is below AA, and only the dark pass sees it.
   const url = await serve(join(HERE, 'fixtures', 'themed'));
   const result = await runScan({
     root: join(HERE, 'fixtures', 'themed'),
@@ -418,7 +411,7 @@ test('a contrast failure that only exists in dark mode is found', opts, async ()
 });
 
 test('a color-mix control is measured against its composited ground', opts, async () => {
-  // Three traps, reported from the field with measurements.
+  // Three traps.
   //
   // 1. color-mix serialises as color(srgb r g b / a), never rgb(), so a parser
   //    that only knows rgba() returns null for every tinted control.
@@ -538,9 +531,9 @@ test('an unfilled grid row is a hole on a marketing page and a record count in a
 });
 
 test('a toggled-theme pass that cannot enter its theme is skipped, not relabelled', opts, async () => {
-  // See test/POLICY.md. The stamp used to be read from the pass config, so a
-  // pass whose init script threw still labelled every hit "data-theme=dark"
-  // for a page that had stayed light the whole time.
+  // See test/POLICY.md. A stamp read from the pass config would label every
+  // hit "data-theme=dark" even when the init script threw and the page stayed
+  // light the whole time.
   const url = await serve(join(HERE, 'fixtures', 'toggled'));
   const result = await runScan({
     root: join(HERE, 'fixtures', 'toggled'),
@@ -561,11 +554,9 @@ test('a toggled-theme pass that cannot enter its theme is skipped, not relabelle
 });
 
 test('a control inside a card is not a card inside a card', opts, async () => {
-  // Found by pointing redpen at the first codebase nobody here built. Every
-  // design system gives its inputs and buttons a background, a border, a radius
-  // and padding — every signal the nested-surface test looks for — so a form
-  // inside a card was reported as card-in-card twelve times, at weight 73, near
-  // the top of the report.
+  // Every design system gives its inputs and buttons a background, a border, a
+  // radius and padding — every signal the nested-surface test looks for — so a
+  // form inside a card must not read as card-in-card.
   //
   // The fixture carries both cases side by side: a card full of ordinary
   // controls, which must stay quiet, and a card genuinely inside a card, which
@@ -591,9 +582,8 @@ test('a control inside a card is not a card inside a card', opts, async () => {
 });
 
 test('a --only filter that matches no category says so rather than reporting clean', opts, async () => {
-  // `--only` takes categories and reads like it takes rule ids, so
-  // `--only nested-cards` printed a confident 100/100 clean. A filter that does
-  // not recognise its argument must never answer with a clean page.
+  // `--only` takes categories and reads like it takes rule ids. A filter that
+  // does not recognise its argument must never answer with a clean page.
   const url = await serve(join(HERE, 'fixtures', 'sloppy'));
   const result = await runScan({
     root: join(HERE, 'fixtures', 'sloppy'),
@@ -623,9 +613,8 @@ test('a --only filter that matches no category says so rather than reporting cle
 });
 
 test('the tells above gate forty each fire on the shape they describe', opts, async () => {
-  // redpen cited its upstream catalogue densely up to gate 40 and not once
-  // above it, which is where the most specific tells live. These five are that
-  // block: a grid track that cannot shrink, display type with no break
+  // Five of the most specific tells in the upstream catalogue: a grid track
+  // that cannot shrink, display type with no break
   // opportunity, uppercase set tighter than its own cap height, two elements
   // stuck to the same strip of viewport, and a window frame drawn out of divs.
   const url = await serve(join(HERE, 'fixtures', 'gates'));
@@ -649,9 +638,9 @@ test('the tells above gate forty each fire on the shape they describe', opts, as
 
 test('none of the new tells fire on a page that does not have them', opts, async () => {
   // The half that matters. A rule that fires on everything is worse than no
-  // rule, and the first cut of display-no-word-wrap fired on every heading in
-  // the clean fixture — it was splitting on the letter "s", because a single
-  // backslash does not survive a TypeScript template literal.
+  // rule: display-no-word-wrap must not fire on the clean fixture's headings.
+  // A single backslash does not survive a TypeScript template literal, so a
+  // `\s` that becomes "s" would split on the letter.
   const url = await serve(join(HERE, 'fixtures', 'clean'));
   const result = await runScan({
     root: join(HERE, 'fixtures', 'clean'),
@@ -673,9 +662,9 @@ test('none of the new tells fire on a page that does not have them', opts, async
 
 test('every copy and marketing tell fires on the page it describes', opts, async () => {
   // The fixture is a marketing page on purpose. These rules are scoped to
-  // persuade and read, and the first cut of this fixture classified as an app —
-  // so all seven copy rules were gated off and the test passed having measured
-  // nothing, which is exactly what test/POLICY.md warns about.
+  // persuade and read, and a fixture that classified as an app would gate all
+  // seven copy rules off and pass having measured nothing, which is exactly
+  // what test/POLICY.md warns about.
   const url = await serve(join(HERE, 'fixtures', 'prose'));
   const result = await runScan({
     root: join(HERE, 'fixtures', 'prose'),
@@ -757,10 +746,9 @@ test('each WCAG criterion fires on the failure it describes', opts, async () => 
 });
 
 test('a page that meets the criteria is not told otherwise', opts, async () => {
-  // target-size-minimum is the one that needed this. WCAG 2.5.8 exempts an
-  // undersized target that is spaced clear of every other target, and without
-  // that half the rule failed a 23px nav link on a page with nothing wrong —
-  // one pixel under, with room all round it.
+  // target-size-minimum needs this. WCAG 2.5.8 exempts an undersized target
+  // that is spaced clear of every other target, so a 23px nav link with room
+  // all round it passes.
   const url = await serve(join(HERE, 'fixtures', 'clean'));
   const result = await runScan({
     root: join(HERE, 'fixtures', 'clean'),
@@ -779,12 +767,11 @@ test('the source rules find tells in a component that works', async () => {
   // that compiles and does its job, with the tells where they turn up rather
   // than where they are easy to find.
   //
-  // Two rules could not see them. `invented-metrics` listed the numbers and the
-  // nouns it would accept, so "Trusted by 50,000+ land managers" was invisible
-  // because "land managers" was not on the menu. And `no-loading-state` only
-  // knew the inline handler — `onClick={async () => await …}` — which is the
-  // tutorial shape; a real component extracts the handler, and that is most
-  // React ever written.
+  // `invented-metrics` must not depend on a fixed list of nouns: "Trusted by
+  // 50,000+ land managers" is the tell whatever the audience is called. And
+  // `no-loading-state` must see more than the inline handler —
+  // `onClick={async () => await …}` is the tutorial shape; a real component
+  // extracts the handler.
   const result = await runScan({
     root: join(HERE, 'fixtures', 'realistic-app'),
     ephemeral: true,
@@ -798,11 +785,8 @@ test('the source rules find tells in a component that works', async () => {
 /**
  * The visual tells, one page, one assertion each.
  *
- * A quarter of the corpus had never fired on anything — not a fixture, not a
- * real project, not a marketing page. Untried is not the same as broken, and
- * the only way to tell them apart is to build the page. This one carries
- * eleven tells that had never been seen firing, and two of them turned out to
- * be broken rather than merely untried.
+ * Untried is not the same as broken, and the only way to tell them apart is to
+ * build the page. This one carries eleven tells no other fixture exercises.
  */
 const VISUAL_TELLS = [
   'all-caps-body',
@@ -851,8 +835,8 @@ test('none of the visual tells fire on a page without them', opts, async () => {
 });
 
 test('a live region one file away is still a live region', async () => {
-  // no-live-region fired on every file importing a toast, on a project whose
-  // Toast component carries `aria-live="polite"` one directory away. Same-line
+  // A file importing a toast is not missing a live region when the Toast
+  // component carries `aria-live="polite"` one directory away. Same-line
   // suppression cannot see another file, and this is a question about the
   // project rather than the line.
   const withOne = await runScan({
@@ -876,12 +860,10 @@ test('a live region one file away is still a live region', async () => {
 });
 
 test('deleting saved work is destructive; editing a draft is not', async () => {
-  // `destructive-without-confirm` was claimed on all four real projects and
-  // three of them were form builders — removeService in a deploy wizard,
-  // removeComponent on a chip in a draft, a Remove button beside a row being
-  // composed. Nothing is saved in any of them, and the rule is about work that
-  // is. `remove`, `clear` and `reset` are gone; delete, destroy and wipe are
-  // what a codebase says when the data is real.
+  // Form builders remove things that were never saved — removeService in a
+  // deploy wizard, removeComponent on a chip in a draft, a Remove button beside
+  // a row being composed. `destructive-without-confirm` is about work that is
+  // saved, so it matches delete, destroy and wipe, not remove, clear or reset.
   const real = await runScan({ root: join(HERE, 'fixtures', 'realistic-app'), ephemeral: true });
   assert.ok(
     real.findings.some((f) => f.ruleId === 'destructive-without-confirm'),
@@ -896,13 +878,10 @@ test('deleting saved work is destructive; editing a draft is not', async () => {
 });
 
 test('a message that names nothing is found in markup as well as in a string', async () => {
-  // `generic-error-message` read quoted literals only, for its whole life, so
-  // `<p role="alert">Something went wrong.</p>` — the most ordinary way there
-  // is to render one — went past it. It was also case-insensitive, which made
-  // the bare word `Error` match `=== 'error'`: a state, not a message. That
-  // reported a project whose two error branches read "Live conditions
-  // unavailable — wind unknown, can't scan." and "Couldn't reach iNaturalist
-  // or GBIF, so the sightings overlay is empty."
+  // `generic-error-message` must read JSX text, not just quoted literals:
+  // `<p role="alert">Something went wrong.</p>` is the most ordinary way there
+  // is to render one. It is case-sensitive, so the bare word `Error` does not
+  // match `=== 'error'`, which is a state, not a message.
   const real = await runScan({ root: join(HERE, 'fixtures', 'realistic-app'), ephemeral: true });
   assert.ok(
     real.findings.some((f) => f.ruleId === 'generic-error-message'),
@@ -917,19 +896,17 @@ test('a message that names nothing is found in markup as well as in a string', a
 });
 
 test('a note about the interface is not the interface', async () => {
-  // Thirteen copy rules carried comment suppression by hand and no other
-  // category had it, so 23 of 632 source hits across four real projects landed
-  // on a comment line — every one of them false. This fixture is a component
-  // that does everything right, with the tells written only in the prose that
-  // explains why.
+  // A comment line is not the interface. This fixture is a component that does
+  // everything right, with the tells written only in the prose that explains
+  // why.
   const ui = await runScan({ root: join(HERE, 'fixtures', 'commented-tells'), ephemeral: true });
   const claimed = [...ui.findings, ...ui.advisory].map((f) => f.ruleId);
   assert.deepEqual(claimed, [], `reported a tell that exists only inside a comment: ${claimed}`);
 
   // And the exemption holds in the other direction: the two categories whose
   // subject is the comment must still read it. The same file carries
-  // TODO(L2-04), which is how a phase id is actually written — the rule wanted
-  // the id flush against the comment marker and missed every real one.
+  // TODO(L2-04), which is how a phase id is actually written, not flush
+  // against the comment marker.
   const code = await runScan({
     root: join(HERE, 'fixtures', 'commented-tells'),
     codeCategories: true,
@@ -943,16 +920,14 @@ test('a note about the interface is not the interface', async () => {
 
 test('a guard written below the button still counts as a guard', async () => {
   // `destructive-without-confirm` is the only critical-severity rule in the
-  // corpus, and it was wrong on both of the two claims it had left. It already
-  // carried the right suppress list and could not see anything with it: no
-  // window, so it read the hit's own line, and a guard is never written on the
-  // button. ridgetag calls window.confirm seven lines above; mozza swaps the
-  // row for an inline "Confirm?" step. A window upward fixed those and left a
-  // third shape reported — `onClick={async (e) => {` with the check two lines
-  // *below*, inside the handler — which is what suppressAfter is for.
+  // corpus. A guard is never written on the button's own line: one component
+  // calls window.confirm seven lines above, another swaps the row for an
+  // inline "Confirm?" step, and a third writes `onClick={async (e) => {` with
+  // the check two lines *below*, inside the handler — which is what
+  // suppressAfter is for.
   //
-  // The fixture never says "confirm" in its own prose. An earlier draft did,
-  // and the upward window ate it, so the fixture passed while testing nothing.
+  // The fixture never says "confirm" in its own prose, because the upward
+  // window would read it and the fixture would pass while testing nothing.
   const guarded = await runScan({ root: join(HERE, 'fixtures', 'guarded-delete'), ephemeral: true });
   const claimed = [...guarded.findings, ...guarded.advisory].filter(
     (f) => f.ruleId === 'destructive-without-confirm',

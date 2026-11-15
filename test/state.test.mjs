@@ -10,10 +10,10 @@ import { stateRoot } from '../dist/config.js';
  *
  * It walks up from the scanned path looking for a project marker so that
  * scanning `internal/dash` puts state at the repo root. Unbounded, that walk
- * wrote a baseline into `~/.claude/.redpen` — a directory five levels above the
- * scan with a package.json in it, so a project by the rule and nothing anyone
- * meant by it. A tool that writes outside the tree you pointed it at has to be
- * wrong on purpose, not by accident.
+ * could write a baseline into `~/.claude/.redpen` — a directory five levels
+ * above the scan with a package.json in it, so a project by the rule and
+ * nothing anyone meant by it. A tool that writes outside the tree you pointed
+ * it at has to be wrong on purpose, not by accident.
  */
 
 function tree(...segments) {

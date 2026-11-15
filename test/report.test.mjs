@@ -8,10 +8,9 @@ import { renderMarkdown } from '../dist/report/markdown.js';
  * terminal a follow-up question. Everything it says has to survive being read
  * cold.
  *
- * It shipped with no test at all, and the first time anyone rendered it the
- * score table said `slop | 100 | reads as machine-made` — a perfect score
- * sitting next to the description of failure. These pin the parts that a
- * reader can misread.
+ * A score table reading `slop | 100 | reads as machine-made` puts a perfect
+ * score next to the description of failure. These pin the parts that a reader
+ * can misread.
  */
 
 function result(over = {}) {

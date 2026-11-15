@@ -7,12 +7,11 @@ import { fileURLToPath } from 'node:url';
 /**
  * The commands, run as commands.
  *
- * `why` and `rules` were broken for every documented use and no test noticed,
- * because every other test calls the library directly. A check meant for the
- * scan path — does this directory exist — ran before the dispatch, so `redpen
- * why ai-purple` exited 2 with "no such directory: ai-purple". The report
- * prints `redpen why <rule-id>` under every folded roster, so the tool was
- * telling people to run something that could not work.
+ * Every other test calls the library directly, so only these catch a dispatch
+ * bug. A check meant for the scan path — does this directory exist — must not
+ * run before the dispatch, or `redpen why ai-purple` exits 2 with "no such
+ * directory: ai-purple". The report prints `redpen why <rule-id>` under every
+ * folded roster, so that command has to work.
  */
 
 const CLI = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist', 'cli.js');

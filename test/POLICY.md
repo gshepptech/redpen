@@ -1,7 +1,6 @@
 # How this suite is allowed to pass
 
-One rule, and it exists because the suite has been green while measuring
-nothing four separate times:
+One rule:
 
 > **Every new rule must be shown failing against its own fixture before it is
 > shown passing.**
@@ -12,38 +11,28 @@ because it occupies the space where a real one would have gone.
 
 ## Why this and not something more elaborate
 
-The failures below were all caught this way and none by reading the code. That
-is the whole argument — code review does not distinguish a check that passes
-from a check that never ran.
+Code review does not distinguish a check that passes from a check that never
+ran. Breaking the code on purpose does. The failures it catches look like this:
 
-**A colour parser that degraded harmlessly.** `parseColor` could not read
-`color(srgb …)`, so a `color-mix` layer dropped silently out of the composite.
-On the reported case — a 7% tint — the ground behind it was nearly the same
-colour, so the answer stayed right by accident. The fixture, the test and the
-fix all looked correct. The test passed with the fix reverted. It now carries a
-94% wash alongside the 7% one, and only the wash discriminates.
+**A parser that degrades harmlessly.** If `parseColor` cannot read
+`color(srgb …)`, a `color-mix` layer drops silently out of the composite. On a
+7% tint the ground behind it is nearly the same colour, so the answer stays
+right by accident and the test passes with the fix reverted. The fixture
+carries a 94% wash alongside the 7% one, and only the wash discriminates.
 
-**Evidence labelled from the request instead of the observation.** The
-toggled-theme pass stamped `data-theme=dark` on the root, then labelled every
-finding with what it had *asked for*. When the init script threw — an init
-script runs before `documentElement` exists — the theme never applied, the pass
-ran against the light page anyway, and every hit still said `data-theme=dark`.
-The evidence was confidently wrong, which is strictly worse than absent. The
-stamp is now read back off the page, and a pass that cannot enter its own
-context is skipped and said out loud rather than reported under a theme it
-never reached.
+**Evidence labelled from the request instead of the observation.** A
+toggled-theme pass that labels findings with the theme it *asked for* stays
+confidently wrong when the theme never applied. The stamp is read back off the
+page, and a pass that cannot enter its own context is skipped and said out
+loud.
 
-**A guard whose removal changed nothing.** From a peer project: a template's
-`{{if .Snippet}}` was removed to prove the test caught it, and the test kept
-passing — the handler had already blanked the value upstream, so it rendered as
-an empty span either way. Three of the four deliberate breaks were real. The
-fourth was recorded in the test as something it explicitly does *not* pin.
+**A guard whose removal changes nothing.** If a value is already blanked
+upstream, removing the guard that hides it renders the same output, and the
+test keeps passing. That test does not pin the guard, and it should say so.
 
-**A fixture that measured the opposite of its claim.** Also from that project: a
-search test's fixture gave its why-match item a title containing the query, so
-it matched on title rather than snippet. The assertion was inverted and the test
-failed for the right-looking wrong reason. The code was nearly "fixed" to suit
-it.
+**A fixture that measures the opposite of its claim.** A search fixture whose
+title contains the query matches on title rather than snippet, and the test
+passes or fails for a reason unrelated to what it names.
 
 ## What this means in practice
 
@@ -54,10 +43,9 @@ it.
   side by side, with a comment saying which is which. The forgiving one
   documents the boundary; the discriminating one is the test.
 - When a rule is surface-gated, the fixture has to land on a surface where the
-  rule applies. `empty-grid-cell` is scoped away from `operate`, and its first
-  fixture had a search input in it, so the page classified as an app and the
-  rule was correctly switched off — the test failed for a reason that had
-  nothing to do with the detector.
+  rule applies. `empty-grid-cell` is scoped away from `operate`, so a fixture
+  with a search input in it classifies as an app and the rule is correctly
+  switched off. The test then fails for a reason unrelated to the detector.
 - The failure mode of a verifier is silence, and silence is indistinguishable
   from success. That is why breaking it on purpose is the only check that
   counts.

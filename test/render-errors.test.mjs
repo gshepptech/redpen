@@ -5,10 +5,10 @@ import { summariseErrors } from '../dist/channels/render.js';
 /**
  * What the reader sees when the dev server is not running.
  *
- * This is the most common failure of the render channel and it was the ugliest
- * thing redpen printed: Playwright attaches a multi-line call log to every
- * navigation error, the same error happens at every viewport, and the raw list
- * was joined and printed whole. Twelve lines of noise around one fact.
+ * This is the most common failure of the render channel. Playwright attaches a
+ * multi-line call log to every navigation error and the same error happens at
+ * every viewport, so the raw list printed whole is a dozen lines of noise
+ * around one fact.
  */
 
 test('one failure repeated across viewports is said once', () => {
@@ -47,18 +47,17 @@ test('it fits on a line rather than running to a call log', () => {
 });
 
 /**
- * Four findings plotguide was right to argue with.
+ * Four false positives a live app is right to argue with.
  *
- * The first live run of the page rules by someone who could push back. Each of
- * these is asserted against the detector source rather than a live browser,
- * because the fix is the condition, and a test that needs a dev server running
- * is a test nobody runs.
+ * Each of these is asserted against the detector source rather than a live
+ * browser, because the fix is the condition, and a test that needs a dev
+ * server running is a test nobody runs.
  */
 
 test('a hero is a screenful, not a page that happens to start with one', async () => {
-  // `main > section:first-child` matched the whole content column — 271vh, then
-  // 202vh once a ceiling went in — where a centred prose measure naturally puts
-  // two dozen elements on one axis. What makes it not a hero is structural: an
+  // `main > section:first-child` can match the whole content column, where a
+  // centred prose measure naturally puts two dozen elements on one axis.
+  // Height alone cannot separate it; what makes it not a hero is structural: an
   // opener does not contain the rest of the sections.
   const src = await import('node:fs').then((fs) =>
     fs.readFileSync(new URL('../src/channels/detectors.ts', import.meta.url), 'utf8'),
@@ -69,9 +68,8 @@ test('a hero is a screenful, not a page that happens to start with one', async (
 });
 
 test('a face the page loads is declared, however the framework declared it', async () => {
-  // next/font emits @font-face and sets no font custom property, so a project
-  // using the framework's own recommended setup had Oswald, Bitter and IBM Plex
-  // Mono — its three deliberate faces — reported as type-system drift.
+  // next/font emits @font-face and sets no font custom property, so the
+  // framework's own recommended setup must not read as type-system drift.
   const src = await import('node:fs').then((fs) =>
     fs.readFileSync(new URL('../src/channels/detectors.ts', import.meta.url), 'utf8'),
   );
@@ -82,7 +80,7 @@ test('a face the page loads is declared, however the framework declared it', asy
 
 test('background texture is not an assembled illustration', async () => {
   // A full-bleed topographic wash — pointer-events:none, fixed, behind the
-  // content — was reported on every route of one project as 23 primitive shapes.
+  // content — is background texture, not an assembled illustration.
   const src = await import('node:fs').then((fs) =>
     fs.readFileSync(new URL('../src/channels/detectors.ts', import.meta.url), 'utf8'),
   );
@@ -93,7 +91,7 @@ test('background texture is not an assembled illustration', async () => {
 
 test('a measure finding says which bound it crossed', async () => {
   // It is a range check, so 44ch and 79ch are opposite problems with opposite
-  // fixes, and both printed as "measure ~Nch".
+  // fixes, and the message has to say which one it is.
   const src = await import('node:fs').then((fs) =>
     fs.readFileSync(new URL('../src/channels/detectors.ts', import.meta.url), 'utf8'),
   );
@@ -105,8 +103,7 @@ test('a measure finding says which bound it crossed', async () => {
 test('framework dev tooling is not the product', async () => {
   // redpen is pointed at a dev server by design, and every stack mounts
   // something there. TanStack Query's devtools button is a 64px svg of 31
-  // primitive shapes, and it was reported as an assembled illustration on every
-  // route of one app — a finding about a button the product does not ship.
+  // primitive shapes, and it is not part of the product.
   const src = await import('node:fs').then((fs) =>
     fs.readFileSync(new URL('../src/channels/detectors.ts', import.meta.url), 'utf8'),
   );

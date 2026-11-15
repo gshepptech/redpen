@@ -10,15 +10,14 @@ import { fileURLToPath } from 'node:url';
  * What someone actually gets when they install the plugin.
  *
  * A Claude Code plugin installs from git, so it receives what is tracked and
- * nothing else. `dist/` was ignored, which meant every one of the eight
- * commands resolved `${CLAUDE_PLUGIN_ROOT}/dist/cli.js`, found nothing, fell
- * back to a `redpen` on PATH that a user has no reason to have, and exited 127.
+ * nothing else. `dist/` is ignored, so a command that resolves
+ * `${CLAUDE_PLUGIN_ROOT}/dist/cli.js` finds nothing, falls back to a `redpen`
+ * on PATH that a user has no reason to have, and exits 127.
  *
- * It looked fine when tested by hand, because this machine has
- * /opt/homebrew/bin/redpen symlinked straight into the working tree. The
- * environment was answering for the package. So this test exports a clean tree
- * out of git and runs with PATH stripped to /usr/bin:/bin — nothing of the
- * developer's setup survives that.
+ * A developer machine with `redpen` linked into the working tree would answer
+ * for the package. So this test exports a clean tree out of git and runs with
+ * PATH stripped to /usr/bin:/bin — nothing of the developer's setup survives
+ * that.
  */
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -65,9 +64,8 @@ test('the commands run with nothing of the developer on PATH', () => {
   const dir = freshInstall();
   try {
     // node has to be reachable — every Claude Code user has it — but the
-    // directory it lives in also holds /opt/homebrew/bin/redpen, symlinked
-    // straight into this working tree. That symlink is what masked the failure
-    // the first time it was tested by hand, so node gets its own bin directory
+    // directory it lives in may also hold a `redpen` linked into this working
+    // tree, which would mask the failure. So node gets its own bin directory
     // and nothing else comes with it.
     const bin = join(dir, '__bin');
     execFileSync('mkdir', ['-p', bin]);
@@ -104,10 +102,9 @@ test('the committed build is the build the source produces', () => {
 });
 
 test('no command file tells anyone to run a path that may not be there', () => {
-  // Eight files carry the same preamble by hand, and the check that reads only
-  // the first bash block passed while three of them still carried a second one
-  // pointing straight at dist/cli.js — a path a plugin install does not have.
-  // Every block, not the first.
+  // Every command file carries the same preamble, and a file can carry a
+  // second block pointing straight at dist/cli.js — a path a plugin install
+  // does not have. Every block, not the first.
   const commands = execFileSync('ls', [join(ROOT, 'commands')], { encoding: 'utf8' })
     .split('\n')
     .filter((f) => f.endsWith('.md'));
@@ -129,14 +126,12 @@ test('no command file tells anyone to run a path that may not be there', () => {
 });
 
 test('the version is answered, and answered from every install shape', () => {
-  // `redpen --version` returned "unknown option --version" and exited 2. It is
-  // the first thing anyone types when a report looks wrong and they want to
-  // know which build produced it.
+  // `redpen --version` is the first thing anyone types when a report looks
+  // wrong and they want to know which build produced it.
   //
   // It is read from package.json by walking up, not from a constant, because a
   // constant drifts from what npm and the plugin manifest publish — and
-  // because dist/, bundle/ and a global install sit at three different depths,
-  // which is the same thing that broke the rules/ lookup.
+  // because dist/, bundle/ and a global install sit at three different depths.
   const expected = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')).version;
 
   const dir = freshInstall();
@@ -186,8 +181,8 @@ test('nothing tells a reader to run a command that does not exist', () => {
 });
 
 test('the packaged binary is one a plugin install actually carries', () => {
-  // `bin` pointed at ./dist/cli.js, which .gitignore ignores — so installing
-  // from the git url produced a binary aimed at a file that was never shipped.
+  // A `bin` pointing at ./dist/cli.js, which .gitignore ignores, would make a
+  // git-url install produce a binary aimed at a file that is never shipped.
   const pkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
   const target = pkg.bin.redpen.replace(/^\.\//, '');
   assert.ok(existsSync(join(ROOT, target)), `${target} does not exist`);
@@ -207,8 +202,8 @@ test('the packaged binary is one a plugin install actually carries', () => {
 });
 
 test('the audit command drives the visual channel rather than mentioning it', () => {
-  // Eight rules are vision-only. The flagship command ran source and render and
-  // stopped, so the only automated entry point silently skipped all of them.
+  // Eight rules are vision-only. A flagship command that runs source and render
+  // and stops would silently skip all of them.
   const body = readFileSync(join(ROOT, 'commands', 'audit.md'), 'utf8');
   assert.match(body, /--vision/, 'audit must capture a brief');
   assert.match(body, /--answers/, 'audit must fold the answers back in');

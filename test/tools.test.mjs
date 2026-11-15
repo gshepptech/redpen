@@ -31,9 +31,9 @@ function project(files) {
 }
 
 test('a tool the project does not have is reported missing, never as clean', async () => {
-  // PATH is emptied for the duration. Without that this test passed or failed
-  // on whether the machine running it happened to have jscpd installed, which
-  // is the one thing a test must never depend on.
+  // PATH is emptied for the duration. Without that this test would pass or
+  // fail on whether the machine running it has jscpd installed, which is the
+  // one thing a test must never depend on.
   const dir = project({ 'package.json': '{"name":"t","private":true}', 'src/a.ts': 'export const a = 1;\n' });
   const path = process.env.PATH;
   process.env.PATH = '';
@@ -124,9 +124,8 @@ test('the tools channel never runs on a UI scan', async () => {
 });
 
 test('the analysers skip the test material redpen skips', async () => {
-  // jscpd walks the tree itself and knows nothing about SKIP_FILE. On a
-  // 1,872-file repository the single largest source of reported duplication
-  // was `*_integration_test.go`, where setup blocks repeat by design.
+  // jscpd walks the tree itself and knows nothing about SKIP_FILE, and test
+  // files such as `*_integration_test.go` repeat setup blocks by design.
   const { runTools } = await import('../dist/channels/tools.js');
   const src = await import('../dist/channels/tools.js');
   assert.ok(typeof runTools === 'function');
@@ -140,8 +139,7 @@ test('the analysers skip the test material redpen skips', async () => {
 });
 
 test('a capped evidence list still reports its true size', async () => {
-  // The cap used to be silent: 1,772 duplicated blocks rendered as sixteen with
-  // nothing saying the other 1,756 existed.
+  // The evidence cap must not be silent: the total says how many were cut.
   const { promote } = await import('../dist/promote.js');
   const raw = Array.from({ length: 40 }, (_, i) => ({
     ruleId: 'copy-paste-duplication',
@@ -188,9 +186,9 @@ test('the terminal report counts against the total, not the capped list', async 
 
 test('the binary lookup is not posix-only', async () => {
   // `PATH.split(':')` and a bare `jscpd` resolve to nothing on Windows, where
-  // the file is `jscpd.cmd` and the separator is `;`. Every analyser came back
-  // null there and was reported as "not installed", which is the wrong reason
-  // on a platform `engines` claims to support.
+  // the file is `jscpd.cmd` and the separator is `;`. Reporting every analyser
+  // as "not installed" there would be the wrong reason on a platform `engines`
+  // claims to support.
   const src = await import('node:fs').then((fs) =>
     fs.readFileSync(new URL('../src/channels/tools.ts', import.meta.url), 'utf8'),
   );
