@@ -31,7 +31,7 @@ severity weighting in rules/*.yaml are original work.
     the surface modes (persuade / operate / read) that decide which rules hold
     on which kind of page.
 
-    The five fix commands — typeset, layout, color, polish, distill — are ported
+    The five fix commands — typeset, layout, color, polish, distill — are derived
     from skill/reference/{typeset,layout,colorize,polish,distill}.md and stay
     under Apache-2.0 for that reason; see LICENSE-APACHE-2.0. Their structure
     and much of their craft guidance is impeccable's, in particular:

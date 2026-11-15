@@ -70,12 +70,12 @@ test('one reachy word is not a register, four is', async () => {
 });
 
 test('an underscore is a character, not a verb', async () => {
-  // A document explaining APP_LABS_CLOUD_DIR said "the single-underscore
+  // A document explaining APP_CACHE_DIR said "the single-underscore
   // form" four times and was read as machine prose.
   const dir = doc(
     'a.md',
     [
-      'Use the single-underscore form: APP_LABS_CLOUD_DIR.',
+      'Use the single-underscore form: APP_CACHE_DIR.',
       'The double-underscore form is wrong. Check the underscore count.',
       'A trailing underscore is also wrong. Underscore, not hyphen.',
     ].join('\n'),

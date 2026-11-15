@@ -3,7 +3,7 @@
  * @author Claude
  */
 // Written with AI assistance.
-// Co-Authored-By: Claude <noreply@anthropic.com>
+// Co-Authored-By: Code Assistant <assistant@example.com>
 // this function was generated using Copilot.
 // As an AI, I cannot verify the upstream rate limit.
 export const ATTRIBUTION_VARIANTS = 6;

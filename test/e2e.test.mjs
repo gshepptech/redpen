@@ -491,7 +491,7 @@ test('a theme the page toggles itself is exercised, not just the OS preference',
 });
 
 test('the four borrowed checks each fire on the shape they describe', opts, async () => {
-  // Ported from two upstream catalogues. Each is a defect a person can act on
+  // Taken from two upstream catalogues. Each is a defect a person can act on
   // and none of them was reachable from an existing rule.
   const url = await serve(join(HERE, 'fixtures', 'borrowed'));
   const result = await runScan({

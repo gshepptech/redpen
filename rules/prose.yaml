@@ -38,7 +38,7 @@
       - '\b(meticulous|meticulously|seamless|seamlessly|holistic|holistically)\b'
       - '\b(cutting-edge|game-chang(er|ing)|thought leader(ship)?|best practices)\b'
       # `underscores` only as the verb. Bare "underscore" is the character,
-      # and a document explaining APP_LABS_CLOUD_DIR said "the
+      # and a document explaining APP_CACHE_DIR said "the
       # single-underscore form" four times and was read as machine prose.
       - '\b(pivotal|showcasing|showcases)\b'
       - '\bunderscor(es|ing) (the|its|how|why|just how)\b'
