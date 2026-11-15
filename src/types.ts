@@ -42,6 +42,14 @@ export type Category =
    */
   | 'residue';
 
+/**
+ * The categories that describe a repository rather than a page.
+ *
+ * `prose` is here because a README, a changelog and a course script are files
+ * in the project, not markup the browser serves.
+ */
+export const CODE_CATEGORIES: ReadonlySet<string> = new Set<Category>(['craft', 'residue', 'prose']);
+
 export type Channel = 'source' | 'render' | 'vision' | 'fingerprint' | 'tools';
 
 /**
@@ -63,8 +71,6 @@ export type Kind = 'slop' | 'quality';
  *   read     — the visitor understands something. Docs, articles, changelogs.
  */
 export type Surface = 'persuade' | 'operate' | 'read';
-
-export const SURFACES: readonly Surface[] = ['persuade', 'operate', 'read'];
 
 /** Author-declared importance, before evidence weighting. */
 export type Severity = 'critical' | 'high' | 'medium' | 'low';
@@ -342,25 +348,6 @@ export interface FingerprintClash {
   distance: number;
   /** The dimensions that matched, named for the report. */
   sharedDimensions: string[];
-}
-
-export interface ScanConfig {
-  /** Directory to scan for source-channel hits. */
-  root: string;
-  /** Declared surface, if any. Detected per-page when not set. */
-  surface?: Surface;
-  /** URLs to drive for the render channel. Empty disables that channel. */
-  urls: string[];
-  /** Viewport widths to sweep. */
-  viewports: number[];
-  /** Enable the vision channel. Requires a configured model provider. */
-  vision: boolean;
-  /** Minimum confidence to include in the report. */
-  minConfidence: Confidence;
-  /** Fail the process when the score drops below this. Null disables gating. */
-  threshold: number | null;
-  /** Categories to skip entirely. */
-  skipCategories: Category[];
 }
 
 export interface ScanResult {

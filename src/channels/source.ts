@@ -1,8 +1,7 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative, extname } from 'node:path';
 import { rulesForChannel } from '../corpus/load.js';
-import { CODE_CATEGORIES } from '../scan.js';
-import type { RawFinding, Evidence, Rule } from '../types.js';
+import { CODE_CATEGORIES, type RawFinding, type Evidence, type Rule } from '../types.js';
 import { findCancelledFloors } from './cascade.js';
 import { burstiness } from './stylometry.js';
 

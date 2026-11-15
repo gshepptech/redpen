@@ -7636,6 +7636,9 @@ function originCounts() {
   return counts;
 }
 
+// src/types.ts
+var CODE_CATEGORIES = /* @__PURE__ */ new Set(["craft", "residue", "prose"]);
+
 // src/channels/cascade.ts
 function blankComments(css) {
   return css.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, " "));
@@ -12358,7 +12361,6 @@ function headline(slop, quality) {
 }
 
 // src/scan.ts
-var CODE_CATEGORIES = /* @__PURE__ */ new Set(["craft", "residue", "prose"]);
 async function runScan(opts) {
   const root = resolve3(opts.root);
   const config = loadConfig(root);

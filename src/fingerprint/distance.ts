@@ -126,7 +126,7 @@ const APP_SHAPES: ReadonlySet<string> = new Set([
  * where there is one, and APP_SHAPES is the fallback
  * for prints replayed from the store, which carry no surface.
  */
-export function isAppShape(print: Fingerprint, operatePages?: ReadonlySet<string>): boolean {
+function isAppShape(print: Fingerprint, operatePages?: ReadonlySet<string>): boolean {
   return operatePages?.has(print.page) || APP_SHAPES.has(print.macrostructure);
 }
 

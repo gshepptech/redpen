@@ -131,7 +131,7 @@ function rightmostCompound(selector: string): string[] {
 }
 
 /** Is every simple selector of `weak` present in `strong`'s rightmost compound? */
-export function subsumes(weak: string, strong: string): boolean {
+function subsumes(weak: string, strong: string): boolean {
   const w = weak.trim();
   // Only single compounds: a descendant weak selector needs real matching.
   if (/[\s>+~]/.test(w)) return false;

@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { runScan } from '../dist/scan.js';
 import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { CODE_CATEGORIES } from '../dist/scan.js';
+import { CODE_CATEGORIES } from '../dist/types.js';
 
 /**
  * The source a project is written in, rather than the page it serves.

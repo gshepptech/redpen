@@ -225,10 +225,6 @@ export function isActionable(rule: Rule, capabilities: Record<string, boolean>):
   return rule.requires.every((cap) => capabilities[cap] !== false);
 }
 
-export function rulesForSurface(surface: Surface | null): Rule[] {
-  return loadCorpus().filter((r) => appliesTo(r, surface));
-}
-
 export function ruleById(id: string): Rule | undefined {
   return loadCorpus().find((r) => r.id === id);
 }
