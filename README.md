@@ -1,249 +1,166 @@
-![redpen scanning a page: a headline of 76/100 reading "minor tells", the two axes below it — slop 76 and quality 100, each with its own bar — an "AI purple as the primary colour" finding promoted from source-only to source+render once both channels agree, and a sameness block reporting two pages that share a section rhythm](assets/hero.gif)
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/mark-dark.svg">
-  <img src="assets/mark.svg" alt="" width="64" height="54">
-</picture>
-
 # redpen
 
-One verdict on your UI.
+A linter for the tells that make a UI, its code and its docs read as machine-made.
 
-A linter for the things that make an interface read as machine-made — the
-default violet, the three-card grid, the gradient heading — plus the ordinary
-defects that are just broken. It reads your source, drives the real page in a
-browser, and only calls something a fact when more than one of them agrees.
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![TypeScript](https://img.shields.io/badge/language-TypeScript-3178c6.svg)
+[![CI](https://github.com/gshepptech/redpen/actions/workflows/ci.yml/badge.svg)](https://github.com/gshepptech/redpen/actions/workflows/ci.yml)
 
-```
-redpen scan . http://localhost:3000
-```
+![redpen scanning a page: a headline of 76/100 reading "minor tells", the two axes below it, slop 76 and quality 100, an "AI purple as the primary colour" finding promoted from source-only to source+render once both channels agree, and a sameness block reporting two pages that share a section rhythm](assets/hero.gif)
 
-```
-  redpen   76/100  minor tells
+Generated interfaces share a look: the default violet, a centred hero over three
+cards, gradient headings, emoji in rounded squares, copy that would fit any
+product. Generated code and docs have their own tells. redpen finds them, along
+with the ordinary defects that are broken whatever the taste, such as low
+contrast, unlabelled inputs and missing focus styles.
 
-  slop      76  ███████████░░░  2 findings — reads as machine-made
-  quality  100  ██████████████  0 findings — broken regardless of taste
+It reads your source, renders the page in a real browser, and reports a finding
+as confirmed only when the evidence agrees. A source-only match that the render
+pass checked and could not reproduce is demoted rather than counted. Each
+finding comes with its weight, the channels that saw it, the file and line, and
+a fix.
 
-  channels: source, render
+## Features
 
-  CONFIRMED (2)
-  Seen independently by more than one channel, or by the only channel that can see it.
+- **184 rules in 16 categories**, merged from five public catalogues of AI
+  design and writing tells, with each rule's provenance kept (`redpen why <id>`).
+- **Cross-checked evidence.** Source patterns, computed styles in Chromium via
+  Playwright, and an optional screenshot review are reconciled into
+  `confirmed`, `likely` and `possible`.
+- **Two scores.** `slop` (reads as machine-made) and `quality` (broken
+  regardless of taste) are kept separate, so you can see which one is the
+  problem.
+- **Surface-aware.** It detects whether a page is marketing, app UI or docs,
+  and turns off rules that do not hold there. A single type family is fine on a
+  dashboard and a tell on a landing page.
+- **Sameness across pages.** It records a structural fingerprint for every page
+  and reports pages that are the same layout with a different palette.
+- **Code and docs mode.** `redpen code` checks source and Markdown for stubs,
+  swallowed errors, edit-history comments, agent bylines and generated prose.
+  It also runs jscpd, madge and knip when the project already has them.
+- **A CI gate that ratchets.** `redpen check` fails when the score drops below a
+  recorded baseline or a new tell appears. It does not demand a perfect score.
 
-  ● AI purple as the primary colour [source+render] ai-purple · 94
-    Violet/indigo is Tailwind's out-of-the-box accent and the colour every model
-    reaches for unprompted, so it reads as "nobody chose this". It ranks second
-    among all named tells in a 3,033-comment sample.
-    fix Pick an anchor hue outside the 265-305 band and derive the ramp from it.
-      src/theme.css:12  --primary: #7c3aed;
-      localhost:3000 body @1440px  background rgb(124, 58, 237)
+## Quick start
 
-  SAMENESS
-  localhost:3000/pricing ≈ localhost:3000  distance 0.06
-      shares macrostructure (hero-triptych)
-      shares section rhythm (nav → hero-full → card-grid-3 → cta → footer)
-```
+redpen needs Node 20.11 or later. The package is not on npm yet, so install it
+from GitHub. The tracked `bundle/redpen.mjs` has its dependencies inlined, so no
+build step runs on install.
 
-That is a two-finding page. A page with twenty-seven looks like this — the
-strongest are argued in full, the tail is named and locatable, and nothing is
-hidden behind a count:
-
-```
-  LIKELY (24)
-  Seen by one channel that reads real state. No channel disagreed.
-
-  ◐ AI purple as the primary colour [source] ai-purple · 94
-    Violet/indigo is Tailwind's out-of-the-box accent and the colour every model
-    reaches for unprompted, so it reads as "nobody chose this". It ranks second
-    among all named tells in a 3,033-comment sample.
-    fix Pick an anchor hue outside the 265-305 band and derive the ramp from it.
-      style.css:2  --primary: #7c3aed;
-      style.css:35  background: linear-gradient(90deg, #7c3aed, #3b82f6);
-      … and 6 more
-
-  ◐  79  no-focus-visible         Interactive element missing focus, active, or…
-  ◐  78  unlabelled-input         Form control with no associated label
-  ◐  76  italic-display           Italic headings or display type
-  ◐  74  default-sans             Inter, Geist, or Roboto as the only face
-      19 listed, not argued — `redpen why <rule-id>`, or --verbose for all
+```bash
+npm i -g github:gshepptech/redpen
+npm i -g playwright && npx playwright install chromium   # optional: the browser pass
+redpen --help
 ```
 
-## Why this exists
+To try it on the sample page in this repository:
 
-Several good catalogues already describe what AI-generated work looks like, and
-[NOTICE](NOTICE) names the ones redpen's corpus draws on.
+```bash
+git clone https://github.com/gshepptech/redpen && cd redpen
+python3 -m http.server 8765 -d examples/landing &
+redpen scan examples/landing http://localhost:8765 --viewport 1440
+```
 
-Running them together is worse than running one. They use different
-vocabularies, they contradict each other, and concatenating ~200 rules doubles
-the false positives without doubling the truth. redpen merges them into 184 rules
-with provenance intact, then does three things none of them does.
+Output, trimmed:
 
-**It cross-checks before it reports.** The catalogues inspect three
-different things and each is blind to the others. A purple gradient written as a
-Tailwind class is visible to a source scan; the same gradient assembled from
-theme variables, or injected after a fetch, is not. redpen runs a source scan, a
-real browser reading computed styles, and — with `--vision` — a pass over the
-screenshots, then reports a finding as **confirmed** only when more than one
-channel saw it independently, or when the only channel that *can* see it did.
-A source-only hit that the render pass checked and did not corroborate is
-demoted to `possible`, hidden by default, and costs nothing against your score.
+```
+  … render: 29 rule(s) hit
+  … surface: http://localhost:8765 is "persuade" (0.88) — full-height opener, pricing or signup language
 
-That last part is measurable. On the well-designed test fixture, the source
-regexes fire for `no-skip-link` and `no-active-nav-state` — the page has both,
-written in a form the regex can't see. The render channel checks the real DOM,
-disagrees, and both are demoted to `possible`. The page scores 100.
+  redpen   11/100  slop
 
-**It weights by what people actually notice.** Severity in every upstream
-catalogue is one author's opinion. One of the four measured it — the unslop-ui
-study tabulated 3,033 comments drawn from 3.2M Reddit posts across 47
-subreddits — so redpen orders the whole corpus by that ranking where it exists,
-and says plainly when it doesn't. `redpen why <rule-id>` tells you which.
+  slop      11  ██░░░░░░░░░░░░  19 findings — reads as machine-made
+  quality   22  ███░░░░░░░░░░░  13 findings — broken regardless of taste
 
-**It remembers your other pages.** The top finding in that study was not any
-single feature. "They all look the same" appeared in ~13% of on-topic posts,
-ahead of every individual tell. Nothing that checks one page at a time can see
-it. redpen records a structural signature per page — skeleton, section rhythm,
-type scale, palette anchor — and reports when two pages in your project are the
-same page wearing different words. Changing the palette does not count as
-variety; the metric is weighted so that it barely moves.
+  CONFIRMED (28)
 
-## Install
+  ● Gradient-filled heading text [source+render] gradient-text · 91
+    Gradient-filled type is the single most-cited visual giveaway after colour
+    choice. It also degrades legibility, because the contrast ratio varies
+    across the word.
+    fix Solid colour on every heading. If the hero needs more presence, get it
+        from scale, weight, or a drawn rule under the line — not from the fill.
+      style.css:32  -webkit-background-clip: text;
+      style.css:33  background-clip: text;
+      localhost:8765 section.hero > h1.hero__title @1440px  Supercharge your te…
 
-> **Not released yet.** @gshepptech/redpen is not on npm, so `npx @gshepptech/redpen` fails
-> today — and `npx redpen` is an unrelated package, so never reach for it. What
-> works now is the plugin and a git install: `bin` points at the tracked
-> `bundle/redpen.mjs`, which carries its dependencies inlined and needs no build
-> step on the machine that runs it.
->
-> ```
-> npm i -D github:gshepptech/redpen && npx redpen --help
-> ```
+  ● Text below its contrast threshold [render] low-contrast · 86
+      localhost:8765 section.hero > p.hero__lede @1440px  2.85:1 needs 4.5:1 — …
+```
 
-**As a Claude Code plugin** — gives you `/redpen:audit`, `/redpen:why`,
-`/redpen:gate`, and a skill that fires whenever you build or review UI:
+Without a URL, or without Playwright, redpen runs source-only and says so. Every
+finding the browser could have confirmed stays at `possible`, and the report
+lists the channels that did not run. A missing channel is never reported as a
+clean page.
+
+### As a Claude Code plugin
 
 ```
 /plugin marketplace add gshepptech/redpen
 /plugin install redpen
 ```
 
-**From a terminal**, globally, so `redpen` works from any directory:
+This adds `/redpen:audit`, `/redpen:code`, `/redpen:gate`, `/redpen:why`, five
+scoped fix commands (`typeset`, `layout`, `color`, `polish`, `distill`), and a
+skill that runs when you build or review UI.
 
-```
-npm i -g @gshepptech/redpen && redpen --help
-```
+## How it works
 
-**As a project dependency**, for CI. Note the `-cli` — the bare `redpen` name on
-npm belongs to an unrelated tool:
-
-```
-npm i -D @gshepptech/redpen
-npm i -D playwright && npx playwright install chromium   # for the browser pass
-```
-
-Playwright is optional. Without it, redpen runs source-only and **says so** — a
-missing channel is reported as unconfirmed, never as clean.
-
-### Commands
-
-| | |
-| --- | --- |
-| `/redpen:audit [path] [--url ...]` | scan, report the confirmed findings, apply the fixes you approve |
-| `/redpen:code [path]` | the source it is written in, not the page it serves |
-| `/redpen:typeset` | fix typography — faces, scale, leading, measure, tokens |
-| `/redpen:layout` | fix layout, spacing rhythm, and composition |
-| `/redpen:color` | fix palette, contrast, and colour tokens |
-| `/redpen:polish` | fix everything mechanically wrong, leaving taste alone |
-| `/redpen:distill` | remove what is not earning its place |
-| `/redpen:why <rule-id>` | what a rule means, who named it, whether humans actually notice it |
-| `/redpen:gate` | wire the regression gate into this project's CI |
-
-The five fix commands are scoped passes, not a different tool: each one scans
-with `--only <categories>`, works the findings in an order where each step
-changes what the next measures, and re-scans. `/redpen:polish` works the
-`quality` axis and is forbidden from touching taste, so its diff is reviewable;
-`/redpen:distill` is the only subtractive one and removes a single thing at a
-time so the score can attribute the change.
-
-## Use
-
-```
-redpen scan [path]        run every available channel and print the report
-redpen code [path]        the source it is written in, not the page it serves
-redpen check [path]       same, but exit non-zero when the score drops
-redpen baseline [path]    record the current score as the bar to hold
-redpen rules              list the merged corpus
-redpen why <rule-id>      explain one rule and where it came from
-redpen sources            provenance rollup across the upstream catalogues
-redpen fingerprints       show recorded page signatures
-redpen init [path]        write .redpen/config.json
+```mermaid
+flowchart LR
+  src[source files] --> S[source channel<br/>patterns over CSS, HTML, JSX, Markdown]
+  url[page URLs] --> R[render channel<br/>Playwright, computed styles per viewport]
+  R --> V[vision brief<br/>screenshots + questions, optional]
+  S --> P[promote<br/>confirmed / likely / possible]
+  R --> P
+  V --> P
+  R --> F[fingerprint<br/>page structure vs. pages on record]
+  F --> P
+  P --> Sc[score<br/>slop and quality axes]
+  Sc --> Out[terminal, JSON, or Markdown report]
 ```
 
-| Option | |
-| --- | --- |
-| `--url <u>` | page to render, repeatable. Without one the render channel never runs. |
-| `--viewport <n>` | viewport width, repeatable. Default 375, 768, 1440. |
-| `--json [file]` / `--markdown [file]` | machine-readable and PR-ready output |
-| `--screenshots` | full-page PNGs to `.redpen/screenshots` |
-| `--vision` | capture screenshots and write `.redpen/vision-brief.json` |
-| `--answers <file>` | fold answered vision questions back into the verdict |
-| `--verbose` | argue every finding in full rather than folding the tail into a roster, and show rule provenance |
-| `--min <level>` | confidence floor for scoring: `confirmed`, `likely`, `possible` |
+Rules live in `rules/*.yaml`. Each one declares its category, weight, the
+channels that can see it, the surfaces it applies to, and its upstream sources.
 
-### The markdown report
+| Channel | Sees | Blind to |
+| --- | --- | --- |
+| source | literal patterns, class names, imports | anything computed or themed at runtime |
+| render | computed styles and geometry in Chromium, per viewport | routes you did not list, states you did not drive |
+| vision | a screenshot judged by whoever runs redpen | anything outside the frame |
+| fingerprint | this page against every other page on record | a project with one page |
+| tools | jscpd, madge and knip output, when installed | everything, if none are installed |
 
-`--markdown` writes the same verdict in the shape a pull request wants — every
-finding keeps its weight, its channels and its provenance, so a reviewer can
-argue with the rule rather than only with the number.
+A finding is `confirmed` when two channels saw it independently, or when the
+only channel able to see it did. The vision channel takes no API key: `--vision`
+writes screenshots and a question brief, and `--answers` folds the replies back
+in. A vision answer never confirms a finding on its own.
 
-````markdown
-# redpen — 9/100 (slop)
+Pass a bare origin and redpen reads the app's routes from the repository (Next,
+SvelteKit, Astro, Nuxt, React Router, Vue Router) instead of scanning only the
+home page. `redpen login <url>` opens a browser, lets you sign in however the
+app works, and saves the session for later scans. A page that redirects
+somewhere you did not ask for is refused and named, so a login screen is never
+scored as your dashboard.
 
-| Axis | Score | Findings | What it measures |
-| --- | --- | --- | --- |
-| **slop** | 22 | 16 | whether it reads as machine-made |
-| **quality** | 42 | 11 | whether it is broken regardless of taste |
-
-Channels run: source.
-
-> Not run: render, vision. Findings that depend on those channels are
-> unconfirmed rather than absent.
-
-## confirmed (3)
-
-### Full-height sections measured against the wrong viewport
-
-`viewport-height-jump` · weight 63 · seen by source
-
-On mobile browsers `100vh` is the viewport with the address bar hidden, so a
-section sized to it is taller than the screen on load and the page jumps as the
-bar retracts. The author never sees it, because desktop has no retracting bar.
-
-**Fix.** Use `100dvh` for the height that follows the bar, or `100svh` for the
-smallest guaranteed viewport when you need no jump at all.
+## Usage
 
 ```
-style.css:23  min-height: 100vh;
-pricing.css:23  min-height: 100vh;
+redpen scan [path] [url...]  run every available channel and print the report
+redpen code [path]           check the source and docs instead of the page
+redpen check [path]          exit non-zero when the score drops below baseline
+redpen baseline [path]       record the current score as the bar to hold
+redpen why <rule-id>         explain one rule and where it came from
+redpen why-score [path]      what the score is made of and what would move it
+redpen rules                 list the corpus
+redpen login <url>           sign in in a real browser and save the session
+redpen init [path]           write .redpen/config.json
 ```
 
-<sub>from catalogue:dynamic-viewport-units</sub>
-
-## likely (24)
-
-… five argued in full, then:
-
-<details><summary>19 more, listed not argued</summary>
-
-| | Weight | Rule | Finding |
-| --- | --- | --- | --- |
-| ◐ | 79 | `no-focus-visible` | Interactive element missing focus, active, or disabled styling |
-| ◐ | 78 | `unlabelled-input` | Form control with no associated label |
-| ◐ | 76 | `italic-display` | Italic headings or display type |
-
-</details>
-````
-
-Pass a filename to write it instead of printing: `--markdown report.md`.
+Common options: `--url <u>` (repeatable), `--viewport <n>` (default 375, 768,
+1440), `--json [file]`, `--markdown [file]`, `--only <categories>`,
+`--min <confidence>`, `--vision`, `--answers <file>`, `--verbose`. Run
+`redpen --help` for the full list.
 
 ### Configuration
 
@@ -257,34 +174,14 @@ Pass a filename to write it instead of printing: `--markdown report.md`.
   "viewports": [375, 768, 1440],
   "minConfidence": "likely",
   "capabilities": { "javascript": false },
-  "skipCategories": [],
   "tolerance": 0,
-  "ignore": {
-    "ai-purple": "the brand is genuinely violet, signed off by design"
-  }
+  "ignore": { "ai-purple": "the brand is violet, signed off by design" }
 }
 ```
 
-**`capabilities`** declares what the project is able to do. A server-rendered
-project that ships no client JavaScript by rule should not be told to add inline
-validation, an unsaved-changes warning and autosave on every scan forever — 15
-rules depend on JavaScript and switch off with one line. A rule whose fix needs
-something you cannot do is not a finding, it is a standing complaint.
-
-### CI
-
-`redpen check` is a regression gate, not a grader. A codebase that starts at 46
-should not have to reach 90 before CI goes green — it has to stop getting worse.
-
-```yaml
-- run: npm run build && npm run preview &
-- run: npx redpen baseline . --url http://localhost:4173   # once, committed
-- run: npx redpen check . --url http://localhost:4173
-```
-
-`check` fails when the score drops below the baseline by more than `tolerance`,
-or when a tell appears that was not present at baseline — so a score that holds
-steady while one problem is fixed and another introduced still fails.
+`capabilities` turns off rules whose fix the project cannot use. For example, a
+server-rendered app with no client JavaScript will not be told to add inline
+validation.
 
 ### Suppressing a finding
 
@@ -293,408 +190,73 @@ steady while one problem is fixed and another introduced still fails.
 --primary: #7c3aed;
 ```
 
-The reason is required. An ignore with no reason is how a rule set stops meaning
-anything, so `/* redpen-ignore */` alone does nothing. `redpen scan
---show-ignored` lists everything a project has excused.
+The reason is required. An ignore with no reason does nothing, and
+`redpen scan --show-ignored` lists everything a project has excused.
 
-## The channels
+### In CI
 
-| Channel | Sees | Blind to |
-| --- | --- | --- |
-| **source** | text in the repo — literal patterns, class names, imports | anything computed, themed, or rendered at runtime |
-| **render** | computed styles and geometry in a real browser, swept across viewports | routes you didn't list; states you didn't drive |
-| **vision** | a screenshot, judged by whoever runs redpen — hierarchy, rhythm, whether a headline says anything | anything not visible in the frame |
-| **fingerprint** | this page against every other page on record | a project with only one page |
+Add redpen as a dev dependency (`npm i -D github:gshepptech/redpen`) so `npx`
+resolves the local binary. The bare `redpen` name on npm is an unrelated
+package.
 
-Each finding names the channels that saw it: `[source+render]`.
-
-### `redpen why-score`
-
-The score was the one output with no provenance, which is a strange gap in a
-tool built on provenance — and it cost someone an afternoon: four true findings
-fixed, score went *down*, nothing to explain why.
-
-```
-  redpen  72/100   reads as generated
-
-    31.5%    +8  tight-leading                quality · 2×
-    27.5%    +7  cramped-padding              quality · 1×
-    26.3%    +7  no-focus-visible             quality · 2×
-
-  Start here  tight-leading — 31% of the total
+```yaml
+- run: npx redpen baseline . --url http://localhost:4173   # once, then commit .redpen/
+- run: npx redpen check . --url http://localhost:4173
 ```
 
-`share` is what proportion of the problem a finding is; `+pts` is what the score
-gains if it goes away on its own. The curve saturates, so on a badly-failing
-page every single fix is worth a fraction of a point — true, and useless for
-deciding what to do. Share ranks correctly at any score, and the command says
-so when the curve is saturated rather than printing a column of `+0`.
-
-### The vision channel takes no API key
-
-Some judgements no rule can express: does the hierarchy read in two seconds, is
-the highlight band sitting at the baseline instead of the x-height, would this
-headline fit any company unedited. hallmark's own gate for the second one
-instructs the model to *imagine* the rendered output.
-
-redpen does not call a model to answer these. Whatever is running redpen —
-Claude Code, Cursor, you — can already open a PNG, and is a better judge than
-any model redpen would pick on your behalf. So `--vision` writes a brief and
-`--answers` reads the replies:
-
-```
-redpen scan . --url http://localhost:3000 --vision
-#   → .redpen/screenshots/*.png
-#   → .redpen/vision-brief.json   (questions + pre-built answer rows)
-
-# open the screenshots, fill in the rows, then:
-redpen scan . --url http://localhost:3000 --answers .redpen/vision-brief.json
-```
-
-**The brief is the artefact you hand to someone who wasn't there.** That is the
-design, and it has two consequences.
-
-It carries enough context to be answered cold — what the product is, who uses
-it, and what each page is for. Half these questions are meaningless without
-that: *could this hold a different product's content* means nothing if you do
-not know what this product's content is. Declare `product` in the config.
-
-And it leaks nothing that telegraphs the answer. Questions carry opaque handles
-(`q1`, `q2`) rather than rule ids, because `no-focal-point` and
-`nothing-memorable` *state the expected answer*. The `fix` text is left out for
-the same reason — it is the answer key printed beside the question. Questions
-are scattered so six typography questions do not arrive in a row and invite
-answering the category rather than the image. The mapping back to rules lives in
-`key`, which the answerer has no reason to open.
-
-The person who built the page is the worst available judge of these, because
-they cannot unsee it. `redpen brief` prints the whole thing readably — and
-deliberately does not print the key. An answer is discarded unless it is a `true` above 0.7
-confidence **with evidence** — an unevidenced yes is a guess, and it is rejected
-and reported rather than silently dropped.
-
-A vision hit never confirms a finding alone. It corroborates another channel, or
-reports as `likely` on its own:
-
-```
-confirmed [render+vision]  icon-tile-feature-card
-    each feature card opens with an emoji inside a ~48px rounded violet-tinted square
-likely    [vision]         vague-headline
-    "Supercharge your workflow" names no product and no outcome — fits any SaaS unchanged
-```
-
-`vague-headline` is a rule no other channel can see at all. It exists only
-because someone looked.
-
-### It reads its own routes
-
-`redpen scan . http://localhost:3000` scans the whole app, not the home page.
-The routes are in the repository, so redpen reads them rather than asking you
-to retype them — Next's app and pages routers, SvelteKit, Astro, Nuxt, React
-Router and Vue Router. Pass a bare origin and it expands; pass an explicit path
-and that one page is what gets read.
-
-A convention only counts when the framework that defines it is installed. A
-directory called `pages/` in a React Router app holds components, and treating
-it as a router produced 188 routes on one project, `/__tests__/AuditLogPage.test`
-among them. Dynamic segments are dropped, because only a running app knows what
-fills `[slug]`.
-
-With no url at all, the run names what it found:
-
-```
-! no urls configured — the render channel did not run, so every source finding
-  that render could confirm is capped at "possible". This project declares 18
-  route(s) (next-app): / /admin /calendar /data /disclaimer /guide /habitat
-  /journal … and 10 more. Start the app and pass an origin.
-```
-
-**A channel that cannot run says so.** No Playwright, no screenshots, an
-unreadable or malformed answers file — each is reported as a warning and the
-affected findings stay unconfirmed. Nothing degrades into a clean report.
-
-### Behind a login
-
-The whole `operate` surface — dashboards, settings, the app itself — sits behind
-a session, and until recently redpen could not see any of it. Worse, it did not
-say so: asking for `/dashboard` on a gated app landed on `/login`, and the
-report came back clean, confident and fully scored, labelled with the
-dashboard's url.
-
-Two things fix that.
-
-**Nothing is reported from a page you did not ask for.** If the browser lands on
-a different path than the one requested, that url is refused and named. A
-trailing slash, an added query string or a host change is not a different page;
-a different path is.
-
-**`redpen login` captures a session, and automates none of the logging in:**
-
-```
-redpen login http://localhost:3000/login
-```
-
-A real browser opens. You log in however the app works — password, OAuth, SSO,
-a magic link, a code on your phone — and press Enter. redpen writes the cookies
-and localStorage to `.redpen/auth.json` and points the config at it; every later
-scan renders as you.
-
-That is the general mechanism, and it is general because it automates nothing.
-Every app's login page is somewhere different, wants different fields, and is
-often not a form at all, so a config schema describing them would be a browser
-automation language redpen owns forever. What every flow produces is the same
-artefact — a cookie jar — so that is the only part worth automating. redpen
-never sees a credential; it only keeps what comes out the other side.
-
-**`--headless` covers the one shape that has to run unattended.** A headed
-browser needs a person, and the place a session is most needed is CI, where
-`redpen check` runs and nobody can press Enter. So there is a second, narrow
-mode: a form with a username field, a password field and a submit.
-
-```
-REDPEN_LOGIN_USER=ci@example.com \
-REDPEN_LOGIN_PASSWORD=... \
-redpen login http://localhost:3000/login --headless \
-  --user-selector '#email' --password-selector '#password' \
-  --expect '[data-testid=app-shell]'
-```
-
-Three details are load-bearing.
-
-There is no `--user` or `--password`. A credential passed as an argument is in
-the process table, the shell history and the CI log; these come from the
-environment or not at all. The progress line prints `c***@example.com`, enough
-to tell which account a failed run used and not enough to reuse.
-
-`--expect` is required, and it is the whole reason this is safe. A *refused*
-password still sets cookies — a CSRF token, an anonymous session id — so the
-empty-jar check that guards the headed flow passes happily on a login that
-failed, and the saved file would then scan every authenticated route as a login
-page. Naming something that only exists once you are through is the only thing
-that separates the two. `--expect-url` does the same job against the url.
-
-Nothing is written unless that check passes. A failed login leaves no file, and
-says where the browser ended up and what the page was called — never what was
-typed into it.
-
-Selectors are never guessed. Guessing wrong types an account into whatever
-field matched first. And anything that is not a form — OAuth, SSO, a magic
-link, a second factor — fails here rather than half-working, and is still the
-headed flow.
-
-`.redpen/auth.json` is a live credential and expires when the session does.
-`redpen login` adds `.redpen/` to .gitignore itself, because the command that
-writes a credential is the one that should protect it. A configured session
-missing from disk is reported rather than silently skipped.
-
-### The tools channel
-
-Three of the tells that most mark a codebase as machine-written cannot be seen
-by a pattern, because each needs a parse of the whole project: whether a block
-is a copy of another block, whether an export has any caller, and whether the
-import graph has a cycle.
-
-Duplication is the most measured of the three. GitClear's analysis of 623
-million changes found block duplication rising from 40.3 to 73.0 per million
-changed lines between 2023 and 2026, while the share of *moved* — that is,
-refactored — code fell from 21% in 2022 to 3.8% in 2026. A second copy is
-cheaper to write than a shared function is to find.
-
-So `redpen code` runs the analysers the project already carries, the same way
-the render channel borrows a browser rather than shipping one:
-
-| tool | reports as |
-| --- | --- |
-| [jscpd](https://jscpd.dev/) | `copy-paste-duplication` |
-| [madge](https://github.com/pahen/madge) | `circular-dependency` |
-| [knip](https://knip.dev/) | `unused-export` |
-
-```
-npm i -D jscpd madge knip     # then `redpen code .` picks them up
-```
-
-**redpen installs nothing.** It looks in the scanned project's
-`node_modules/.bin` first, then PATH, and never fetches. A scan that reaches the
-network behaves differently on a plane and runs code nobody in the project
-chose. When an analyser is absent, the run says which one and why it matters —
-a tool that did not run means a finding is *absent*, not that the code is clean.
-
-These rules never run on a UI scan. A project's source and the page it serves
-are different questions.
-
-## Two scores, not one
-
-"Does this look machine-made" and "is this broken" are different questions, and
-one number answers neither. Every rule declares which it is, and that split
-turns out to be the most useful distinction in the corpus.
-
-```
-  redpen   62  ███████████████░░░░░░░░░  reads as generated
-
-  slop      41  14 findings — reads as machine-made
-  quality   88   2 findings — broken regardless of taste
-```
-
-107 slop rules, 77 quality. A page can be immaculate taste over a broken form, or
-flawless mechanics wearing every default in the catalogue, and you should be
-able to see which.
-
-**Advisory rules** are reported and never scored. Some tells — em dashes being
-the canonical case — humans use legitimately often enough that counting them is
-noise rather than signal. 12 rules are marked this way.
-
-## Surfaces
-
-The rule that most needed to exist: **what the visitor is doing on the page
-decides which rules are true there.**
-
-| | The visitor | Examples |
-| --- | --- | --- |
-| `persuade` | decides and acts | landing, marketing, pricing |
-| `operate` | completes a task | app UI, dashboards, settings |
-| `read` | understands something | docs, articles, changelogs |
-
-On an operate surface familiarity is a *feature*. A single type family is the
-right answer there and a tell on a landing page; uniform spacing is consistency
-in a settings panel and monotony on a marketing site; identical repeating
-components are the point of a data table. 38 rules are scoped accordingly, and
-firing them on the wrong surface is a false positive by construction.
-
-redpen detects the surface from the rendered DOM — controls and data rows versus
-a hero and a pitch versus sustained prose — and reports what it decided and why:
-
-```
-surface  persuade (detected) — rules that only hold elsewhere are off
-```
-
-Detection is a heuristic and behaves like one: below 0.6 confidence it declines
-to classify and every rule stays on, because a false positive you can dismiss
-beats a silently skipped check. Declare it once to skip the guessing:
-
-```json
-{ "surface": "operate", "surfaceByUrl": { "http://localhost:3000/": "persuade" } }
-```
-
-Same fixture page, judged both ways, drops ten findings that are wrong on a
-dashboard: `default-sans`, `monotonous-spacing`, `ghost-cards`, `over-rounding`,
-`line-length`, `hero-three-cards`, `centered-everything-hero`, `generic-cta`,
-`marketing-buzzword`, `numbered-section-labels`.
-
-## What this has and has not been proven against
-
-v0.1.0. The corpus is 184 rules across 16 categories, the suite is 283 tests,
-and it has been run end to end against five real projects plus its own
-fixtures. Nearly everything ever found wrong with redpen was found by pointing
-it at something real rather than by reading it: a first Go dashboard gave up six
-defects in the dashboard and six in redpen, and each project since has given up
-one or two more.
-
-The last of those runs was the first with nothing at stake — five public
-marketing pages, fetched and scanned, none of them built by anyone who has
-touched this repository. Twelve findings. Three were spot-checked by hand
-against the pages, independently of redpen's own code, and all three held:
-gradient-clipped headings on two sites, Inter as the only declared face on one,
-emoji standing in for icons on two. The fifteen copy rules reported nothing, and
-a separate pass over the stripped text confirmed the tells genuinely are not
-there — professional copy, correctly left alone.
-
-Specifically not yet true:
-
-- **Validation is thin, and now has two real passes behind it.** The code rules
-  were run against a 1,872-file repository and produced four false positives — a
-  comment about a type read as a type, `staleTime: 5 * 60 * 1000, // 5 minutes`
-  reported as an unnamed constant, a named re-export reported as a barrel, and
-  Go's `interface{}`, which turned out to be the language rather than a habit
-  and was measured and rejected.
-
-  The page rules were then run against a live 18-route Next.js app and produced
-  four more: the whole content column read as a 271vh hero, a topographic
-  background wash read as an assembled illustration, three deliberate faces
-  declared through `next/font` read as type-system drift — a false positive that
-  would fire on every project using the framework's own recommended setup — and
-  a measure range that printed 44ch and 79ch, opposite problems, identically.
-
-  A third project — a 81-route React SPA behind a login, written by someone
-  else — produced two more, both whole classes rather than one-offs. `{/* … */}`
-  is the only way to write a comment inside JSX, and all fifteen copy rules
-  suppressed `//`, `/*` and `<!--` but not the braced form, so a comment about
-  super admins was reported as marketing copy at `confirmed`. And redpen is
-  pointed at a dev server by design, where every stack mounts something into the
-  page: TanStack Query's devtools button is a 64px svg of 31 primitive shapes,
-  and it was reported as an assembled illustration on every route.
-
-  All ten are fixed and each has a regression test. Three projects is still not
-  a corpus, and the last two classes were both found in the first hour of
-  pointing it at something new.
-- **The vision channel is hand-answered.** It writes a brief and folds answers
-  back in; it does not look at the screenshots itself.
-- **Dark mode is one extra pass.** An emulated preference and, where the page
-  ships one, its own theme toggle — but not a matrix of both against every
-  viewport.
-- **The composition rules are unmeasured.** Eight of them ask a human a
-  question no detector can answer, and they carry no evidence ranking because
-  no study measured them.
-
-- **The tools channel is only as good as what the project carries.** With no
-  analyser installed, duplication, cycles and unused exports are simply not
-  looked at. The run says so, but a score with the tools channel missing is not
-  comparable to one with it.
-
-If you run it against a codebase it has never seen and it says something
-useless, that is the most valuable bug report available right now.
-
-## Rule categories
-
-Thirteen for the page:
-
-`color` · `typography` · `layout` · `depth` · `motion` · `iconography` · `copy`
-· `usability` · `a11y` · `sameness` · `chrome` · `system` · `composition`
-
-Three for the project it is written in, which only `redpen code` returns:
-
-`craft` · `residue` · `prose`
-
-`prose` is the documents: README, changelog, design notes, course scripts. It
-exists because `.md` was in neither extension list, so every written file in
-every repository redpen scanned was invisible to a tool whose subject is writing
-that reads as machine-made. `copy` is the sibling question — words on a rendered
-page — and the two differ in where they look, not in what they are looking for.
-
-`craft` is code that reads as machine-written — comments narrating an edit,
-stubs in the shipped path, types widened to quiet the compiler, a block copied
-rather than shared. `residue` is what the machine left behind: a phase id in a
-comment, an agent's byline, a pointer to a file nobody created.
-
-`chrome` is the surfaces nobody drew — selection, caret, scrollbar, focus ring.
-`system` is drift from the project's own declared tokens. `composition` is the
-eight judgements no measurement reaches, and the only category that is
-vision-only by construction.
-
-Accessibility rules sit next to the visual rule they interact with — contrast in
-`color`, heading order in `typography`, alt text in `iconography` — because that
-is how they get fixed. `redpen rules a11y` lists what remains.
-
-## Attribution
-
-Every rule records what kind of authority stands behind it, because a rule
-backed by a measured study is a different claim from one backed by an author's
-taste. See [NOTICE](NOTICE) for the projects behind each and their licences.
-`redpen sources`:
+`check` fails when the score falls by more than `tolerance`, or when a rule
+fires that was not present at baseline.
+
+## Scope and limits
+
+The corpus is 184 rules across 16 categories, and the suite is 283 tests.
+
+The upstream catalogues use different vocabularies and overlap heavily, so
+running them side by side doubles the false positives. redpen merges them into 184 rules
+and records which catalogue named each one. Some tells, such as the em dash,
+are common in human writing too, so they are advisory: reported, never scored.
+12 rules are marked this way. Rules that only hold on one kind of page carry a
+surface list, and 38 rules are scoped accordingly.
 
 ```
   184 rules merged from:
-     225  catalogue     curated lists of design tells
-      68  heuristics    the usability and a11y tradition
-      23  study         two measurements: 3,033 Reddit comments, 623M changes
-      23  redpen        named here first
+     225  catalogue
+      68  heuristics
+      23  study
+      23  redpen
 ```
 
-The counts exceed the rule total because most rules were named by more than one
-catalogue. That overlap is what the merge collapsed.
+The counts add up to more than the rule total because most rules were named by
+more than one catalogue.
 
-## Licence
+Known limits:
 
-MIT, except for five files. `commands/{typeset,layout,color,polish,distill}.md`
-are derivative works of Apache-2.0 material and stay under that licence — each
-says so at the top, [LICENSE-APACHE-2.0](LICENSE-APACHE-2.0) is the text, and
-[NOTICE](NOTICE) itemises what came from where.
+- The vision channel is answered by a person or an agent. redpen does not call a
+  model itself.
+- Dark mode gets one extra pass (the emulated preference, plus the page's own
+  theme toggle if it has one), not a full matrix against every viewport.
+- The eight composition rules ask a judgement question no detector can answer,
+  and no study has measured them.
+- Without jscpd, madge or knip installed, duplication, import cycles and unused
+  exports are not checked. The report says so.
+
+## Development
+
+```bash
+npm ci
+npx playwright install chromium   # the end-to-end tests drive a real browser
+npm run build                     # tsc to dist/, then esbuild to bundle/redpen.mjs
+npm test                          # build, then node --test test/*.test.mjs
+```
+
+`bundle/redpen.mjs` is tracked so a plugin or git install works with no build
+step. A test fails if it drifts from `src/`, so rebuild before committing.
+`test/POLICY.md` explains the one rule the suite holds new rules to.
+
+## License
+
+MIT, see [LICENSE](LICENSE). Five files,
+`commands/{typeset,layout,color,polish,distill}.md`, are derived from
+Apache-2.0 material and stay under that license; see
+[LICENSE-APACHE-2.0](LICENSE-APACHE-2.0) and [NOTICE](NOTICE), which also
+credits the upstream catalogues.
