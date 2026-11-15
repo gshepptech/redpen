@@ -1,9 +1,18 @@
 {
   "name": "@gshepptech/redpen",
   "version": "0.1.0",
-  "description": "One verdict on your UI. Source, rendered DOM, and vision \u2014 cross-confirmed, weighted by what humans actually notice.",
+  "description": "Lints a UI, its source and its docs for the tells of AI-generated design, code and copy, checked against a real browser render.",
   "type": "module",
   "license": "MIT AND Apache-2.0",
+  "author": "Garrett Sheppard",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gshepptech/redpen.git"
+  },
+  "homepage": "https://github.com/gshepptech/redpen",
+  "bugs": {
+    "url": "https://github.com/gshepptech/redpen/issues"
+  },
   "engines": {
     "node": ">=20.11"
   },

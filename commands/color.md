@@ -9,7 +9,7 @@ Portions of this file are derived from impeccable (skill/reference/colorize.md),
 Copyright the impeccable authors, licensed under the Apache License, Version 2.0.
 A copy of that licence ships with redpen as LICENSE-APACHE-2.0.
 
-Changed by the redpen authors: rewritten to drive redpen's CLI and its evidence
+Changed by Garrett Sheppard: rewritten to drive redpen's CLI and its evidence
 model, reordered around redpen's channels and confidence tiers, and rewritten
 throughout in redpen's own wording. The craft guidance this file inherits from
 impeccable is itemised in NOTICE.
