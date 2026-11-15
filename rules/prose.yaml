@@ -38,8 +38,8 @@
       - '\b(meticulous|meticulously|seamless|seamlessly|holistic|holistically)\b'
       - '\b(cutting-edge|game-chang(er|ing)|thought leader(ship)?|best practices)\b'
       # `underscores` only as the verb. Bare "underscore" is the character,
-      # and a document explaining APP_CACHE_DIR said "the
-      # single-underscore form" four times and was read as machine prose.
+      # and a document explaining APP_CACHE_DIR can say "the single-underscore
+      # form" four times.
       - '\b(pivotal|showcasing|showcases)\b'
       - '\bunderscor(es|ing) (the|its|how|why|just how)\b'
       - '\b(leverage|leveraging|leveraged) (the|our|its|their|a)\b'
@@ -227,9 +227,8 @@
     # habit.
     minHits: 3
     patterns:
-      # A lookbehind, not a consumed newline: (^|\n) put the match on the blank
-      # line above the heading, so every hit reported the wrong line and an
-      # empty excerpt.
+      # A lookbehind, not a consumed newline: (^|\n) would put the match on the
+      # blank line above the heading, with the wrong line and an empty excerpt.
       - '(?<=^|\n)#{2,4} [A-Z][a-z]+(?: [A-Z][a-z]+){2,}(?=\s*(?:\n|$))'
     suppress: '^\s*(```|>|\|)'
   why: >-

@@ -1,22 +1,17 @@
 # Composition — what the page is like, rather than what is true of it.
 #
 # Every other rule in the corpus measures a property: a hex value, a ratio, a
-# count, a distance. This file holds the judgements no measurement reaches, and
-# they exist because of a field report from a real project:
-#
-#   "your measurable channels answer *what is true of this page*; vision should
-#    answer *what this page is like*. Right now it asks twelve more
-#    measurable-ish questions with a human doing the measuring."
-#
-# That was fair. The vision channel had twelve questions and ten were landing-
-# page questions that are trivially false on an app — answered "no" twelve times
-# with 0.95 confidence and taught the reader nothing.
+# count, a distance. This file holds the judgements no measurement reaches.
+# The measurable channels answer *what is true of this page*; vision answers
+# *what this page is like*, rather than asking more measurable questions with a
+# human doing the measuring. Landing-page questions are trivially false on an
+# app, so these are written to hold on any page.
 #
 # These are vision-only by construction. If a detector could answer one of
 # these, it would belong in another file. They apply on every surface, because
 # "does one thing want your attention first" is as true of a dashboard as of a
-# hero — the report of that project's UI was that everything sat at one weight
-# for a week, which is measurable as font sizes and invisible as effect.
+# hero. Everything sitting at one weight is measurable as font sizes and
+# invisible as effect.
 
 - id: fails-squint-test
   kind: slop

@@ -1,10 +1,9 @@
 # Design-system drift.
 #
-# the prior art checks literal values against a declared DESIGN.md — four rules
-# that ask "is this value part of the system, or did somebody improvise it?".
-# redpen had one of the four, and it was a proxy: a count of distinct colours,
-# which flags a rich palette and misses a project that declared six tokens and
-# then hard-coded twelve hexes.
+# Upstream checks literal values against a declared DESIGN.md: four rules that
+# ask "is this value part of the system, or did somebody improvise it?". A count
+# of distinct colours is a poor proxy for that: it flags a rich palette and
+# misses a project that declared six tokens and then hard-coded twelve hexes.
 #
 # These read the declaration the project already has: the custom properties on
 # :root. A project that defines --color-* and then writes #7c3aed in a component

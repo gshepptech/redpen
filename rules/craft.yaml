@@ -67,10 +67,9 @@
     # part worth keeping.
     #
     # And a line starting lower-case is the middle of a sentence, not the start
-    # of a note. Patterns compile case-insensitively, so "Whitetail Institute
-    # renamed this product" and "a field added to a type in lib/types.ts" both
-    # matched on their continuation lines — two of the better comments in that
-    # codebase, reported for containing a verb.
+    # of a note. Patterns compile case-insensitively, so "the vendor renamed
+    # this product" and "a field added to a type in lib/types.ts" would match
+    # on their continuation lines for containing a verb.
     caseSensitive: true
     suppress: '\b(because|so that|so it|so the|which is|otherwise|means|in order to|to avoid|to keep)\b|^\s*(//|#|\*)\s*[a-z]'
   why: >-
@@ -98,8 +97,8 @@
       - '/\*\*\s*\n\s*\*\s*(Gets?|Sets?|Returns?|Creates?|Handles?|Processes?|Exports?|Imports?|Updates?|Deletes?|Fetches|Builds?|Runs?|Sends?|Loads?|Saves?) the \w+\.?\s*\n\s*\*\s*@(returns?|param)'
       # Two shapes of the same line. JSDoc with a type — `@param {string} format
       # The format` — and without one, which is what TypeScript writes because
-      # the type is already in the signature. Only the first was matched, so a
-      # TypeScript codebase could not trip this rule at all.
+      # the type is already in the signature. Both are matched, so a
+      # TypeScript codebase can trip this rule too.
       - '@param\s+\{\w+\}\s+(\w+)\s+[Tt]he\s+\1\b'
       - '@param\s+(\w+)\s+[Tt]he\s+\1\b'
       - '@returns?\s+[Tt]he\s+(result|value|output|data|response)\.?\s*$'
@@ -155,20 +154,18 @@
       - 'catch\s*(\([^)]*\))?\s*\{\s*\}'
       - 'except\s+\w*\s*:\s*\n\s+pass\b'
       # A comment that gives no reason. The fix below says a caught error with a
-      # stated reason is a decision, so a block carrying one has to pass — the
-      # first version of this fired on redpen's own
-      # `catch (e) { /* cross-origin stylesheet */ }`, contradicting its own
-      # advice. Same rule as redpen-ignore: the reason is what makes it a
+      # stated reason is a decision, so a block carrying one has to pass:
+      # `catch (e) { /* cross-origin stylesheet */ }` is a decision. Same rule
+      # as redpen-ignore: the reason is what makes it a
       # decision, and three words is the floor for one.
       - 'catch\s*(\([^)]*\))?\s*\{\s*(//|/\*)\s*(ignore|noop|no-op|nothing|skip|empty|pass|swallow)?d?\s*(\*/)?\s*\n?\s*\}'
-      # Logging is not handling. The pattern used to need the console call to be
-      # the only statement in the block, so `catch (e) { console.log(e); return
-      # ""; }` — the commonest shape there is — went unreported.
+      # Logging is not handling. The console call need not be the only
+      # statement in the block: `catch (e) { console.log(e); return ""; }` is
+      # the commonest shape there is.
       - 'catch\s*\([^)]*\)\s*\{\s*console\.(log|debug|info)\([^)]*\);?\s*(\n\s*)?(return[^;\n]*;?\s*)?\}'
-    # A reason in the comment above is still a reason. This rule reported
-    # `try { await refresh(); } catch {}` on a project where the three lines
-    # above it say "Swallow a refresh failure so the error surface below always
-    # fires" — which is a better justification than most code carries inside
+    # A reason in the comment above is still a reason. `try { await refresh(); }
+    # catch {}` under "Swallow a refresh failure so the error surface below
+    # always fires" is a better justification than most code carries inside
     # the block.
     suppress: '\b(because|so that|so the|so it|otherwise|expected|deliberate|intentional|on purpose|safe to)\b|\bSwallow\b'
     suppressLines: 4
@@ -200,10 +197,10 @@
       # where a same-line suppression cannot see it. A word that reads the same
       # asserted and denied is not a signal.
       - '(//|#)\s*(just in case|belt and braces|should never happen|shouldn''t happen)\b'
-      # `if (!Array.isArray(x)) return []` was here and is gone. On the first
-      # real codebase it fired three times, every one of them narrowing an
-      # `unknown` — from JSON.parse, and from a parameter declared `unknown`.
-      # That is not a defensive check, it is the only way to touch the value at
+      # `if (!Array.isArray(x)) return []` is deliberately not matched. It is
+      # how code narrows an `unknown`, from JSON.parse or from a parameter
+      # declared `unknown`. That is not a defensive check, it is the only way to
+      # touch the value at
       # all, and this rule's own fix text calls guarding at the edge correct.
       # A regex cannot see the declared type, so it cannot tell the two apart,
       # and a false positive here sends someone to delete a guard they need.
@@ -260,14 +257,12 @@
   channels: [source]
   source:
     patterns:
-      # `new`, `test` and `temp` are gone. newX() is the Go constructor idiom and
-      # a JS factory convention — `newToken`, `newCompileCmd`, `newPropertyId`,
-      # `newTestFlagSet` were every hit on four real codebases and every one was
-      # ordinary code. `tempDir` and `testService` are test helpers named
-      # exactly right. What is left is the set nobody chooses on purpose.
-      # `sample` is gone too. It is a real word doing real work — sampleProfile
-      # takes samples along a path, sampleTemplates returns sample templates —
-      # and it was wrong both times it fired on real code.
+      # Not `new`, `test` or `temp`. newX() is the Go constructor idiom and a JS
+      # factory convention (`newToken`, `newCompileCmd`), and `tempDir` and
+      # `testService` are test helpers named exactly right. What is left is the
+      # set nobody chooses on purpose. Not `sample` either: it is a real word
+      # doing real work — sampleProfile takes samples along a path,
+      # sampleTemplates returns sample templates.
       - '\b(function|const|let|var|class|def|func|type|interface)\s+(my|example|demo|foo|bar|baz|qux)[A-Z]\w*'
       - '\b(function|def|func)\s+(doSomething|doStuff|handleIt|myFunction|newFunction|exampleFunction|testFunction)\b'
       - '\b(const|let|var)\s+(data|result|temp|obj|item|thing|stuff|value)[0-9]\b'
@@ -399,8 +394,7 @@
       # Brackets, braces and angle brackets are excluded from a parameter
       # segment on purpose. Without that, `compare(x: [number, number, number],
       # y: [number, number, number])` counts its tuple commas and reports a
-      # two-parameter function as a six-parameter one — which is what it did on
-      # redpen's own cascade.ts the first time this rule ran.
+      # two-parameter function as a six-parameter one.
       - '\b(function|def)\s+\w+\s*\(\s*(?:[^()\[\]{}<>]*?,\s*){5,}[^()\[\]{}<>]*?\)'
       # Four or more optional parameters is an options bag written as a
       # signature: every call site passes a different subset and none of them
@@ -433,8 +427,8 @@
       #
       # Only names with a real standard equivalent to be a duplicate *of*.
       # `sleep`, `clamp`, `debounce` and `slugify` are not in any of these
-      # runtimes, so a local one is the only one there can be — the first draft
-      # of this rule reported eleven honest `const sleep = ms => ...` lines.
+      # runtimes, so a local one is the only one there can be, and
+      # `const sleep = ms => ...` is honest code.
       #
       # And the right-hand side has to look like a function. `const pick =
       # features.find(f => ...)` is a variable that happens to share a name
@@ -476,9 +470,9 @@
       # the author knew the number needed a name, and wrote the name in the one
       # place nothing can reference it.
       #
-      # Bare number words are out. `# two spur lines running N-S` above a test
-      # fixture matched "two" and reported an array index as an unnamed
-      # constant — that comment was describing a shape, not naming a limit.
+      # Bare number words are out. `# two spur lines running N-S` describes a
+      # shape, not a limit, and "two" would report an array index as an unnamed
+      # constant.
       # What survives is the vocabulary of a limit or a unit, opening the
       # comment rather than appearing anywhere in it.
       - '\b\d{2,}\b[^\n]{0,24}(//|#)\s*[Mm]ax\b'
@@ -491,8 +485,8 @@
     # comment is explaining the cap rather than standing in for a name.
     #
     # `staleTime: 5 * 60 * 1000, // 5 minutes` is the shape this rule is asking
-    # for — the arithmetic spells the unit out and the comment confirms it — and
-    # the rule reported it. So is a digit inside a quoted string:
+    # for — the arithmetic spells the unit out and the comment confirms it. So
+    # is a digit inside a quoted string:
     # `"capi-ubun2-2404", // default` is a version, not a limit.
     suppress: '\b(const|final|static|let|var|#define)\s+[A-Z][A-Z0-9_]{2,}\s*[=:]|(^|\n)\s*[A-Z][A-Z0-9_]{2,}\s*[=:]|\d\s*\*\s*\d|["\x27][^"\x27]*\d[^"\x27]*["\x27]'
   why: >-
