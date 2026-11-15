@@ -137,9 +137,8 @@ export function parseArgs(argv: string[]): Args {
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i]!;
     if (a === '--version' || a === '-V') {
-      // Every CLI has this and redpen answered `unknown option --version`. It
-      // is the first thing anyone types when a report looks wrong and they
-      // want to know which build produced it.
+      // The first thing anyone types when a report looks wrong and they want
+      // to know which build produced it.
       args.command = 'version';
       return args;
     }
@@ -186,9 +185,9 @@ export function parseArgs(argv: string[]): Args {
       continue;
     }
     first = false;
-    // A bare URL is what everyone types, and taking it as the root path meant
-    // scanning a directory that cannot exist while quietly using the config's
-    // urls instead — so the report described pages the command never named.
+    // A bare URL is what everyone types. Taken as the root path, it would scan
+    // a directory that cannot exist while quietly using the config's urls, and
+    // the report would describe pages the command never named.
     if (/^https?:\/\//i.test(a)) { args.urls.push(a); continue; }
     args.positional.push(a);
   }
@@ -204,8 +203,8 @@ function fail(message: string): never {
  * The version, found by walking up rather than by a fixed depth.
  *
  * A checkout runs this from dist/, a plugin install runs it from bundle/, and
- * a global install runs it from somewhere else again — the same three shapes
- * that broke the rules/ lookup, so this uses the same walk.
+ * a global install runs it from somewhere else again. These are the same three
+ * shapes the rules/ lookup handles, so this uses the same walk.
  */
 function packageVersion(): string {
   let dir = dirname(fileURLToPath(import.meta.url));
@@ -216,7 +215,7 @@ function packageVersion(): string {
       };
       if (pkg.version) return pkg.version;
     } catch {
-      // Not this level. Keep walking; the throw below is the only failure.
+      // Not this level. Keep walking.
     }
     const parent = dirname(dir);
     if (parent === dir) break;
@@ -241,10 +240,8 @@ async function main(): Promise<void> {
   }
 
   // Only the commands that scan something take a path. `why` takes a rule id
-  // and `rules` takes a category filter, and checking their argument against
-  // the filesystem meant every documented use of either exited 2 with "no such
-  // directory: ai-purple" — including the `redpen why <rule-id>` the report
-  // itself prints under every folded roster.
+  // and `rules` takes a category filter; checking either against the
+  // filesystem would reject `redpen why ai-purple` with "no such directory".
   const TAKES_A_PATH = new Set(['scan', 'code', 'check', 'baseline', 'fingerprints', 'brief', 'init', 'why-score']);
   const root = resolve(TAKES_A_PATH.has(args.command) ? args.positional[0] ?? '.' : '.');
   if (TAKES_A_PATH.has(args.command) && args.positional[0] && !existsSync(root)) {
@@ -552,16 +549,15 @@ async function cmdWhyScore(root: string, args: Args): Promise<void> {
     onProgress: args.quiet ? undefined : (m) => process.stderr.write(pc.dim(`  … ${m}\n`)),
   });
 
-  // Every other command prints these. Swallowing them here meant a run whose
-  // browser could not reach the urls printed a confident number twenty points
-  // off the scan's, with nothing to say one of them had not looked.
+  // Every other command prints these. Without them, a run whose browser could
+  // not reach the urls would print a confident number with nothing to say the
+  // render pass had not looked.
   for (const warning of result.warnings) {
     process.stderr.write(pc.yellow(`  ! ${warning}\n`));
   }
 
   // Score exactly what `scan` scores. Anything below the confidence floor is
-  // reported but never counted, and counting it here made `why-score` disagree
-  // with `scan` by nine points and a whole verdict band.
+  // reported but never counted, so `why-score` and `scan` agree on the number.
   const scorable = result.findings.filter((f) => meetsThreshold(f, result.config.minConfidence));
   const { score: total, contributions } = explainScore(scorable);
   const excluded = result.findings.length - scorable.length;
@@ -755,10 +751,8 @@ async function cmdLogin(root: string, args: Args): Promise<void> {
     `\n  session saved to ${pc.bold(relative(root, result.path) || result.path)}\n` +
       pc.dim(`  ${result.cookies} cookie(s), ${result.origins} stored origin(s), captured at ${result.landedOn}\n`),
   );
-  // The command that writes a credential is the command that protects it.
-  // This used to print "`redpen init` adds .redpen/ to .gitignore" — which
-  // nothing did. A session file sat untracked-but-committable in a repository
-  // that had never run init, under a message saying it was handled.
+  // The command that writes a credential is the command that protects it, so
+  // the ignore entry is added here rather than left to `redpen init`.
   const ignored = ensureGitignored(root, '.redpen/');
   process.stderr.write(
     pc.yellow('\n  This file is a live credential, and it expires when the session does.\n') +

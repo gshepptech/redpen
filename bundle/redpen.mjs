@@ -7907,10 +7907,7 @@ var CODE_EXTENSIONS = /* @__PURE__ */ new Set([
   ".zsh",
   ".sql",
   ".gradle",
-  // Documents. `.mdx` was already here as a page format; plain `.md` was in
-  // neither list, so a README, a changelog, a design doc and a course script
-  // were all unreadable to a tool whose whole subject is writing that reads as
-  // machine-made.
+  // Documents: a README, a changelog, a design doc.
   ".md",
   ".markdown",
   ".rst",
@@ -7937,8 +7934,8 @@ var SKIP_DIRS = /* @__PURE__ */ new Set([
   ".netlify",
   "storybook-static",
   ".redpen",
-  // Test material is not shipped UI. Reported from the field: a Go render
-  // test's golden file was fingerprinted as a page and cited ten times.
+  // Test material is not shipped UI. A render test's golden file would
+  // otherwise be fingerprinted as a page.
   "testdata",
   "__snapshots__",
   "__fixtures__",
@@ -8306,14 +8303,11 @@ var CONTRAST_LIB = `
     return (hi + 0.05) / (lo + 0.05);
   }
 
-  // Walk up for the first non-transparent background. Alpha-compositing a
-  // semi-transparent card over its parent is what makes muted-text-on-tinted-
-  // surface failures so easy to miss.
   /**
    * True when a gradient or image sits between this element and the first
    * solid colour above it. Contrast cannot be computed against those from
-   * computed styles alone, and guessing produced a confident 1.00:1 for white
-   * text on a violet gradient button.
+   * computed styles alone, and guessing would report a confident 1.00:1 for
+   * white text on a violet gradient button.
    */
   function hasPaintedAncestor(el) {
     var node = el, depth = 0;
@@ -8327,6 +8321,9 @@ var CONTRAST_LIB = `
     return false;
   }
 
+  // Walk up for the first non-transparent background. Alpha-compositing a
+  // semi-transparent card over its parent is what makes muted-text-on-tinted-
+  // surface failures so easy to miss.
   function effectiveBackground(el) {
     var node = el;
     var stack = [];
@@ -8392,9 +8389,8 @@ var HELPERS_LIB = `
    * redpen is pointed at a dev server by design, and every modern stack mounts
    * something into the page there: TanStack Query's devtools button, Next's
    * build indicator and error portal, Vite's error overlay. The Query devtools
-   * button alone is a 64px svg of 31 primitive shapes, and it was reported as
-   * an assembled illustration on every route of one app \u2014 a finding about a
-   * button the product does not ship.
+   * button alone is a 64px svg of 31 primitive shapes, which would read as an
+   * assembled illustration on every route.
    */
   var DEV_TOOL_SELECTOR = [
     '[class*="tsqd-"]',
@@ -8598,8 +8594,8 @@ var CHECKS_LIB = `
       var s = getComputedStyle(el);
       var r = el.getBoundingClientRect();
       // The root carries the CSS initial color: rgb(0,0,0) unless something
-      // sets it, and html/body usually set only layout. Reading it reported a
-      // pure black that appears nowhere in the source. A text colour only
+      // sets it, and html/body usually set only layout. Reading it would report
+      // a pure black that appears nowhere in the source. A text colour only
       // counts where there is text wearing it.
       var pairs = [s.backgroundColor];
       if (isTextBearing(el)) pairs.push(s.color);
@@ -8861,9 +8857,8 @@ var CHECKS_LIB = `
 
   CHECKS['font-size-floor'] = function (p) {
     // The rule's own fix promises "14px for anything read as prose, 12px for
-    // incidental UI chrome". Treating only interactive elements as chrome broke
-    // that promise: an id, a timestamp or a unit label is chrome by any reading,
-    // and was being held to the prose floor with no way to satisfy the rule.
+    // incidental UI chrome". An id, a timestamp or a unit label is chrome by
+    // any reading, not only interactive elements.
     function isChrome(el) {
       if (isInteractive(el)) return true;
       var t = textOf(el);
@@ -8984,22 +8979,18 @@ var CHECKS_LIB = `
     var hero = document.querySelector('header + section, main > section:first-child, [class*="hero"]') ||
                topLevelSections()[0];
     if (!hero) return [];
-    // A hero does not contain the rest of the page. Height alone could not
-    // separate the two: the first section of one long route measured 271vh,
-    // and tightening the ceiling only moved the argument to 202vh. What makes
-    // it not a hero is that the other sections are inside it.
-    // topLevelSections only returns direct children of main, so a wrapper that
-    // holds every section has no sibling inside it and the check found nothing.
-    // Count the sections it contains instead: an opener holds none.
+    // A hero does not contain the rest of the page. Height alone cannot
+    // separate the two; what makes a wrapper not a hero is that the other
+    // sections are inside it. topLevelSections only returns direct children of
+    // main, so count the sections it contains instead: an opener holds none.
     if (hero.querySelectorAll('section, article').length > 1) return [];
 
     var h = hero.getBoundingClientRect().height;
     var vh = h / window.innerHeight;
-    // A hero is a screenful, or two. There was a floor and no ceiling, so on a
-    // long page the first section matched the whole content column \u2014 271vh \u2014
-    // where a centred prose measure naturally puts two dozen elements on one
-    // axis. Above the ceiling this is a page, and the check does not apply to
-    // pages.
+    // A hero is a screenful, or two. On a long page the first section can be
+    // the whole content column, where a centred prose measure naturally puts
+    // two dozen elements on one axis. Above the ceiling this is a page, and the
+    // check does not apply to pages.
     if (vh < (p.minHeroVh || 0.85) || vh > (p.maxHeroVh || 2.5)) return [];
     var centered = Array.prototype.slice.call(hero.querySelectorAll('h1, h2, p, a, button, span'))
       .filter(visible)
@@ -9022,9 +9013,7 @@ var CHECKS_LIB = `
     function isSurface(el) {
       // A control is not a container. Every design system gives its inputs and
       // buttons a background, a border, a radius and padding, which is four of
-      // the four signals below \u2014 so on the first real app this ever scanned,
-      // input.field inside div.card was reported as a card inside a card,
-      // twelve times, at weight 73. Card-in-card is about two levels of chrome
+      // the four signals below. Card-in-card is about two levels of chrome
       // around the same content; a field inside a card is one level of chrome
       // around a control that has always looked like that.
       if (CONTROLS[el.tagName] || el.getAttribute('role') === 'button') return false;
@@ -9107,12 +9096,11 @@ var CHECKS_LIB = `
 
   // Elements that sit past the viewport edge.
   //
-  // This used to gate on document.scrollWidth, which overflow-x: clip on the
-  // root sets equal to clientWidth \u2014 so a page could put three of five nav
-  // destinations and a destructive action off-screen at 375px and measure as
-  // perfectly clean. Reported from a project that applied the clip *because
-  // redpen told it to*. So: measure element rects against the viewport, and
-  // treat a clipping root as a reason to look harder rather than as a pass.
+  // Not gated on document.scrollWidth, which overflow-x: clip on the root
+  // sets equal to clientWidth, so a page could put nav destinations and a
+  // destructive action off-screen at 375px and still measure clean. Measure
+  // element rects against the viewport, and treat a clipping root as a reason
+  // to look harder rather than as a pass.
   function pastViewport() {
     var vw = window.innerWidth;
     return all('*').filter(function (el) {
@@ -9199,10 +9187,10 @@ var CHECKS_LIB = `
       var s = getComputedStyle(el);
       if (s.display === 'inline') return false;
       if (s.whiteSpace === 'nowrap' || s.whiteSpace === 'pre') return false;
-      // Comparing box height to line height counted an icon beside the label,
-      // or any extra padding, as a wrap \u2014 it fired on a correct button in the
-      // clean fixture. Count the text's own line boxes instead: a Range over
-      // the text node yields one client rect per rendered line.
+      // Comparing box height to line height would count an icon beside the
+      // label, or any extra padding, as a wrap. Count the text's own line boxes
+      // instead: a Range over the text node yields one client rect per
+      // rendered line.
       var lines = 0;
       for (var i = 0; i < el.childNodes.length; i++) {
         var n = el.childNodes[i];
@@ -9515,9 +9503,7 @@ var CHECKS_LIB = `
           if (/outline|box-shadow|all/.test(t)) {
             out.push({ selector: r.selectorText, excerpt: 'focus ring transitions: ' + t });
           }
-          // A keyframe animation moves the ring exactly as a transition does,
-          // and only the transition was looked for \u2014 so a ring that pulses
-          // forever went unreported while one that eased once did not.
+          // A keyframe animation moves the ring exactly as a transition does.
           var a = r.style.animation || r.style.animationName || '';
           if (a && a !== 'none') {
             out.push({ selector: r.selectorText, excerpt: 'focus ring animates: ' + a });
@@ -9703,8 +9689,7 @@ var CHECKS_LIB = `
     return all('svg').filter(function (svg) {
       // Background texture is not an assembled illustration. A full-bleed svg
       // that sits behind the content and cannot be clicked is chrome the author
-      // drew on purpose \u2014 a topographic contour wash was reported on every
-      // route of one project as 23 primitive shapes.
+      // drew on purpose, such as a topographic contour wash.
       var cs = getComputedStyle(svg);
       var behind = parseFloat(cs.zIndex) < 0;
       var pinned = cs.position === 'fixed' || cs.position === 'absolute';
@@ -9833,10 +9818,9 @@ var CHECKS_LIB = `
   };
 
   CHECKS['color-only-state'] = function () {
-    // The five words the rule declares were the only ones matched, and real code
-    // says ok, bad, pass, fail, good, danger, valid and invalid at least as
-    // often. A state carried by colour alone is the defect whatever it is
-    // called.
+    // Real code says ok, bad, pass, fail, good, danger, valid and invalid as
+    // often as error, success and warning. A state carried by colour alone is
+    // the defect whatever it is called.
     return all(
       '[class*="error"], [class*="success"], [class*="warning"], [aria-invalid="true"],' +
       '[class*="danger"], [class*="invalid"], [class~="ok"], [class~="bad"],' +
@@ -9998,10 +9982,8 @@ var CHECKS_LIB = `
   /**
    * Tokens declared for one role, found by NAME not by value.
    *
-   * Matching on value shape alone is what made the first version noise: a
-   * --space-2xs of 4px looks exactly like a font-size token, so a project with
-   * a spacing scale and no type scale was told its type scale was broken. A
-   * design system names its roles; read the names.
+   * Matching on value shape alone is noise: a --space-2xs of 4px looks exactly
+   * like a font-size token. A design system names its roles; read the names.
    */
   function declaredTokens(namePattern) {
     var out = {};
@@ -10107,9 +10089,8 @@ var CHECKS_LIB = `
     });
     // A face the page actually loads is part of the type system, however it was
     // declared. next/font emits @font-face and a hashed family name and sets no
-    // font custom property at all, so a project using the framework's own
-    // recommended setup had its three deliberate faces \u2014 Oswald, Bitter, IBM
-    // Plex Mono \u2014 reported as drift. Reading the loaded set instead of only the
+    // font custom property at all, so the framework's own recommended setup
+    // would read as drift. Reading the loaded set instead of only the
     // token block makes the check framework-agnostic: shipping a webfont is as
     // explicit a declaration as naming it in a root custom property.
     var loaded = {};
@@ -10138,11 +10119,9 @@ var CHECKS_LIB = `
   CHECKS['grid-track-bare-fr'] = function () {
     // Measured, not inferred.
     //
-    // The first cut read grid-template-columns out of the stylesheet and
-    // reported any bare fr beside an image somewhere on the page. On the first
-    // real project it cited three Tailwind classes that only apply above the lg
-    // breakpoint, at a viewport where they do not apply, on a page with no
-    // overflow at all. A stylesheet rule is not a fact about the page.
+    // Reading grid-template-columns out of the stylesheet would cite classes
+    // that only apply above a breakpoint, at a viewport where they do not
+    // apply. A stylesheet rule is not a fact about the page.
     //
     // What is a fact: a grid whose content is wider than the grid, holding an
     // image whose own natural width is what makes it so. That is the defect,
@@ -10434,8 +10413,7 @@ var CHECKS_LIB = `
         // 2.5.8's spacing exemption, which is the rest of the criterion: an
         // undersized target passes if a min-diameter circle centred on it
         // reaches no other target's circle. Without it a 23px nav link \u2014 one
-        // pixel under, with room around it \u2014 reads as a failure, which is how
-        // this first fired on a page that has no problem.
+        // pixel under, with room around it \u2014 would read as a failure.
         var r = el.getBoundingClientRect();
         var cx = r.left + r.width / 2, cy = r.top + r.height / 2;
         return targets.some(function (other) {
@@ -10663,7 +10641,7 @@ function fingerprintSource() {
 
     // An app shell: a toolbar and a list, or a page that is one form. The
     // marketing taxonomy below has no bucket for this, and forcing the nearest
-    // archetype produced "manifesto" for a work queue \u2014 a wrong label makes a
+    // archetype would call a work queue a "manifesto", and a wrong label makes a
     // correct sameness finding read as noise.
     var records = 0, forms = 0;
     (els || []).forEach(function (el) {
@@ -10698,8 +10676,8 @@ function fingerprintSource() {
   }
 
   function navShape() {
-    // Prefer a real <nav>: counting every anchor under <header> made four text
-    // tabs read as a mega-menu.
+    // Prefer a real <nav>: counting every anchor under <header> would read four
+    // text tabs as a mega-menu.
     var nav = document.querySelector('nav') || document.querySelector('header');
     if (!nav || !visible(nav)) return 'none';
     var s = getComputedStyle(nav);
@@ -10876,17 +10854,16 @@ function surfaceSource() {
   var authish  = all('[class*="avatar"], [class*="account"], [aria-label*="profile" i]').length;
 
   // A list of records with per-row actions. This is the strongest operate
-  // signal there is, and the first version counted it the other way: eight
-  // rows each carrying Promote/Drop read as "a landing page repeating its
-  // call to action". No marketing page repeats a control cluster per item.
+  // signal there is: eight rows each carrying Promote/Drop are not a landing
+  // page repeating its call to action. No marketing page repeats a control
+  // cluster per item.
   var recordRows = (function () {
     var best = 0;
     all('*').forEach(function (parent) {
       var kids = Array.prototype.slice.call(parent.children).filter(visible);
       if (kids.length < 3) return;
-      // Actions only. Counting inputs and selects made a form's field wrappers
-      // \u2014 one label and one input each \u2014 look exactly like record rows, which
-      // is why a page with zero rows reported seven of them.
+      // Actions only. Counting inputs and selects would make a form's field
+      // wrappers \u2014 one label and one input each \u2014 look exactly like record rows.
       var ACTIONS = 'button, a[class], a[href], [role="button"]';
       var withControls = kids.filter(function (k) {
         if (!k.querySelector(ACTIONS)) return false;
@@ -10896,8 +10873,8 @@ function surfaceSource() {
       if (withControls.length < 3) return;
 
       // Compare structure, not labels. Row actions legitimately differ by
-      // state \u2014 Start / Claim / Close \u2014 and matching on text meant a real list
-      // with per-row state failed while a uniform form passed.
+      // state \u2014 Start / Claim / Close \u2014 and matching on text would fail a real
+      // list with per-row state while passing a uniform form.
       var sig = withControls.map(function (k) {
         return Array.prototype.slice.call(k.querySelectorAll(ACTIONS))
           .map(function (c) { return c.tagName; }).sort().join('|');
@@ -10910,8 +10887,8 @@ function surfaceSource() {
     return best;
   })();
 
-  // Controls that are NOT inside a repeated record row. Counting row actions
-  // as calls to action is what produced four confident misclassifications.
+  // Controls that are NOT inside a repeated record row. Row actions are not
+  // calls to action, and counting them misclassifies app pages as landing pages.
   var standaloneCtas = all('a[class], button').filter(function (el) {
     var t = (el.textContent || '').trim();
     if (!t.length || t.length >= 32) return false;
@@ -10928,8 +10905,7 @@ function surfaceSource() {
 
   // Repeated structure with no controls at all. A read-only data list is still
   // a task surface \u2014 controls are one way of showing repetition, not the
-  // definition of it. Reported from the field: an 11-row merged queue view with
-  // zero buttons scored 0.0 on operate.
+  // definition of it. An 11-row queue view with zero buttons is an operate page.
   var repeatedShape = (function () {
     var best = 0;
     all('*').forEach(function (parent) {

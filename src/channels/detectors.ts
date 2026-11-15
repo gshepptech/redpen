@@ -143,14 +143,11 @@ const CONTRAST_LIB = `
     return (hi + 0.05) / (lo + 0.05);
   }
 
-  // Walk up for the first non-transparent background. Alpha-compositing a
-  // semi-transparent card over its parent is what makes muted-text-on-tinted-
-  // surface failures so easy to miss.
   /**
    * True when a gradient or image sits between this element and the first
    * solid colour above it. Contrast cannot be computed against those from
-   * computed styles alone, and guessing produced a confident 1.00:1 for white
-   * text on a violet gradient button.
+   * computed styles alone, and guessing would report a confident 1.00:1 for
+   * white text on a violet gradient button.
    */
   function hasPaintedAncestor(el) {
     var node = el, depth = 0;
@@ -164,6 +161,9 @@ const CONTRAST_LIB = `
     return false;
   }
 
+  // Walk up for the first non-transparent background. Alpha-compositing a
+  // semi-transparent card over its parent is what makes muted-text-on-tinted-
+  // surface failures so easy to miss.
   function effectiveBackground(el) {
     var node = el;
     var stack = [];
@@ -230,9 +230,8 @@ const HELPERS_LIB = `
    * redpen is pointed at a dev server by design, and every modern stack mounts
    * something into the page there: TanStack Query's devtools button, Next's
    * build indicator and error portal, Vite's error overlay. The Query devtools
-   * button alone is a 64px svg of 31 primitive shapes, and it was reported as
-   * an assembled illustration on every route of one app — a finding about a
-   * button the product does not ship.
+   * button alone is a 64px svg of 31 primitive shapes, which would read as an
+   * assembled illustration on every route.
    */
   var DEV_TOOL_SELECTOR = [
     '[class*="tsqd-"]',
@@ -440,8 +439,8 @@ const CHECKS_LIB = `
       var s = getComputedStyle(el);
       var r = el.getBoundingClientRect();
       // The root carries the CSS initial color: rgb(0,0,0) unless something
-      // sets it, and html/body usually set only layout. Reading it reported a
-      // pure black that appears nowhere in the source. A text colour only
+      // sets it, and html/body usually set only layout. Reading it would report
+      // a pure black that appears nowhere in the source. A text colour only
       // counts where there is text wearing it.
       var pairs = [s.backgroundColor];
       if (isTextBearing(el)) pairs.push(s.color);
@@ -703,9 +702,8 @@ const CHECKS_LIB = `
 
   CHECKS['font-size-floor'] = function (p) {
     // The rule's own fix promises "14px for anything read as prose, 12px for
-    // incidental UI chrome". Treating only interactive elements as chrome broke
-    // that promise: an id, a timestamp or a unit label is chrome by any reading,
-    // and was being held to the prose floor with no way to satisfy the rule.
+    // incidental UI chrome". An id, a timestamp or a unit label is chrome by
+    // any reading, not only interactive elements.
     function isChrome(el) {
       if (isInteractive(el)) return true;
       var t = textOf(el);
@@ -826,22 +824,18 @@ const CHECKS_LIB = `
     var hero = document.querySelector('header + section, main > section:first-child, [class*="hero"]') ||
                topLevelSections()[0];
     if (!hero) return [];
-    // A hero does not contain the rest of the page. Height alone could not
-    // separate the two: the first section of one long route measured 271vh,
-    // and tightening the ceiling only moved the argument to 202vh. What makes
-    // it not a hero is that the other sections are inside it.
-    // topLevelSections only returns direct children of main, so a wrapper that
-    // holds every section has no sibling inside it and the check found nothing.
-    // Count the sections it contains instead: an opener holds none.
+    // A hero does not contain the rest of the page. Height alone cannot
+    // separate the two; what makes a wrapper not a hero is that the other
+    // sections are inside it. topLevelSections only returns direct children of
+    // main, so count the sections it contains instead: an opener holds none.
     if (hero.querySelectorAll('section, article').length > 1) return [];
 
     var h = hero.getBoundingClientRect().height;
     var vh = h / window.innerHeight;
-    // A hero is a screenful, or two. There was a floor and no ceiling, so on a
-    // long page the first section matched the whole content column — 271vh —
-    // where a centred prose measure naturally puts two dozen elements on one
-    // axis. Above the ceiling this is a page, and the check does not apply to
-    // pages.
+    // A hero is a screenful, or two. On a long page the first section can be
+    // the whole content column, where a centred prose measure naturally puts
+    // two dozen elements on one axis. Above the ceiling this is a page, and the
+    // check does not apply to pages.
     if (vh < (p.minHeroVh || 0.85) || vh > (p.maxHeroVh || 2.5)) return [];
     var centered = Array.prototype.slice.call(hero.querySelectorAll('h1, h2, p, a, button, span'))
       .filter(visible)
@@ -864,9 +858,7 @@ const CHECKS_LIB = `
     function isSurface(el) {
       // A control is not a container. Every design system gives its inputs and
       // buttons a background, a border, a radius and padding, which is four of
-      // the four signals below — so on the first real app this ever scanned,
-      // input.field inside div.card was reported as a card inside a card,
-      // twelve times, at weight 73. Card-in-card is about two levels of chrome
+      // the four signals below. Card-in-card is about two levels of chrome
       // around the same content; a field inside a card is one level of chrome
       // around a control that has always looked like that.
       if (CONTROLS[el.tagName] || el.getAttribute('role') === 'button') return false;
@@ -949,12 +941,11 @@ const CHECKS_LIB = `
 
   // Elements that sit past the viewport edge.
   //
-  // This used to gate on document.scrollWidth, which overflow-x: clip on the
-  // root sets equal to clientWidth — so a page could put three of five nav
-  // destinations and a destructive action off-screen at 375px and measure as
-  // perfectly clean. Reported from a project that applied the clip *because
-  // redpen told it to*. So: measure element rects against the viewport, and
-  // treat a clipping root as a reason to look harder rather than as a pass.
+  // Not gated on document.scrollWidth, which overflow-x: clip on the root
+  // sets equal to clientWidth, so a page could put nav destinations and a
+  // destructive action off-screen at 375px and still measure clean. Measure
+  // element rects against the viewport, and treat a clipping root as a reason
+  // to look harder rather than as a pass.
   function pastViewport() {
     var vw = window.innerWidth;
     return all('*').filter(function (el) {
@@ -1041,10 +1032,10 @@ const CHECKS_LIB = `
       var s = getComputedStyle(el);
       if (s.display === 'inline') return false;
       if (s.whiteSpace === 'nowrap' || s.whiteSpace === 'pre') return false;
-      // Comparing box height to line height counted an icon beside the label,
-      // or any extra padding, as a wrap — it fired on a correct button in the
-      // clean fixture. Count the text's own line boxes instead: a Range over
-      // the text node yields one client rect per rendered line.
+      // Comparing box height to line height would count an icon beside the
+      // label, or any extra padding, as a wrap. Count the text's own line boxes
+      // instead: a Range over the text node yields one client rect per
+      // rendered line.
       var lines = 0;
       for (var i = 0; i < el.childNodes.length; i++) {
         var n = el.childNodes[i];
@@ -1357,9 +1348,7 @@ const CHECKS_LIB = `
           if (/outline|box-shadow|all/.test(t)) {
             out.push({ selector: r.selectorText, excerpt: 'focus ring transitions: ' + t });
           }
-          // A keyframe animation moves the ring exactly as a transition does,
-          // and only the transition was looked for — so a ring that pulses
-          // forever went unreported while one that eased once did not.
+          // A keyframe animation moves the ring exactly as a transition does.
           var a = r.style.animation || r.style.animationName || '';
           if (a && a !== 'none') {
             out.push({ selector: r.selectorText, excerpt: 'focus ring animates: ' + a });
@@ -1545,8 +1534,7 @@ const CHECKS_LIB = `
     return all('svg').filter(function (svg) {
       // Background texture is not an assembled illustration. A full-bleed svg
       // that sits behind the content and cannot be clicked is chrome the author
-      // drew on purpose — a topographic contour wash was reported on every
-      // route of one project as 23 primitive shapes.
+      // drew on purpose, such as a topographic contour wash.
       var cs = getComputedStyle(svg);
       var behind = parseFloat(cs.zIndex) < 0;
       var pinned = cs.position === 'fixed' || cs.position === 'absolute';
@@ -1675,10 +1663,9 @@ const CHECKS_LIB = `
   };
 
   CHECKS['color-only-state'] = function () {
-    // The five words the rule declares were the only ones matched, and real code
-    // says ok, bad, pass, fail, good, danger, valid and invalid at least as
-    // often. A state carried by colour alone is the defect whatever it is
-    // called.
+    // Real code says ok, bad, pass, fail, good, danger, valid and invalid as
+    // often as error, success and warning. A state carried by colour alone is
+    // the defect whatever it is called.
     return all(
       '[class*="error"], [class*="success"], [class*="warning"], [aria-invalid="true"],' +
       '[class*="danger"], [class*="invalid"], [class~="ok"], [class~="bad"],' +
@@ -1840,10 +1827,8 @@ const CHECKS_LIB = `
   /**
    * Tokens declared for one role, found by NAME not by value.
    *
-   * Matching on value shape alone is what made the first version noise: a
-   * --space-2xs of 4px looks exactly like a font-size token, so a project with
-   * a spacing scale and no type scale was told its type scale was broken. A
-   * design system names its roles; read the names.
+   * Matching on value shape alone is noise: a --space-2xs of 4px looks exactly
+   * like a font-size token. A design system names its roles; read the names.
    */
   function declaredTokens(namePattern) {
     var out = {};
@@ -1949,9 +1934,8 @@ const CHECKS_LIB = `
     });
     // A face the page actually loads is part of the type system, however it was
     // declared. next/font emits @font-face and a hashed family name and sets no
-    // font custom property at all, so a project using the framework's own
-    // recommended setup had its three deliberate faces — Oswald, Bitter, IBM
-    // Plex Mono — reported as drift. Reading the loaded set instead of only the
+    // font custom property at all, so the framework's own recommended setup
+    // would read as drift. Reading the loaded set instead of only the
     // token block makes the check framework-agnostic: shipping a webfont is as
     // explicit a declaration as naming it in a root custom property.
     var loaded = {};
@@ -1980,11 +1964,9 @@ const CHECKS_LIB = `
   CHECKS['grid-track-bare-fr'] = function () {
     // Measured, not inferred.
     //
-    // The first cut read grid-template-columns out of the stylesheet and
-    // reported any bare fr beside an image somewhere on the page. On the first
-    // real project it cited three Tailwind classes that only apply above the lg
-    // breakpoint, at a viewport where they do not apply, on a page with no
-    // overflow at all. A stylesheet rule is not a fact about the page.
+    // Reading grid-template-columns out of the stylesheet would cite classes
+    // that only apply above a breakpoint, at a viewport where they do not
+    // apply. A stylesheet rule is not a fact about the page.
     //
     // What is a fact: a grid whose content is wider than the grid, holding an
     // image whose own natural width is what makes it so. That is the defect,
@@ -2276,8 +2258,7 @@ const CHECKS_LIB = `
         // 2.5.8's spacing exemption, which is the rest of the criterion: an
         // undersized target passes if a min-diameter circle centred on it
         // reaches no other target's circle. Without it a 23px nav link — one
-        // pixel under, with room around it — reads as a failure, which is how
-        // this first fired on a page that has no problem.
+        // pixel under, with room around it — would read as a failure.
         var r = el.getBoundingClientRect();
         var cx = r.left + r.width / 2, cy = r.top + r.height / 2;
         return targets.some(function (other) {

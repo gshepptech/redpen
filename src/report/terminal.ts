@@ -25,10 +25,8 @@ const CONFIDENCE_MARK: Record<Confidence, string> = {
 /**
  * The pip, painted.
  *
- * It encodes confidence, and confidence is what the whole tool exists to
- * establish, but it was printed in the default colour while the section header
- * fifty lines above carried the meaning. On a report this long the header is off
- * the screen for most of the reading, and a filled circle in the terminal's
+ * It encodes confidence. On a long report the section header is off the
+ * screen for most of the reading, and a filled circle in the terminal's
  * foreground colour says nothing on its own. Same palette as the section header
  * it belongs to, so the two agree.
  */
@@ -45,9 +43,9 @@ export interface TerminalOptions {
 /**
  * How many findings each tier argues in full before it switches to a roster.
  *
- * Printing all of them at full depth produced a 275-line wall in which a
- * weight-94 finding was typeset identically to a weight-43 one, so nothing on
- * screen said where to start. Confidence is what the whole tool is built to
+ * Printing all of them at full depth makes a wall in which a weight-94 finding
+ * is typeset identically to a weight-43 one, so nothing on screen says where
+ * to start. Confidence is what the whole tool is built to
  * establish, so confidence is what buys depth: everything two channels agree on
  * gets argued, the strongest few of the rest get argued, and the tail is still
  * named and locatable rather than hidden behind a count.
@@ -204,11 +202,9 @@ function rosterLine(f: Finding, idWidth: number): string {
 /**
  * The id column is as wide as the widest id in the group and no wider.
  *
- * It was a fixed 24 characters, which is a guess about a corpus that changes
- * every time a rule is added. Every character it guesses too wide is a
- * character taken off the end of every title on the screen — which is how
- * `no-reduced-motion` came to read "Motion with no prefers-reduced-motion
- * fallba…" while eight columns of the id gutter sat empty beside it.
+ * A fixed width is a guess about a corpus that changes every time a rule is
+ * added, and every character it guesses too wide is taken off the end of every
+ * title on the screen.
  */
 const idColumn = (list: Finding[]) => Math.max(...list.map((f) => f.ruleId.length));
 
@@ -259,9 +255,9 @@ function formatEvidence(e: Evidence): string {
   if (!e.excerpt) return head;
 
   // The prose above wraps at 76 from an indent of 4, so the block has a right
-  // edge at column 80. Evidence sits at an indent of 6 and used to ignore that
-  // edge entirely, running to 146 characters — past the 78ch maximum redpen's
-  // own line-length rule enforces on the pages it scans. The address is never
+  // edge at column 80. Evidence sits at an indent of 6 and keeps to the same
+  // edge, inside the 78ch maximum redpen's own line-length rule enforces on
+  // the pages it scans. The address is never
   // cut, because a location you cannot copy is worth nothing; the excerpt is,
   // because it is there to recognise the line, not to read it.
   const budget = MEASURE - 6 - head.length - 2;
@@ -273,9 +269,8 @@ function formatEvidence(e: Evidence): string {
 /**
  * What a confidence tier means, which depends on whether render ran.
  *
- * `possible` used to say the render pass "checked the same thing and did not
- * confirm it" — true when render ran, and a lie the moment both cases were
- * folded into one tier. A finding nothing looked at and a finding something
+ * `possible` covers both cases, so its description has to say which one this
+ * run was. A finding nothing looked at and a finding something
  * looked at and did not agree with are both unconfirmed, and they are not the
  * same thing to whoever is deciding what to fix.
  */
@@ -301,9 +296,8 @@ function kindLine(result: ScanResult): string {
   const slop = result.findings.filter((f) => f.kind === 'slop').length;
   const qual = result.findings.filter((f) => f.kind === 'quality').length;
   // Both axes get a bar, not just the headline. The headline is the worse of
-  // the two, so its number already appears again on one of these rows — which
-  // read as a second measurement until you could see the two bars side by side
-  // and watch one of them match the header exactly.
+  // the two, so its number appears again on one of these rows, and seeing the
+  // two bars side by side shows which one it is.
   const row = (name: string, value: number, n: number, gloss: string) =>
     `  ${pc.dim(name)}${' '.repeat(7 - name.length)}  ${colorScore(value)}  ${meter(value, 14)}  ` +
     pc.dim(`${n} finding${n === 1 ? '' : 's'} — ${gloss}`);
@@ -329,10 +323,9 @@ function surfaceLine(result: ScanResult): string | null {
 /**
  * The header carries no bar of its own.
  *
- * It used to draw one 24 cells wide while the axes below drew theirs at 14, and
- * since the headline *is* the worse axis, that was the same number rendered at
- * two lengths — an encoding that invites the eye to compare them and get it
- * wrong. The rows below do the measuring. This line says which page you are
+ * The headline *is* the worse axis, so a bar here would draw the same number
+ * at a second length, which invites the eye to compare them and get it wrong.
+ * The rows below do the measuring. This line says which page you are
  * looking at and what the verdict is.
  */
 function scoreLine(value: number, slop: number, quality: number): string {
@@ -342,11 +335,8 @@ function scoreLine(value: number, slop: number, quality: number): string {
 /**
  * One band table for the number and the bar.
  *
- * They used to carry their own: the number had four bands and the bar had
- * three, so a 70 got a bold-yellow number beside a yellow bar and an 80 got a
- * plain-yellow number beside the same yellow bar. Two encodings of one quantity
- * that disagree about where the lines are is the same defect as a header whose
- * word and number came from different sums — smaller, and no more defensible.
+ * Two encodings of one quantity that disagree about where the lines are would
+ * paint a number one colour beside a bar of another.
  *
  * The floors are the grade floors, so the colour changes exactly where the word
  * does.

@@ -166,8 +166,7 @@ export async function loadPlaywright(root?: string): Promise<PlaywrightModule | 
       const mod = (await import(pathToFileURL(entry).href)) as Record<string, unknown>;
       // playwright's entry is CommonJS, and importing CJS from ESM puts the
       // whole module object on `default`. Resolved but unusable is worse than
-      // not found: the first version of this got as far as "could not launch
-      // chromium: Cannot read properties of undefined".
+      // not found.
       const ns = ('chromium' in mod ? mod : mod.default) as unknown;
       return ns as PlaywrightModule;
     } catch {
@@ -263,11 +262,9 @@ export async function scanRender(opts: RenderOptions): Promise<RenderResult> {
   /**
    * Which passes to run, as (viewport, scheme) pairs.
    *
-   * Every pass before this one opened a default context, so `prefers-color-
-   * scheme: dark` never applied and half of a themed app went unscanned. A
-   * project's dark `--on-danger` measured 3.14:1 on its only destructive
-   * control — below AA, on a confirmation page — and redpen reported the light
-   * value of 6.15 and called it clean.
+   * A default context never applies `prefers-color-scheme: dark`, so half of a
+   * themed app would go unscanned: a dark `--on-danger` at 3.14:1 hides behind
+   * a light value of 6.15.
    *
    * Dark runs at the widest viewport only. What it uniquely catches is colour,
    * and colour does not change with width, so a second full sweep would double
@@ -307,9 +304,8 @@ export async function scanRender(opts: RenderOptions): Promise<RenderResult> {
         await page.addInitScript(install);
         if (stampFor) {
           // An init script runs at document creation, when documentElement may
-          // not exist yet — setting it unguarded threw, and the only sign was a
-          // console-error finding that fired on the stamped pass alone. Apply as
-          // early as possible, then again once the element is certainly there.
+          // not exist yet, and setting it unguarded throws. Apply as early as
+          // possible, then again once the element is certainly there.
           const apply =
             stampFor.kind === 'class'
               ? `document.documentElement.classList.add(${JSON.stringify(stampFor.value)})`
@@ -346,12 +342,10 @@ export async function scanRender(opts: RenderOptions): Promise<RenderResult> {
          * Where the browser actually landed.
          *
          * Asking for `/dashboard` on an app that requires a session lands on
-         * `/login`, and nothing here compared the two — so redpen produced a
-         * clean, confident, fully scored report about a login page, labelled
-         * with the dashboard's url, and classified it as a `persuade` surface
-         * for good measure. Silently answering a different question is the
-         * worst failure this tool has, because every safeguard downstream is
-         * working correctly on the wrong page.
+         * `/login`. Scoring that would produce a clean, confident report about a
+         * login page labelled with the dashboard's url. Silently answering a
+         * different question is the worst failure this tool can have, because
+         * every safeguard downstream is working correctly on the wrong page.
          *
          * A same-path redirect is normal — a trailing slash, a locale prefix,
          * a canonical host. A different path is a different page.
@@ -369,11 +363,9 @@ export async function scanRender(opts: RenderOptions): Promise<RenderResult> {
         }
 
         // Read the stamp back off the page rather than trusting that setting
-        // it worked. The first version labelled every hit from the pass config,
-        // so when the init script threw before documentElement existed the
-        // evidence still said "data-theme=dark" for a context the page had
-        // never entered — confidently wrong, which is worse than absent.
-        // Report what was observed, never what was requested.
+        // it worked. Labelling hits from the pass config would say
+        // "data-theme=dark" for a context the page never entered, which is
+        // worse than absent. Report what was observed, never what was requested.
         let observedStamp: string | null = null;
         if (stampFor) {
           if (stampScript) await page.evaluate(stampScript);

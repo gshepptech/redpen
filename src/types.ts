@@ -113,8 +113,7 @@ export interface SourceMatcher {
    * Reasons are written above the code they explain, not beside it. A catch
    * carrying `// Swallow a refresh failure so the error surface below always
    * fires` three lines up is a decision by any reading, and same-line
-   * suppression cannot see it — it reported that block twice, on two different
-   * projects, as an omission.
+   * suppression cannot see it.
    */
   suppressLines?: number;
   /**
@@ -122,10 +121,8 @@ export interface SourceMatcher {
    *
    * A reason is written above; a guard is written below. `onClick={async (e) =>
    * {` is the line a pattern lands on, and the confirmation the rule is asking
-   * about is two lines further in, inside the handler. Reading upward only,
-   * `destructive-without-confirm` reported two buttons whose very next
-   * statement was `if (!confirm("Cancel this deployment? This will remove it
-   * from history.")) return;`.
+   * about is two lines further in, inside the handler: `if (!confirm("Cancel
+   * this deployment?")) return;`.
    */
   suppressAfter?: number;
   /**
@@ -134,17 +131,16 @@ export interface SourceMatcher {
    * Patterns compile case-insensitively because CSS and class names vary in
    * case. Prose does not: a comment opening with "Added" is a note about an
    * edit, and the same word lower-case mid-sentence is somebody explaining
-   * that a vendor renamed a product. Case was the only thing telling those
-   * apart, and the `i` flag was quietly discarding it.
+   * that a vendor renamed a product. Case is the only thing telling those
+   * apart, and the `i` flag would discard it.
    */
   caseSensitive?: boolean;
   /**
    * A match anywhere in the project cancels every hit for this rule.
    *
-   * Some questions are about the project rather than the line. `no-live-region`
-   * fired on every file that imports a toast, because its suppression could
-   * only see the line the hit was on — and the live region lives in the toast
-   * component, one directory away. A project that has a live region has one.
+   * Some questions are about the project rather than the line. A file that
+   * imports a toast does not carry the live region; the toast component, one
+   * directory away, does. A project that has a live region has one.
    */
   suppressProject?: string;
   /** Restrict to these file extensions. Defaults to all scanned extensions. */
@@ -298,10 +294,9 @@ export interface Finding {
   /**
    * How many pieces of evidence there were before `evidence` was cut.
    *
-   * The list is capped so one rule cannot fill a report, and the cap used to be
-   * silent: on a 1,872-file repository 1,772 duplicated blocks rendered as
-   * sixteen, with nothing saying the other 1,756 existed. A count hidden behind
-   * a cap is the thing this tool exists to argue against.
+   * The list is capped so one rule cannot fill a report, and the cap must not
+   * be silent: a count hidden behind a cap is the thing this tool exists to
+   * argue against.
    */
   evidenceTotal: number;
   why: string;

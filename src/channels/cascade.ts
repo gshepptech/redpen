@@ -4,8 +4,8 @@
  *
  * The render channel can see that a control computes to 32px when the design
  * system promised 44. It cannot see *why*, so the reader gets the symptom and
- * has to find the cause — one project fixed the same defect three times
- * because each report named a different button.
+ * has to find the cause, and can fix the same defect three times because each
+ * report names a different button.
  *
  * The defect is a source-level question and it is answerable:
  *
@@ -159,10 +159,9 @@ function px(value: string): number | null {
 /**
  * The winning value for a property in one block — which is the *last* one.
  *
- * This took the first, so `height: 32px; height: 48px` (the fallback-then-real
- * pattern) was reported as a cancelled floor when 48px is what the browser
- * uses, and `height: 48px; height: 32px` was reported as clean when 32px is.
- * One bug, a false positive and a false negative, pointing opposite ways.
+ * Taking the first would read `height: 32px; height: 48px` (the
+ * fallback-then-real pattern) as a cancelled floor when 48px is what the
+ * browser uses, and `height: 48px; height: 32px` as clean when 32px is.
  */
 function declValue(body: string, prop: string): { value: string; offset: number } | null {
   const re = new RegExp(`(^|[;{\\s])${prop}\\s*:\\s*([^;}]+)`, 'gi');
@@ -186,9 +185,8 @@ export function parse(css: string): RuleSet[] {
   /**
    * Index just past a quoted string starting at `from`.
    *
-   * Braces live inside strings — `content: "{"` is ordinary CSS — and the
-   * scanner used to count them. One such declaration desynchronised the brace
-   * depth and every rule after it in the file was dropped without a word.
+   * Braces live inside strings — `content: "{"` is ordinary CSS — and counting
+   * them would desynchronise the brace depth and drop every rule after it.
    */
   const skipString = (from: number): number => {
     const quote = text[from];
@@ -212,11 +210,10 @@ export function parse(css: string): RuleSet[] {
     /**
      * A statement at-rule ends at its semicolon and wraps nothing.
      *
-     * `@import` and `@charset` open no block, so the scanner ran on to the next
-     * rule's brace and read `@import url("x"); .btn` as one at-rule head —
-     * pushing it as a condition and losing `.btn` entirely. Since `@import` is
-     * the first line of a great many stylesheets, the rule this file exists for
-     * reported nothing at all on them.
+     * `@import` and `@charset` open no block. Without this the scanner would
+     * run on to the next rule's brace, read `@import url("x"); .btn` as one
+     * at-rule head and lose `.btn` entirely, on the first line of a great many
+     * stylesheets.
      */
     if (ch === ';' && text.slice(selectorStart, i).trim().startsWith('@')) {
       i++;
@@ -267,8 +264,8 @@ export interface CascadeOptions {
 /**
  * Find rules that pin a dimension below a floor another rule promised.
  *
- * Only `height` against `min-height` today, which is the case that produced
- * three separate reports of one bug. The shape generalises — a specific rule
+ * Only `height` against `min-height` today, the case seen most in practice.
+ * The shape generalises — a specific rule
  * opting out of a guarantee a base rule made — and `max-width`/`min-width`
  * and `overflow` are the obvious next instances.
  */
@@ -306,12 +303,7 @@ export function findCancelledFloors(css: string, opts: CascadeOptions = {}): Cas
       const weak = specificity(p.rule.selector);
       if (compare(off, weak) <= 0) continue;
 
-      // A restore inside a condition only covers what that condition matches.
-      //
-      // The first version treated any conditional restore as a full one, which
-      // declined to report a control that is under the floor at the *most
-      // common* viewport on the grounds that it is fine at an uncommon one.
-      // Reported from the field, from the stylesheet this rule was built for:
+      // A restore inside a condition only covers what that condition matches:
       // a restore under `(pointer: coarse), (max-width: 720px)` leaves the
       // control at 44px on a phone and 32px on every desktop.
       let partialUnder: string | null = null;
@@ -323,10 +315,8 @@ export function findCancelledFloors(css: string, opts: CascadeOptions = {}): Cas
         const ov = px(od.value);
         if (ov === null || ov < floor) return false;
         // The restoring rule must be the *same* selector, not merely one that
-        // ends the same way. Comparing rightmost compounds meant a single
-        // `.qacts .btn` restore silently excused `.acts .btn` and
-        // `.prompt-side .btn` too — which is exactly the bug this rule exists
-        // to find, suppressed by the check meant to avoid false positives.
+        // ends the same way. Comparing rightmost compounds would let a single
+        // `.qacts .btn` restore excuse `.acts .btn` and `.prompt-side .btn` too.
         if (compare(specificity(other.selector), off) < 0) return false;
         if (normalise(other.selector) !== normalise(r.selector)) return false;
         const narrowing = other.conditions.filter(isNarrowing);

@@ -10,12 +10,10 @@ const HERE = dirname(fileURLToPath(import.meta.url));
  * Where the corpus is, from wherever this module ended up.
  *
  * Three shapes ship: dist/corpus/load.js in a checkout and in the npm package,
- * and bundle/redpen.mjs in a plugin install, which is one level shallower. The
- * bundle found nothing and refused to start, which is a poor way to learn that
- * the search was written against two of the three.
+ * and bundle/redpen.mjs in a plugin install, which is one level shallower.
  *
- * Walking up rather than listing depths, so the next output shape does not
- * break it again.
+ * Walking up rather than listing depths, so a new output shape does not break
+ * it.
  */
 function rulesDir(): string {
   let dir = HERE;

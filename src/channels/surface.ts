@@ -13,7 +13,7 @@ import type { Surface } from '../types.js';
  * On an operate surface, familiarity is a feature. A single type family, uniform
  * spacing, and identical repeating components are the correct answers there and
  * tells on a landing page. A rule set that fires the same way on both is wrong
- * half the time — which is what redpen was doing before this existed.
+ * half the time.
  *
  * Detection is a heuristic and it says so: the result carries a confidence, and
  * a declared surface in .redpen/config.json always wins. When nothing is
@@ -74,17 +74,16 @@ export function surfaceSource(): string {
   var authish  = all('[class*="avatar"], [class*="account"], [aria-label*="profile" i]').length;
 
   // A list of records with per-row actions. This is the strongest operate
-  // signal there is, and the first version counted it the other way: eight
-  // rows each carrying Promote/Drop read as "a landing page repeating its
-  // call to action". No marketing page repeats a control cluster per item.
+  // signal there is: eight rows each carrying Promote/Drop are not a landing
+  // page repeating its call to action. No marketing page repeats a control
+  // cluster per item.
   var recordRows = (function () {
     var best = 0;
     all('*').forEach(function (parent) {
       var kids = Array.prototype.slice.call(parent.children).filter(visible);
       if (kids.length < 3) return;
-      // Actions only. Counting inputs and selects made a form's field wrappers
-      // — one label and one input each — look exactly like record rows, which
-      // is why a page with zero rows reported seven of them.
+      // Actions only. Counting inputs and selects would make a form's field
+      // wrappers — one label and one input each — look exactly like record rows.
       var ACTIONS = 'button, a[class], a[href], [role="button"]';
       var withControls = kids.filter(function (k) {
         if (!k.querySelector(ACTIONS)) return false;
@@ -94,8 +93,8 @@ export function surfaceSource(): string {
       if (withControls.length < 3) return;
 
       // Compare structure, not labels. Row actions legitimately differ by
-      // state — Start / Claim / Close — and matching on text meant a real list
-      // with per-row state failed while a uniform form passed.
+      // state — Start / Claim / Close — and matching on text would fail a real
+      // list with per-row state while passing a uniform form.
       var sig = withControls.map(function (k) {
         return Array.prototype.slice.call(k.querySelectorAll(ACTIONS))
           .map(function (c) { return c.tagName; }).sort().join('|');
@@ -108,8 +107,8 @@ export function surfaceSource(): string {
     return best;
   })();
 
-  // Controls that are NOT inside a repeated record row. Counting row actions
-  // as calls to action is what produced four confident misclassifications.
+  // Controls that are NOT inside a repeated record row. Row actions are not
+  // calls to action, and counting them misclassifies app pages as landing pages.
   var standaloneCtas = all('a[class], button').filter(function (el) {
     var t = (el.textContent || '').trim();
     if (!t.length || t.length >= 32) return false;
@@ -126,8 +125,7 @@ export function surfaceSource(): string {
 
   // Repeated structure with no controls at all. A read-only data list is still
   // a task surface — controls are one way of showing repetition, not the
-  // definition of it. Reported from the field: an 11-row merged queue view with
-  // zero buttons scored 0.0 on operate.
+  // definition of it. An 11-row queue view with zero buttons is an operate page.
   var repeatedShape = (function () {
     var best = 0;
     all('*').forEach(function (parent) {
@@ -257,8 +255,7 @@ export function classify(s: SurfaceSignals): SurfaceVerdict {
   if (s.logoWall >= 3) { persuade += 1.5; reasons.persuade.push('logo wall'); }
   // Only counts standalone calls to action — row actions are excluded above.
   // A page with almost no content is not evidence of a landing page: an empty
-  // list and a hero look alike, and guessing there was worth 0.67 of confidence
-  // on four routes that were plainly app pages.
+  // list and a hero look alike.
   if (s.h1 === 1 && s.ctas >= 2 && s.prose < 2500 && s.recordRows < 3 && s.total > 600) {
     persuade += 2;
     reasons.persuade.push('single headline with repeated CTAs and little prose');

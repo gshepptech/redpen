@@ -121,10 +121,9 @@ const APP_SHAPES: ReadonlySet<string> = new Set([
  * Pages the surface channel classified as `operate`.
  *
  * The macrostructure guess below is a second, weaker classifier answering the
- * same question the surface detector already answered from richer signal. On a
- * real dashboard it returned "manifesto" for ten routes the surface pass had
- * called `operate` with 0.94 confidence, and sameness fired on all of them. So
- * the surface verdict wins where there is one, and APP_SHAPES is the fallback
+ * same question the surface detector already answered from richer signal, and
+ * it can call a dashboard route a "manifesto". So the surface verdict wins
+ * where there is one, and APP_SHAPES is the fallback
  * for prints replayed from the store, which carry no surface.
  */
 export function isAppShape(print: Fingerprint, operatePages?: ReadonlySet<string>): boolean {

@@ -60,10 +60,9 @@ export function compareToBaseline(
     notes.push('this baseline predates channel recording, so a partial run cannot be detected');
   }
 
-  // A baseline without the two axes was written under the old scoring model,
-  // where `score` was the union of both rather than the worse of them. The two
-  // numbers are not the same quantity, so comparing them would gate on
-  // arithmetic rather than on the page.
+  // A baseline without the two axes stores `score` as the union of both rather
+  // than the worse of them. The two numbers are not the same quantity, so
+  // comparing them would gate on arithmetic rather than on the page.
   if (baseline.slop === undefined || baseline.quality === undefined) {
     return { status: 'incomparable', reason: 'pre-two-axis', notes };
   }
