@@ -9,10 +9,8 @@ import { loadCorpus } from '../dist/corpus/load.js';
 /**
  * Writing that reads as machine-made.
  *
- * The gap this closed was not a missing rule but a missing file type: `.md` was
- * in neither extension list, so every README, changelog, design doc and course
- * script in every repository redpen scanned was invisible to a tool whose
- * subject is exactly that.
+ * READMEs, changelogs and design docs are read as documents: `.md` is a
+ * scanned file type, and the prose rules apply to it.
  */
 
 function doc(name, body) {
@@ -70,8 +68,8 @@ test('one reachy word is not a register, four is', async () => {
 });
 
 test('an underscore is a character, not a verb', async () => {
-  // A document explaining APP_CACHE_DIR said "the single-underscore
-  // form" four times and was read as machine prose.
+  // A document explaining APP_CACHE_DIR can say "the single-underscore form"
+  // four times without being machine prose.
   const dir = doc(
     'a.md',
     [
@@ -88,8 +86,8 @@ test('an underscore is a character, not a verb', async () => {
 });
 
 test('sentence case is not Title Case', async () => {
-  // Patterns compile case-insensitively, so [A-Z] matched lowercase and every
-  // sentence-case heading read as Title Case — which is the whole rule.
+  // Patterns compile case-insensitively, so without caseSensitive [A-Z] would
+  // match lowercase and every sentence-case heading would read as Title Case.
   const sentence = doc(
     'a.md',
     ['## Maintained development host', '', '## Running the test suite', '', '## Building a release', ''].join('\n'),
@@ -138,9 +136,8 @@ test('every prose rule reads documents and nothing else', () => {
 });
 
 test('a document is checked for em dashes; the page rule never saw one', async () => {
-  // The em-dash rule read markup only, so it never opened a .md — the format
-  // where the tell was named in the first place. redpen's own README carries 67
-  // of them and the corpus said nothing.
+  // The em-dash rule reads .md too — the format where the tell was named in
+  // the first place.
   const dir = doc('README.md', 'A sentence — with an aside — and another one.\n'.repeat(8));
   try {
     const r = await runScan({ root: dir, codeCategories: true, ephemeral: true, tools: false });
@@ -157,7 +154,7 @@ test('a document is checked for em dashes; the page rule never saw one', async (
 
 test('a bolded lead term in a list is typography, not a prose splice', async () => {
   // `- **Term** — description` is a definition list wearing markdown, and the
-  // catalogue carves it out by name. redpen was counting them.
+  // catalogue carves it out by name, so it must not count.
   const dir = doc(
     'README.md',
     Array.from({ length: 12 }, (_, i) => `- **Term ${i}** — what it means`).join('\n') + '\n',
@@ -171,9 +168,9 @@ test('a bolded lead term in a list is typography, not a prose splice', async () 
 });
 
 test('every writing tell borrowed from the catalogue is credited', async () => {
-  // Eighteen rules carried a `writing:` reference while NOTICE named no writing
-  // catalogue at all — an attribution gap in a corpus whose whole claim is
-  // provenance.
+  // Every rule carrying a `writing:` reference needs a writing catalogue named
+  // in NOTICE; a gap there is an attribution gap in a corpus whose whole claim
+  // is provenance.
   const { readFileSync } = await import('node:fs');
   const notice = readFileSync(new URL('../NOTICE', import.meta.url), 'utf8');
   const cited = loadCorpus().filter((r) => r.sources.some((s) => /^writing:/.test(s.ref)));

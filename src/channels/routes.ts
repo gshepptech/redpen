@@ -22,10 +22,10 @@ import { SKIP_DIRS } from './source.js';
 /**
  * Which conventions this project actually uses.
  *
- * Applying every convention to every project is what produced 188 routes on a
- * React Router app whose `web/src/pages/` holds components, not pages —
- * including `/‌__tests__/AuditLogPage.test`. A directory named `pages` means
- * nothing on its own; `next` in the dependency list is what makes it a router.
+ * Applying every convention to every project would read a React Router app's
+ * `web/src/pages/`, which holds components, as hundreds of routes. A directory
+ * named `pages` means nothing on its own; `next` in the dependency list is
+ * what makes it a router.
  */
 function frameworks(root: string): Set<string> {
   const found = new Set<string>();

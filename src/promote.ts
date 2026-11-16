@@ -46,19 +46,14 @@ function confidenceFor(rule: Rule, observed: Set<Channel>): Confidence {
 
   // Source-only, on a rule the render channel could have settled.
   //
-  // Both ways round this is a lead, and the second way was backwards. If render
-  // ran and did not agree, the channels disagree. If render never ran, nothing
-  // checked it — which is weaker still, and it was being reported as stronger.
+  // Both ways round this is a lead. If render ran and did not agree, the
+  // channels disagree. If render never ran, nothing checked it, which is
+  // weaker still.
   //
-  // Measured on one real app: of eleven source-only findings presented as
-  // likely or confirmed, seven were false. The page had `lang="en"`, the nav had
-  // `aria-current`, the input was wrapped in its label, the stylesheet had the
-  // reduced-motion block. Every one of those is a fact about the rendered page
-  // that a regex over .tsx files cannot see, and each of those rules already
-  // carries a render check that would have answered it.
-  //
-  // This rule's own doc comment said `possible` means the render pass
-  // "disagreed or never ran". The code said otherwise.
+  // `lang="en"` on the page, `aria-current` on the nav, an input wrapped in its
+  // label, a reduced-motion block in the stylesheet: each is a fact about the
+  // rendered page that a regex over .tsx files cannot see, and each of those
+  // rules carries a render check that answers it.
   if (possible.has('render')) {
     return 'possible';
   }
@@ -70,10 +65,10 @@ export interface PromoteOptions {
   /**
    * False when playwright was unavailable.
    *
-   * No longer changes any confidence: a source hit on a rule render could have
-   * settled is a lead whether render disagreed or never ran. Kept because the
-   * report says which of those happened, and the two read very differently to
-   * someone deciding whether to act.
+   * Does not change any confidence: a source hit on a rule render could have
+   * settled is a lead whether render disagreed or never ran. The report says
+   * which of those happened, and the two read very differently to someone
+   * deciding whether to act.
    */
   renderRan: boolean;
   /** Rule ids that do not apply on this surface. Dropped before promotion. */

@@ -8,7 +8,7 @@ import { discoverRoutes } from '../dist/channels/routes.js';
 /**
  * Routes read out of the project instead of typed in.
  *
- * Every case here is one a real repository produced. The expensive failure is
+ * Every case here is a layout real repositories have. The expensive failure is
  * not missing a route — it is inventing one, because a scan of a url that does
  * not exist reports a 404 page as though it were the product.
  */
@@ -57,9 +57,9 @@ test('a dynamic segment is dropped — only a running app knows what fills it', 
 });
 
 test('a directory called pages is not a router unless the project has one', () => {
-  // A React Router app with `web/src/pages/` holding components produced 188
-  // routes, `/​__tests__/AuditLogPage.test` among them. A convention is only a
-  // convention when the framework that defines it is installed.
+  // A React Router app with `web/src/pages/` holding components has no routes
+  // there. A convention is only a convention when the framework that defines
+  // it is installed.
   const dir = project({
     'package.json': '{"dependencies":{"react":"19.0.0"}}',
     'src/pages/Dashboard.tsx': 'export const D = 1;',

@@ -10,12 +10,10 @@ const HERE = dirname(fileURLToPath(import.meta.url));
  * Where the corpus is, from wherever this module ended up.
  *
  * Three shapes ship: dist/corpus/load.js in a checkout and in the npm package,
- * and bundle/redpen.mjs in a plugin install, which is one level shallower. The
- * bundle found nothing and refused to start, which is a poor way to learn that
- * the search was written against two of the three.
+ * and bundle/redpen.mjs in a plugin install, which is one level shallower.
  *
- * Walking up rather than listing depths, so the next output shape does not
- * break it again.
+ * Walking up rather than listing depths, so a new output shape does not break
+ * it.
  */
 function rulesDir(): string {
   let dir = HERE;
@@ -225,10 +223,6 @@ const VALID_CAPABILITIES: ReadonlySet<string> = new Set(['javascript', 'external
 export function isActionable(rule: Rule, capabilities: Record<string, boolean>): boolean {
   if (!rule.requires) return true;
   return rule.requires.every((cap) => capabilities[cap] !== false);
-}
-
-export function rulesForSurface(surface: Surface | null): Rule[] {
-  return loadCorpus().filter((r) => appliesTo(r, surface));
 }
 
 export function ruleById(id: string): Rule | undefined {

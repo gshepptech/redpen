@@ -27,8 +27,8 @@
       - 'onSubmit=\{[^}]*(fetch|axios|api)\.'
       - 'async function \w+\([^)]*\)[^{]*\{[^}]*await [^}]*\}[\s\S]{0,600}?on(Submit|Click)=\{\w+\}'
     # A pending flag is set a line or two into the handler, not on the line the
-    # await is on. Same-line suppression reported a button that carries
-    # `disabled` eight lines below its own onClick.
+    # await is on, and a button can carry `disabled` eight lines below its own
+    # onClick.
     suppress: '(isLoading|isPending|loading|pending|isSubmitting|disabled|setBusy|setSaving|setCreating)'
     suppressLines: 12
     minHits: 1
@@ -79,26 +79,22 @@
   channels: [source]
   source:
     patterns:
-      # `remove`, `clear` and `reset` are gone. They fired on every form builder
-      # in reach — removeService in a deploy wizard, removeComponent on a chip
-      # in a draft, a Remove button beside a row being composed. Nothing is
-      # saved yet in any of them, and the rule is about work that is.
+      # Not `remove`, `clear` or `reset`. Form builders use them for unsaved
+      # work — removeService in a deploy wizard, removeComponent on a chip in a
+      # draft, a Remove button beside a row being composed — and the rule is
+      # about work that is saved.
       #
       # delete, destroy and wipe are what a codebase says when the data is real,
       # and the labels below are what a button says when it means it.
-      # `\w`, not `[A-Z]`: the camelCase hump was never enforced under the
+      # `\w`, not `[A-Z]`: the camelCase hump is not enforced under the
       # default case-insensitive compile, and a lowercase handler name is the
       # same unguarded delete.
       - 'onClick=\{[^}]*\b(delete|destroy|wipe|purge)\w*\('
       - '>\s*(Delete|Delete all|Clear all|Discard|Wipe)\s*<'
-    # The suppress list was right and could not see anything. Without a window
-    # it read the hit's own line only, and a confirmation is never written on
-    # the button — it is the branch the button sits inside. Both survivors on
-    # the real projects were guarded: ridgetag calls window.confirm seven lines
-    # up with "Clear N compared areas and their ranking? This can't be undone."
-    # and mozza swaps the row for an inline "Confirm?" before the Delete shows
-    # at all. The only critical-severity rule in the corpus was wrong on both
-    # of the two claims it had left.
+    # The suppression reads a window, not the hit's own line: a confirmation
+    # is never written on the button, it is the branch the button sits inside.
+    # A window.confirm seven lines up, or a row swapped for an inline
+    # "Confirm?" before the Delete shows, is a guard.
     suppress: '(confirm|Confirm|AlertDialog|undo|Undo|areYouSure)'
     suppressLines: 14
     suppressAfter: 6
@@ -170,12 +166,10 @@
   channels: [source]
   source:
     patterns:
-      # The bare words are gone and the rest match case. `'error'` is a state,
-      # a type or a key far more often than it is a message, and matching it
-      # case-insensitively reported a project whose two error branches read
-      # "Live conditions unavailable — wind unknown, can't scan." and
-      # "Couldn't reach iNaturalist or GBIF, so the sightings overlay is empty."
-      # A phrase is a message. A single word in quotes is usually an enum.
+      # No bare words, and the phrases match case. `'error'` is a state, a type
+      # or a key far more often than it is a message, and a specific error
+      # message is the thing this rule asks for. A phrase is a message. A single
+      # word in quotes is usually an enum.
       - '[''"`](Something went wrong|An error occurred|An unexpected error|Invalid input|Operation failed|Request failed|Please try again|Try again later)[.!]?[''"`]'
       # The same phrase written as markup rather than as a string. The rule read
       # only quoted literals for its whole life, so `<p role="alert">Something

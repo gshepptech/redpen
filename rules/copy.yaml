@@ -18,18 +18,13 @@
     - { origin: catalogue, ref: theater-slop-phrase }
   channels: [source, vision]
   source:
-    # `{/* … */}` is the only way to write a comment inside JSX, and the
-    # suppression here matched `//`, `/*` and `<!--` but not the braced form —
-    # so on a React codebase `{/* Renders only for super admins; no-op for
-    # everyone else. */}` was reported as marketing copy, at confirmed.
+    # `{/* … */}` is the only way to write a comment inside JSX, so the
+    # suppression matches the braced form as well as `//`, `/*` and `<!--`.
     #
     # A comment is addressed to whoever opens the file, not to a reader of
-    # the page. These fired on a CSS comment explaining a design decision, a
-    # code comment about "today's conditions" in a weather panel, and a help
-    # string listing three platforms.
-    # Copy lives in markup and in strings, not in a stylesheet. This fired on a
-    # CSS block comment explaining why a list is keyboard-reachable, on the
-    # continuation line, where no comment marker starts the line to suppress on.
+    # the page: a CSS comment explaining a design decision is not copy.
+    # Copy lives in markup and in strings, not in a stylesheet, and a CSS block
+    # comment's continuation lines carry no comment marker to suppress on.
     extensions: ['.html', '.htm', '.tsx', '.jsx', '.ts', '.js', '.mjs', '.vue', '.svelte', '.astro', '.mdx']
     suppress: '^\s*(\{\s*/\*|//|\*|/\*|#|<!--)'
     patterns:
@@ -85,12 +80,9 @@
   channels: [source]
   source:
     # A comment is addressed to whoever opens the file, not to a reader of
-    # the page. These fired on a CSS comment explaining a design decision, a
-    # code comment about "today's conditions" in a weather panel, and a help
-    # string listing three platforms.
-    # Copy lives in markup and in strings, not in a stylesheet. This fired on a
-    # CSS block comment explaining why a list is keyboard-reachable, on the
-    # continuation line, where no comment marker starts the line to suppress on.
+    # the page: a CSS comment explaining a design decision is not copy.
+    # Copy lives in markup and in strings, not in a stylesheet, and a CSS block
+    # comment's continuation lines carry no comment marker to suppress on.
     extensions: ['.html', '.htm', '.tsx', '.jsx', '.ts', '.js', '.mjs', '.vue', '.svelte', '.astro', '.mdx']
     # A list item that opens with a bolded lead term or a link and separates it
     # with a dash is typography, not a prose splice — `- **Term** — description`
@@ -124,12 +116,9 @@
   channels: [source]
   source:
     # A comment is addressed to whoever opens the file, not to a reader of
-    # the page. These fired on a CSS comment explaining a design decision, a
-    # code comment about "today's conditions" in a weather panel, and a help
-    # string listing three platforms.
-    # Copy lives in markup and in strings, not in a stylesheet. This fired on a
-    # CSS block comment explaining why a list is keyboard-reachable, on the
-    # continuation line, where no comment marker starts the line to suppress on.
+    # the page: a CSS comment explaining a design decision is not copy.
+    # Copy lives in markup and in strings, not in a stylesheet, and a CSS block
+    # comment's continuation lines carry no comment marker to suppress on.
     extensions: ['.html', '.htm', '.tsx', '.jsx', '.ts', '.js', '.mjs', '.vue', '.svelte', '.astro', '.mdx']
     suppress: '^\s*(\{\s*/\*|//|\*|/\*|#|<!--)'
     patterns:
@@ -157,12 +146,9 @@
   channels: [source, render]
   source:
     # A comment is addressed to whoever opens the file, not to a reader of
-    # the page. These fired on a CSS comment explaining a design decision, a
-    # code comment about "today's conditions" in a weather panel, and a help
-    # string listing three platforms.
-    # Copy lives in markup and in strings, not in a stylesheet. This fired on a
-    # CSS block comment explaining why a list is keyboard-reachable, on the
-    # continuation line, where no comment marker starts the line to suppress on.
+    # the page: a CSS comment explaining a design decision is not copy.
+    # Copy lives in markup and in strings, not in a stylesheet, and a CSS block
+    # comment's continuation lines carry no comment marker to suppress on.
     extensions: ['.html', '.htm', '.tsx', '.jsx', '.ts', '.js', '.mjs', '.vue', '.svelte', '.astro', '.mdx']
     suppress: '^\s*(\{\s*/\*|//|\*|/\*|#|<!--)'
     patterns:
@@ -191,12 +177,9 @@
   channels: [source]
   source:
     # A comment is addressed to whoever opens the file, not to a reader of
-    # the page. These fired on a CSS comment explaining a design decision, a
-    # code comment about "today's conditions" in a weather panel, and a help
-    # string listing three platforms.
-    # Copy lives in markup and in strings, not in a stylesheet. This fired on a
-    # CSS block comment explaining why a list is keyboard-reachable, on the
-    # continuation line, where no comment marker starts the line to suppress on.
+    # the page: a CSS comment explaining a design decision is not copy.
+    # Copy lives in markup and in strings, not in a stylesheet, and a CSS block
+    # comment's continuation lines carry no comment marker to suppress on.
     extensions: ['.html', '.htm', '.tsx', '.jsx', '.ts', '.js', '.mjs', '.vue', '.svelte', '.astro', '.mdx']
     suppress: '^\s*(\{\s*/\*|//|\*|/\*|#|<!--)'
     patterns:
@@ -223,25 +206,19 @@
   channels: [source, vision]
   source:
     # A comment is addressed to whoever opens the file, not to a reader of
-    # the page. These fired on a CSS comment explaining a design decision, a
-    # code comment about "today's conditions" in a weather panel, and a help
-    # string listing three platforms.
-    # Copy lives in markup and in strings, not in a stylesheet. This fired on a
-    # CSS block comment explaining why a list is keyboard-reachable, on the
-    # continuation line, where no comment marker starts the line to suppress on.
+    # the page: a CSS comment explaining a design decision is not copy.
+    # Copy lives in markup and in strings, not in a stylesheet, and a CSS block
+    # comment's continuation lines carry no comment marker to suppress on.
     extensions: ['.html', '.htm', '.tsx', '.jsx', '.ts', '.js', '.mjs', '.vue', '.svelte', '.astro', '.mdx']
     suppress: '^\s*(\{\s*/\*|//|\*|/\*|#|<!--)'
     patterns:
-      # The first version listed the numbers and the nouns it would accept, so
-      # "Trusted by 50,000+ land managers" and "cut scouting time by 40%" both
-      # went unreported — the number was not on the menu and neither was the
-      # noun. A claim's shape is the tell, not its vocabulary.
+      # Listing the numbers and nouns to accept would miss "Trusted by 50,000+
+      # land managers". A claim's shape is the tell, not its vocabulary.
       - '\b\d{1,3}(\.\d)?x\s+(faster|more|fewer|better|cheaper|higher|lower)\b'
       - '\b(9[0-9](\.\d{1,2})?)%\s+(uptime|availability|accuracy|accurate)\b'
-      # A bare percentage is not a claim to a reader. `by 40%` and `60% more`
-      # matched a comment in a herbicide module explaining that a grower reading
-      # the wrong row applies 60% more than the label allows — a sourced fact,
-      # in code, on a page nobody markets. What makes an invented metric one is
+      # A bare percentage is not a claim to a reader. `60% more` is just as
+      # likely a sourced fact in code, on a page nobody markets. What makes an
+      # invented metric one is
       # the framing around the number, so only framed shapes are matched.
       - '(?:trusted by|join|over|more than|used by|powering)\s+\d{1,3}(,\d{3})+\+?\s+\w+'
       - '\b\d{1,3}(,\d{3})+\+\s+\w+'
@@ -271,12 +248,9 @@
   channels: [source]
   source:
     # A comment is addressed to whoever opens the file, not to a reader of
-    # the page. These fired on a CSS comment explaining a design decision, a
-    # code comment about "today's conditions" in a weather panel, and a help
-    # string listing three platforms.
-    # Copy lives in markup and in strings, not in a stylesheet. This fired on a
-    # CSS block comment explaining why a list is keyboard-reachable, on the
-    # continuation line, where no comment marker starts the line to suppress on.
+    # the page: a CSS comment explaining a design decision is not copy.
+    # Copy lives in markup and in strings, not in a stylesheet, and a CSS block
+    # comment's continuation lines carry no comment marker to suppress on.
     extensions: ['.html', '.htm', '.tsx', '.jsx', '.ts', '.js', '.mjs', '.vue', '.svelte', '.astro', '.mdx']
     suppress: '^\s*(\{\s*/\*|//|\*|/\*|#|<!--)'
     patterns:
@@ -304,12 +278,9 @@
   channels: [source]
   source:
     # A comment is addressed to whoever opens the file, not to a reader of
-    # the page. These fired on a CSS comment explaining a design decision, a
-    # code comment about "today's conditions" in a weather panel, and a help
-    # string listing three platforms.
-    # Copy lives in markup and in strings, not in a stylesheet. This fired on a
-    # CSS block comment explaining why a list is keyboard-reachable, on the
-    # continuation line, where no comment marker starts the line to suppress on.
+    # the page: a CSS comment explaining a design decision is not copy.
+    # Copy lives in markup and in strings, not in a stylesheet, and a CSS block
+    # comment's continuation lines carry no comment marker to suppress on.
     extensions: ['.html', '.htm', '.tsx', '.jsx', '.ts', '.js', '.mjs', '.vue', '.svelte', '.astro', '.mdx']
     suppress: '^\s*(\{\s*/\*|//|\*|/\*|#|<!--)'
     patterns:
@@ -337,12 +308,9 @@
   channels: [source]
   source:
     # A comment is addressed to whoever opens the file, not to a reader of
-    # the page. These fired on a CSS comment explaining a design decision, a
-    # code comment about "today's conditions" in a weather panel, and a help
-    # string listing three platforms.
-    # Copy lives in markup and in strings, not in a stylesheet. This fired on a
-    # CSS block comment explaining why a list is keyboard-reachable, on the
-    # continuation line, where no comment marker starts the line to suppress on.
+    # the page: a CSS comment explaining a design decision is not copy.
+    # Copy lives in markup and in strings, not in a stylesheet, and a CSS block
+    # comment's continuation lines carry no comment marker to suppress on.
     extensions: ['.html', '.htm', '.tsx', '.jsx', '.ts', '.js', '.mjs', '.vue', '.svelte', '.astro', '.mdx']
     suppress: '^\s*(\{\s*/\*|//|\*|/\*|#|<!--)'
     patterns:
@@ -373,18 +341,15 @@
   channels: [source]
   source:
     # A comment is addressed to whoever opens the file, not to a reader of
-    # the page. These fired on a CSS comment explaining a design decision, a
-    # code comment about "today's conditions" in a weather panel, and a help
-    # string listing three platforms.
-    # Copy lives in markup and in strings, not in a stylesheet. This fired on a
-    # CSS block comment explaining why a list is keyboard-reachable, on the
-    # continuation line, where no comment marker starts the line to suppress on.
+    # the page: a CSS comment explaining a design decision is not copy.
+    # Copy lives in markup and in strings, not in a stylesheet, and a CSS block
+    # comment's continuation lines carry no comment marker to suppress on.
     extensions: ['.html', '.htm', '.tsx', '.jsx', '.ts', '.js', '.mjs', '.vue', '.svelte', '.astro', '.mdx']
     suppress: '^\s*(\{\s*/\*|//|\*|/\*|#|<!--)'
     patterns:
       # An audience, not any either/or. "whether it's in testing or live" is a
-      # real distinction in help text about NODE_ENV, and it was reported as a
-      # page refusing to name who it is for.
+      # real distinction in help text about NODE_ENV, not a page refusing to
+      # name who it is for.
       - '\bwhether (you''re|you are|your team is) (an?|the)? ?\w+ (\w+ )?or\b'
       - '\bfrom (startups|solo founders|individuals|small teams) to (enterprises|large organi[sz]ations|global teams)\b'
       - '\bfor (teams|businesses|creators|developers) of (all|any) (sizes?|kinds?)\b'
@@ -409,12 +374,9 @@
   channels: [source]
   source:
     # A comment is addressed to whoever opens the file, not to a reader of
-    # the page. These fired on a CSS comment explaining a design decision, a
-    # code comment about "today's conditions" in a weather panel, and a help
-    # string listing three platforms.
-    # Copy lives in markup and in strings, not in a stylesheet. This fired on a
-    # CSS block comment explaining why a list is keyboard-reachable, on the
-    # continuation line, where no comment marker starts the line to suppress on.
+    # the page: a CSS comment explaining a design decision is not copy.
+    # Copy lives in markup and in strings, not in a stylesheet, and a CSS block
+    # comment's continuation lines carry no comment marker to suppress on.
     extensions: ['.html', '.htm', '.tsx', '.jsx', '.ts', '.js', '.mjs', '.vue', '.svelte', '.astro', '.mdx']
     suppress: '^\s*(\{\s*/\*|//|\*|/\*|#|<!--)'
     patterns:
@@ -444,12 +406,9 @@
   channels: [source]
   source:
     # A comment is addressed to whoever opens the file, not to a reader of
-    # the page. These fired on a CSS comment explaining a design decision, a
-    # code comment about "today's conditions" in a weather panel, and a help
-    # string listing three platforms.
-    # Copy lives in markup and in strings, not in a stylesheet. This fired on a
-    # CSS block comment explaining why a list is keyboard-reachable, on the
-    # continuation line, where no comment marker starts the line to suppress on.
+    # the page: a CSS comment explaining a design decision is not copy.
+    # Copy lives in markup and in strings, not in a stylesheet, and a CSS block
+    # comment's continuation lines carry no comment marker to suppress on.
     extensions: ['.html', '.htm', '.tsx', '.jsx', '.ts', '.js', '.mjs', '.vue', '.svelte', '.astro', '.mdx']
     suppress: '^\s*(\{\s*/\*|//|\*|/\*|#|<!--)'
     patterns:
@@ -478,12 +437,9 @@
   channels: [source]
   source:
     # A comment is addressed to whoever opens the file, not to a reader of
-    # the page. These fired on a CSS comment explaining a design decision, a
-    # code comment about "today's conditions" in a weather panel, and a help
-    # string listing three platforms.
-    # Copy lives in markup and in strings, not in a stylesheet. This fired on a
-    # CSS block comment explaining why a list is keyboard-reachable, on the
-    # continuation line, where no comment marker starts the line to suppress on.
+    # the page: a CSS comment explaining a design decision is not copy.
+    # Copy lives in markup and in strings, not in a stylesheet, and a CSS block
+    # comment's continuation lines carry no comment marker to suppress on.
     extensions: ['.html', '.htm', '.tsx', '.jsx', '.ts', '.js', '.mjs', '.vue', '.svelte', '.astro', '.mdx']
     suppress: '^\s*(\{\s*/\*|//|\*|/\*|#|<!--)'
     patterns:
@@ -545,10 +501,9 @@
   source:
     extensions: ['.html', '.htm', '.tsx', '.jsx', '.ts', '.js', '.mjs', '.vue', '.svelte', '.astro', '.mdx']
     # The comparison can be made before the adjective as well as after it, and
-    # the lookahead only saw one direction: "it will make your life worse rather
-    # than better" is a page naming who it is *not* for — the best sentence on
-    # the fixture — and this rule reported it. A `than` anywhere on the line
-    # means a comparison is being drawn.
+    # a lookahead sees only one direction: "it will make your life worse rather
+    # than better" is a page naming who it is *not* for. A `than` anywhere on
+    # the line means a comparison is being drawn.
     suppress: '^\s*(//|\*|/\*|#|<!--)|\bthan\b|\d'
     patterns:
       # A comparative with nothing on the other side of it. "Faster" is a claim

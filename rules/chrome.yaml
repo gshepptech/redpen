@@ -4,11 +4,10 @@
 # custom scrollbars, focus rings, underline offset and the numerals in tabular
 # data all ship with browser defaults that belong to no design system.
 #
-# the prior art's craft floor calls this "the cheapest signal that a page was built
-# rather than assembled, and the one models skip most reliably" — which is
-# exactly why it belongs in a corpus about machine-made UI. None of these
-# appear in any of the four catalogues as a *detector*; the prior art carries them
-# as prose in craft-floor.md and checks them nowhere.
+# The upstream craft floor calls this "the cheapest signal that a page was
+# built rather than assembled, and the one models skip most reliably", which is
+# why it belongs in a corpus about machine-made UI. The upstream catalogues
+# describe these in prose and carry no detector for them.
 #
 # Every rule here is scoped to the render channel: a pseudo-element nobody
 # authored has no computed style, so these read the stylesheets directly.

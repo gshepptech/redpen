@@ -10,8 +10,8 @@ import { captureLoginHeadless } from '../dist/channels/login.js';
  * Logging in where nobody is watching.
  *
  * The headed `redpen login` cannot run in CI, which is where `redpen check`
- * lives — so until this existed the gate could never cover a route behind a
- * session. The failure it has to prevent is subtler than a crash: a refused
+ * lives, so this is how the gate covers a route behind a session. The failure
+ * it has to prevent is subtler than a crash: a refused
  * password still sets cookies, so a naive capture saves a logged-out jar and
  * every authenticated scan afterwards reads the login page under the
  * dashboard's url. That is the same failure auth.test.mjs was written for,

@@ -17,8 +17,8 @@ export interface RawFingerprint {
    *
    * This is what sameness is compared on. Two app routes share a header, a nav
    * and a footer by design — that is consistency, not repetition — so including
-   * the shell made every page of every app look identical to every other. Two
-   * field reports flagged it independently.
+   * the shell would make every page of every app look identical to every
+   * other.
    */
   sectionRhythm: string[];
   /** The shell that was excluded, kept so the report can say what it ignored. */
@@ -170,7 +170,7 @@ export function fingerprintSource(): string {
 
     // An app shell: a toolbar and a list, or a page that is one form. The
     // marketing taxonomy below has no bucket for this, and forcing the nearest
-    // archetype produced "manifesto" for a work queue — a wrong label makes a
+    // archetype would call a work queue a "manifesto", and a wrong label makes a
     // correct sameness finding read as noise.
     var records = 0, forms = 0;
     (els || []).forEach(function (el) {
@@ -205,8 +205,8 @@ export function fingerprintSource(): string {
   }
 
   function navShape() {
-    // Prefer a real <nav>: counting every anchor under <header> made four text
-    // tabs read as a mega-menu.
+    // Prefer a real <nav>: counting every anchor under <header> would read four
+    // text tabs as a mega-menu.
     var nav = document.querySelector('nav') || document.querySelector('header');
     if (!nav || !visible(nav)) return 'none';
     var s = getComputedStyle(nav);

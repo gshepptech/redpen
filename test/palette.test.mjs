@@ -6,12 +6,11 @@ import assert from 'node:assert/strict';
 /**
  * The number and the bar are one quantity, so they get one colour.
  *
- * They used to carry separate band tables — four bands for the number, three
- * for the bar — so a 70 drew a bold-yellow number beside a yellow bar and an 80
- * drew a plain-yellow number beside the same yellow bar. Nobody would have
- * noticed, which is the point: two encodings of one number that disagree about
- * where the lines fall is the same defect as a header whose word and number
- * came from different sums, only quieter.
+ * Separate band tables for the number and the bar would paint a number one
+ * colour beside a bar of another. Nobody would notice, which is the point: two
+ * encodings of one number that disagree about where the lines fall is the same
+ * defect as a header whose word and number came from different sums, only
+ * quieter.
  *
  * FORCE_COLOR is set before the import because picocolors decides once, at
  * module load, whether it is writing to something that can show colour.
@@ -103,16 +102,15 @@ test('the header states a verdict and leaves the measuring to the rows', () => {
   const [header] = renderTerminal(r, OPTS)
     .split('\n')
     .filter((l) => l.includes('redpen'));
-  // Its bar was 24 cells while the axis bars were 14, so the same number was
-  // drawn at two lengths on one screen.
+  // A headline bar would draw the same number as one of the axis bars at a
+  // second length on one screen.
   assert.ok(!header.includes('█'), `the header is drawing a bar again: ${header}`);
   assert.match(header, /22/);
 });
 
 test('the pip carries its tier colour, so a scrolled report still says which', () => {
-  // It used to print in the terminal's default colour while the section header
-  // fifty lines above carried the meaning. On a report this long that header is
-  // off the screen for most of the reading.
+  // On a long report the section header that carries the meaning is off the
+  // screen for most of the reading, so the pip has to carry its own colour.
   const r = pageNear(0);
   r.findings = [
     { ...finding('slop', 90, 'a-confirmed'), confidence: 'confirmed' },
@@ -138,8 +136,8 @@ test('the pip carries its tier colour, so a scrolled report still says which', (
 });
 
 test('the id column is as wide as the widest id and no wider', () => {
-  // Fixed at 24, every character it guessed too wide came off the end of every
-  // title on screen.
+  // A fixed width guesses, and every character it guesses too wide comes off
+  // the end of every title on screen.
   const r = pageNear(0);
   r.findings = Array.from({ length: 9 }, (_, i) => ({
     ...finding('slop', 70 - i, `short-${i}`),

@@ -5,13 +5,10 @@ import { score, scoreKind, headline, verdict, explainScore } from '../dist/score
 /**
  * The numbers on the header line, and whether they agree with each other.
  *
- * The header used to print three things computed three different ways: a
- * headline from the union of both axes, a word from whichever axis was worse,
- * and the two axes underneath. Penalties add before the curve is applied, so
- * the union sits at or below *both* parts — two axes of 89 headlined 79, two of
- * 39 headlined 15 — and a header could read "heavily templated" over a number
- * that graded as slop. None of it was wrong arithmetic. It was three answers to
- * three different questions printed as though they were one.
+ * A headline from the union of both axes would disagree with the axes under it:
+ * penalties add before the curve is applied, so the union sits at or below
+ * *both* parts (two axes of 89 would headline 79). The headline, the word and
+ * the two axes have to answer the same question.
  */
 
 const SLOP_BANDS = [
@@ -129,9 +126,9 @@ test('worth is what fixing it gives back on its own axis', () => {
 
 test('two findings sharing a rule id do not each claim the whole group', () => {
   // promote.ts emits one finding per rule, so this cannot happen today. It is
-  // pinned because the old code matched on rule id rather than identity, and
-  // the day that invariant slips, every sibling would report the group's worth
-  // as its own.
+  // pinned because matching on rule id rather than identity would, the day
+  // that invariant slips, make every sibling report the group's worth as its
+  // own.
   const fs = [finding('slop', 60, 'same'), finding('slop', 60, 'same'), finding('slop', 60, 'other')];
   const e = explainScore(fs);
   const dupes = e.contributions.filter((c) => c.ruleId === 'same');

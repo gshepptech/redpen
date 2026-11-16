@@ -30,18 +30,14 @@ test('source-only on a render-observable rule is demoted when render ran', () =>
 });
 
 test('a finding render could have settled is a lead whether it ran or not', () => {
-  // This test used to assert the opposite, and argued it well: absence of a
-  // channel is not disagreement, so do not penalise the source hit. It reads as
-  // fair and it is wrong, because it treats "nobody checked" as better than
-  // "somebody checked and did not agree" when both mean the finding is
-  // unconfirmed.
+  // "Absence of a channel is not disagreement" reads as fair and is wrong: it
+  // treats "nobody checked" as better than "somebody checked and did not
+  // agree" when both mean the finding is unconfirmed.
   //
-  // Measured on a real app scanned without a browser: eleven source findings,
-  // presented as likely or confirmed, and seven were false. The page had
-  // `lang="en"`. The nav had `aria-current`. The input was wrapped in its own
-  // label. The stylesheet had the reduced-motion block. Every one of those is a
-  // fact about the rendered page, every one of those rules already carries a
-  // render check that would have answered it, and none of them ran.
+  // `lang="en"` on the page, `aria-current` on the nav, an input wrapped in its
+  // own label, a reduced-motion block in the stylesheet: each is a fact about
+  // the rendered page, and each of those rules carries a render check that
+  // would answer it. Without a browser, none of them runs.
   for (const renderRan of [true, false]) {
     const { findings } = promote(
       [{ ruleId: 'ai-purple', channel: 'source', evidence: [ev('source', 'a.css', { line: 2 })] }],
@@ -183,9 +179,9 @@ test('scoreKind isolates one axis from the other', () => {
 });
 
 test('a hidden input is not an unlabelled input', async () => {
-  // A hidden field cannot be labelled and must not be. Reported from the
-  // field: three CSRF/routing hidden inputs per form made this the most-cited
-  // rule in an entire scan, at 12 occurrences.
+  // A hidden field cannot be labelled and must not be. CSRF and routing hidden
+  // inputs on every form would otherwise make this the most-cited rule in a
+  // scan.
   const { loadCorpus } = await import('../dist/corpus/load.js');
   const rule = loadCorpus().find((r) => r.id === 'unlabelled-input');
   const re = new RegExp(rule.source.patterns[0], 'giu');
@@ -198,9 +194,8 @@ test('a hidden input is not an unlabelled input', async () => {
 
 test('the headline verdict names whichever axis is actually worse', async () => {
   const { verdict } = await import('../dist/score.js');
-  // A real dashboard scored 78 slop / 55 quality and was headlined "heavily
-  // templated" while the report under it listed clipped text and unhittable
-  // controls and not one sameness finding.
+  // A page at 78 slop / 55 quality must not be headlined "heavily templated"
+  // over a report of clipped text and unhittable controls.
   assert.equal(verdict(78, 55), 'visibly rough');
   assert.equal(verdict(40, 95), 'heavily templated');
   assert.equal(verdict(100, 100), 'clean');

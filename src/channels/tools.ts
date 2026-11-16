@@ -8,20 +8,13 @@ import { SKIP_DIRS } from './source.js';
 /**
  * The directories redpen's own walk skips, handed to tools that do their own.
  *
- * Without this jscpd read `node_modules` and the lockfile beside it and
- * returned 1,309 findings, the loudest of which was a package-lock duplicating
- * itself. A tool pointed at the whole tree answers a question nobody asked.
+ * Without this jscpd reads `node_modules` and the lockfile beside it, and a
+ * package-lock duplicating itself drowns everything else.
+ *
+ * Test material too. redpen's own walk skips it by filename, but a tool doing
+ * its own walk knows nothing about that, and test setup blocks repeat by
+ * design.
  */
-//
-// Computed on call rather than at module load. As a top-level const this read
-// SKIP_DIRS while source.ts was still initialising — a circular import between
-// the two channels, introduced in the same change that added the rule for
-// circular imports.
-//
-// Test material too. redpen's own walk skips it by filename, but a tool doing
-// its own walk knows nothing about that: on a 1,872-file repository the single
-// largest source of reported duplication was `*_integration_test.go`, where
-// setup blocks repeat by design and sharing them is the wrong answer.
 const SKIP_FILE_GLOBS = [
   '**/*_test.go',
   '**/*_test.py',
@@ -93,9 +86,8 @@ interface Analyser {
  */
 export function resolveBin(root: string, bin: string): string | null {
   // On Windows the executable is `jscpd.cmd`, not `jscpd`, and PATH is
-  // semicolon-separated. Without this every analyser resolved to null there and
-  // the tools channel was permanently absent on a platform `engines` claims to
-  // support — reported as "not installed", which is the wrong reason.
+  // semicolon-separated. Without this every analyser resolves to null there
+  // and is reported as "not installed", which is the wrong reason.
   const names = process.platform === 'win32' ? [`${bin}.cmd`, `${bin}.exe`, bin] : [bin];
 
   for (const name of names) {
@@ -185,8 +177,7 @@ const madge: Analyser = {
       // and reports no cycle where there are two — the NodeNext import style
       // every current TypeScript project writes.
       // madge exits non-zero precisely when it finds a cycle, so the throw is
-      // the success case and the output rides on it. Reading only the happy
-      // path meant the adapter reported no cycles on a project with two.
+      // the success case and the output rides on it.
       let raw: string;
       try {
         raw = execFileSync(exe, [

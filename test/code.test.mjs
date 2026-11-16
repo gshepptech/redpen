@@ -5,14 +5,14 @@ import { fileURLToPath } from 'node:url';
 import { runScan } from '../dist/scan.js';
 import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { CODE_CATEGORIES } from '../dist/scan.js';
+import { CODE_CATEGORIES } from '../dist/types.js';
 
 /**
  * The source a project is written in, rather than the page it serves.
  *
- * Two categories, both source-channel, both outside a UI scan on purpose: they
- * fired on redpen's own src the moment they existed, and folding them into
- * `scan` would have moved every score anyone holds a baseline against.
+ * Two categories, both source-channel, both outside a UI scan on purpose:
+ * folding them into `scan` would move every score anyone holds a baseline
+ * against.
  */
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -59,10 +59,9 @@ test('none of them fire on code written without them', async () => {
 });
 
 test('a caught error with a stated reason is a decision, not a swallow', async () => {
-  // The rule's own fix says so, and the first version contradicted it — firing
-  // on redpen's `catch (e) { /* cross-origin stylesheet */ }`, which is exactly
-  // the shape the advice calls correct. Same principle as redpen-ignore: the
-  // reason is what makes it a decision.
+  // The rule's own fix says so: `catch (e) { /* cross-origin stylesheet */ }`
+  // is exactly the shape the advice calls correct. Same principle as
+  // redpen-ignore: the reason is what makes it a decision.
   const result = await scanCode('clean-code');
   assert.ok(
     !result.findings.some((f) => f.ruleId === 'swallowed-error'),
@@ -89,8 +88,7 @@ test('a UI scan never returns a code finding, and a code scan never returns a UI
 
 test("redpen's own source stays clean of what it reports", async () => {
   // A real-world check rather than a fixture: the code that ships the rules has
-  // to pass them. It found three catches in detectors.ts the first time, which
-  // turned out to be the rule's fault rather than the code's.
+  // to pass them.
   const result = await runScan({
     root: join(HERE, '..', 'src'),
     codeCategories: true,
@@ -102,8 +100,8 @@ test("redpen's own source stays clean of what it reports", async () => {
 });
 
 test('a code scan reads the language the project is written in', async () => {
-  // The extension list was the UI one, so `redpen code` on a 174-file Go
-  // repository read the fourteen HTML files in it and answered 100/100 clean.
+  // `redpen code` reads source in any language, not only the UI extension
+  // list, so a Go repository is not scored on its handful of HTML files.
   const result = await runScan({
     root: join(HERE, 'fixtures', 'go-code'),
     codeCategories: true,
@@ -132,9 +130,9 @@ test('a language nothing can read is said out loud, not scored around', async ()
 });
 
 test('a code scan opens no browser and claims no missing one', async () => {
-  // It launched chromium against eight configured urls with no server behind
-  // them, then reported the connection failures as though the run had lost
-  // something. No craft or residue rule has a render half.
+  // A code scan never opens a browser, so configured urls with no server
+  // behind them cannot print connection failures. No craft or residue rule has
+  // a render half.
   const result = await runScan({
     root: join(HERE, 'fixtures', 'sloppy-code'),
     urls: ['http://127.0.0.1:9/nothing-here'],
@@ -150,7 +148,7 @@ test('a code scan opens no browser and claims no missing one', async () => {
 });
 
 test('a name is evidence too', async () => {
-  // Every rule before these read file contents. A file called
+  // Every other rule reads file contents. A file called
   // `enhanced-parser-v2.ts` says as much about how it came to exist as
   // anything inside it, and no amount of reading the contents finds it.
   const result = await scanCode('sloppy-names');
@@ -169,12 +167,10 @@ test('a name is evidence too', async () => {
 });
 
 test('the naming rules leave ordinary naming alone', async () => {
-  // Learned from four codebases, one prefix at a time. `newToken` and
-  // `newCompileCmd` are the Go constructor idiom; `tempDir` and `testService`
-  // are test helpers named exactly right; `sampleProfile` takes samples along a
-  // path and `sampleTemplates` returns sample templates. Every one of those
-  // fired before the prefix list was cut down to the words nobody picks on
-  // purpose.
+  // `newToken` and `newCompileCmd` are the Go constructor idiom; `tempDir` and
+  // `testService` are test helpers named exactly right; `sampleProfile` takes
+  // samples along a path and `sampleTemplates` returns sample templates. The
+  // prefix list holds only the words nobody picks on purpose.
   const result = await scanCode('ordinary-names');
   assert.deepEqual(
     result.findings.map((f) => `${f.ruleId}: ${f.evidence[0]?.excerpt}`),
@@ -210,11 +206,9 @@ test('a directory of odds and ends counts once, not once per file', async () => 
 });
 
 test('a reason written above the block is still a reason', async () => {
-  // Suppression read only the line the hit was on, and reasons are written
-  // above the code they explain. It reported
-  // `try { await refresh(); } catch {}` on a project whose three lines above it
-  // say "Swallow a refresh failure so the error surface below always fires" —
-  // a better justification than most code carries inside the braces.
+  // Reasons are written above the code they explain, so suppression reads the
+  // lines above the hit. `try { await refresh(); } catch {}` under "Swallow a
+  // refresh failure so the error surface below always fires" is a decision.
   const result = await scanCode('clean-code');
   assert.ok(
     !result.findings.some((f) => f.ruleId === 'swallowed-error'),
@@ -232,14 +226,12 @@ test('a reason written above the block is still a reason', async () => {
 test('the rules catch code that looks like it shipped, not just the caricature', async () => {
   // sloppy-code is a caricature: every tell, one per line, unmistakable. This
   // fixture is what actually gets committed — a plausible service class with
-  // four tells buried in working code — and on the first run the rules found
-  // two of them.
+  // four tells buried in working code.
   //
-  // Both misses had causes. `swallowed-error` needed the console call to be the
-  // only statement in the block, so `catch (e) { console.log(e); return ""; }`
-  // went unreported. And the docstring rule only knew JSDoc that carries a
-  // type, which TypeScript does not write, because the type is in the
-  // signature — so a TypeScript codebase could not trip it at all.
+  // `swallowed-error` must not need the console call to be the only statement
+  // in the block: `catch (e) { console.log(e); return ""; }` is the tell. And
+  // the docstring rule must see JSDoc without a type, which is what TypeScript
+  // writes, because the type is in the signature.
   const result = await scanCode('realistic-code');
   const fired = new Set(result.findings.map((f) => f.ruleId));
   for (const id of [
@@ -253,14 +245,13 @@ test('the rules catch code that looks like it shipped, not just the caricature',
 });
 
 test('the residue rules find tells buried in a working feature', async () => {
-  // Six of the twelve had never fired outside sloppy-code, which is a
-  // caricature: every tell on its own line, unmistakable. This fixture is a
+  // sloppy-code is a caricature: every tell on its own line, unmistakable. This
+  // fixture is a
   // sync feature that works — a retry queue, a conflict resolver, a totals
   // helper — with the tells where they actually turn up.
   //
-  // agent-attribution was the one that needed widening. It knew "generated by
-  // Claude Code" and not `@author Claude` or "Written with AI assistance",
-  // which are the two shapes a real file carries.
+  // agent-attribution has to see `@author Claude` and "Written with AI
+  // assistance", not only "generated by Claude Code".
   const result = await scanCode('realistic-residue');
   const fired = new Set(result.findings.map((f) => f.ruleId));
   for (const id of [
@@ -297,14 +288,8 @@ test('no code rule rests on the caricature alone', async () => {
 /**
  * One phrasing is not the class.
  *
- * Every miss this session was the same shape: the pattern encoded one way of
- * writing a tell and there were more. agent-attribution knew "generated by
- * Claude Code" and not `@author Claude`; invented-metrics listed the nouns it
- * would accept; no-loading-state knew only the inline handler;
- * signature-restating-docstring knew only JSDoc that carries a type;
- * swallowed-error needed the log to be the only statement in the block.
- *
- * A regex is a whitelist. The fixture is where the whitelist gets thought
+ * A pattern that encodes one way of writing a tell misses the others. A regex
+ * is a whitelist, and the fixture is where the whitelist gets thought
  * about, so each tell carries every phrasing that turns up, and the assertion
  * is per line — a failure names the phrasing that escaped rather than saying
  * the rule went quiet.
@@ -354,16 +339,12 @@ test('each tell is caught in every phrasing it is written in', async () => {
 });
 
 test('an ignore written in the source is reported, not just obeyed', async () => {
-  // The channel collected in-source ignores into a map and scan.ts dropped it
-  // on the floor, so `--show-ignored` — whose help says it lists findings
-  // suppressed by redpen-ignore — listed only the ones named in
-  // .redpen/config.json. The reason a person is required to write, on the
-  // argument that an ignore with a reason is a decision on record, went
-  // nowhere and could not be read back.
+  // `--show-ignored` lists findings suppressed by redpen-ignore in the source,
+  // not only the ones named in .redpen/config.json. The reason a person is
+  // required to write has to be readable back.
   //
-  // The renderer had the second half of the same bug: the block sat below the
-  // early return for a clean report, which is exactly when someone asks what
-  // was excused to get it.
+  // The renderer prints the block even for a clean report, which is exactly
+  // when someone asks what was excused to get it.
   const r = await runScan({
     root: join(HERE, 'fixtures', 'excused'),
     codeCategories: true,
@@ -384,9 +365,9 @@ test('an ignore written in the source is reported, not just obeyed', async () =>
 /**
  * The rules added from code-slop CODE-03, 06, 09, 10 and 12.
  *
- * Each one is here with the false positive it produced on a real codebase
- * before it was narrowed, because that is the only evidence that the narrowing
- * is real rather than asserted.
+ * Each one is here with the false positive its narrowing exists to avoid,
+ * because that is the only evidence that the narrowing is real rather than
+ * asserted.
  */
 const ADDED_CODE_RULES = [
   'weak-type-escape',
@@ -405,9 +386,9 @@ test('the rules added from the code catalogue fire on the shapes they name', asy
 });
 
 test('a tuple in a signature is not six parameters', async () => {
-  // `compare(x: [number, number, number], y: [number, number, number])` counted
-  // its tuple commas and reported redpen's own cascade.ts as a six-parameter
-  // function. Brackets are excluded from a parameter segment for this reason.
+  // `compare(x: [number, number, number], y: [number, number, number])` is a
+  // two-parameter function. Brackets are excluded from a parameter segment so
+  // tuple commas do not count.
   const { runScan } = await import('../dist/scan.js');
   const result = await runScan({
     root: join(HERE, '..', 'src'),
@@ -446,9 +427,8 @@ test('a number that already has a name is not a magic number', async () => {
 });
 
 test('English prose is not a type annotation', async () => {
-  // `# same as any other failure` in a shell script matched `as any` and was
-  // reported as a widened type. The rule now reads only languages that have
-  // one.
+  // `# same as any other failure` in a shell script is not a widened type. The
+  // rule reads only languages that have one.
   const { runScan } = await import('../dist/scan.js');
   const dir = mkdtempSync(join(tmpdir(), 'redpen-prose-'));
   try {
@@ -493,9 +473,8 @@ test('a local named for a standard helper is not a reimplementation of one', asy
 });
 
 test('a Python or Go test file is test material, not shipped source', async () => {
-  // `test_corridor.py` gave a magic-number finding on an array index and
-  // `conftest.py` gave eleven swallowed-error findings. SKIP_FILE only knew
-  // the JavaScript spellings.
+  // Python test files (`test_*.py`, `conftest.py`) are test material too, not
+  // only the JavaScript spellings.
   const { runScan } = await import('../dist/scan.js');
   const dir = mkdtempSync(join(tmpdir(), 'redpen-pytest-'));
   try {
@@ -513,8 +492,7 @@ test('a Python or Go test file is test material, not shipped source', async () =
 test('a comment about a type is not a type', async () => {
   // Craft rules read comments on purpose, which is why this needed saying
   // twice: `// structToMap converts a reflect.Value to a map[string]interface{}`
-  // and `// is NOT recorded as any other manifest's` were both reported as
-  // widened types on a 1,872-file repository.
+  // and `// is NOT recorded as any other manifest's` are not widened types.
   const { runScan } = await import('../dist/scan.js');
   const dir = mkdtempSync(join(tmpdir(), 'redpen-typecomment-'));
   try {
@@ -580,9 +558,9 @@ test('a named re-export is a public surface; only the star form is a barrel', as
 
 test('a JSX comment is a comment', async () => {
   // `{/* ... */}` is the only way to write a comment inside JSX, and the copy
-  // rules suppressed `//`, `/*` and `<!--` but not the braced form — so
-  // `{/* Renders only for super admins; no-op for everyone else. */}` was
-  // reported as marketing copy, at confirmed, on a React codebase.
+  // rules must treat the braced form like `//`, `/*` and `<!--`:
+  // `{/* Renders only for super admins; no-op for everyone else. */}` is not
+  // marketing copy.
   const { runScan } = await import('../dist/scan.js');
   const dir = mkdtempSync(join(tmpdir(), 'redpen-jsx-'));
   try {

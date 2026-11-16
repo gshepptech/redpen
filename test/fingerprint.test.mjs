@@ -96,7 +96,7 @@ test('a single page never clashes with itself', () => {
 test('an app shape never clashes with another app shape', () => {
   // Two routes of the same product sharing a skeleton is the consistency
   // heuristic working. Telling the author to reshape one would make the
-  // product worse — reported from the field twice.
+  // product worse.
   const a = withChanges({ page: 'a', macrostructure: 'record-list', sectionRhythm: ['table'] });
   const b = withChanges({ page: 'b', macrostructure: 'record-list', sectionRhythm: ['table'] });
   assert.deepEqual(findClashes([a, b]), []);
@@ -149,8 +149,8 @@ test('corpus-wide rules stay quiet with fewer than three pages', () => {
 
 test('a page the surface pass called operate never clashes, whatever its skeleton', () => {
   // The macrostructure guess is a second, weaker classifier answering the same
-  // question. On a real dashboard it returned "manifesto" for ten routes the
-  // surface pass had called operate at 0.94, and sameness fired on all of them.
+  // question, and it can call a dashboard route a "manifesto" that the surface
+  // pass called operate. The surface verdict wins.
   const a = withChanges({ page: 'a', macrostructure: 'manifesto' });
   const b = withChanges({ page: 'b', macrostructure: 'manifesto' });
   assert.equal(findClashes([a, b]).length, 1, 'without the surface hint these still clash');
@@ -172,10 +172,8 @@ test('the corpus-wide sameness rules also respect the surface hint', () => {
  * rather than clashing with itself, and that only holds if the id is stable. A
  * loopback port is the least stable thing about a local URL: Vite walks 5173,
  * 5174, 5175 as ports are taken; Next walks 3000, 3001.
- *
- * Found on a real single-page app. Two runs on two ports left two records of
- * one page, and redpen reported it as two pages sharing a skeleton — its
- * strongest finding, about nothing.
+ * Two runs on two ports would otherwise leave two records of one page,
+ * reported as two pages sharing a skeleton.
  */
 
 test('a loopback port is not part of a page identity', () => {

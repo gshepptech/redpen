@@ -7,11 +7,9 @@ import { fileURLToPath } from 'node:url';
 /**
  * Every number the prose claims about the corpus, checked against the corpus.
  *
- * This exists because the counts drifted three separate times in two days —
- * rules, then surface-scoped rules, then the test total — and each time the
- * only thing that caught it was someone deciding to recount by hand. A tool
- * whose whole pitch is "it only says what it observed" cannot ship a README
- * claiming 116 tests when there are 125.
+ * Rule counts, surface-scoped counts and the test total all drift as the
+ * corpus grows, and nothing else catches it. A tool whose whole pitch is "it
+ * only says what it observed" cannot ship a README with a wrong test count.
  *
  * The claims stay as patterns over the prose rather than as a generated table,
  * because prose should read like prose. What it must not do is disagree with
@@ -56,12 +54,9 @@ test('the prose agrees with the corpus it describes', () => {
     ['README.md', /^ {2}(\d+) rules merged from:/m, c.rules],
     ['NOTICE', /(\d+) rules collapsed from/, c.rules],
     ['NOTICE', /collapsed from (\d+)\s*\n?\s*upstream references/, c.upstreamRefs],
-    // Shipped metadata drifts too, and nobody reads it — both of these were
-    // still advertising 113 rules six rules later.
-    // `design rules` became `rules` when the corpus stopped being only about
-    // design — it reads code and documents now. The pattern tracks the wording
-    // rather than pinning it, so a future rename fails loudly instead of
-    // silently dropping the claim from the check.
+    // Shipped metadata drifts too, and nobody reads it. The pattern accepts
+    // both `design rules` and `rules`, so a future rename fails loudly instead
+    // of silently dropping the claim from the check.
     ['.claude-plugin/plugin.json', /(\d+) (?:design )?rules merged/, c.rules],
     ['.claude-plugin/marketplace.json', /(\d+) (?:design )?rules merged/, c.rules],
   ];

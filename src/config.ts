@@ -45,11 +45,8 @@ export interface RedpenConfig {
   /**
    * What this project is able to do. A rule whose fix requires a capability the
    * project does not have is not a finding — it is a standing complaint the
-   * reader can never act on.
-   *
-   * Reported from the field: a deliberately no-JavaScript dashboard was told to
-   * add inline validation, an unsaved-changes warning and autosave on every
-   * scan forever.
+   * reader can never act on: a deliberately no-JavaScript dashboard cannot add
+   * inline validation, an unsaved-changes warning or autosave.
    */
   capabilities: Capabilities;
   /**
@@ -119,15 +116,13 @@ const BASELINE_FILE = 'baseline.json';
  *
  * Walks up from the scanned path for a project marker, so pointing redpen at
  * `internal/dash` writes to the repo root rather than burying a state directory
- * inside a source tree. Reported from the field twice — it got swept into a
- * commit both times.
+ * inside a source tree, where it gets swept into a commit.
  *
- * Two things bound the walk, both because it once wrote a baseline into
- * `~/.claude/.redpen`. That directory has a package.json, so by the marker rule
- * it was a project; it was five levels above the scanned path with nothing in
- * between, and it was not remotely what anyone meant. So: never a home
- * directory or anything above one, and never a dot-directory — `.claude`,
- * `.config`, `.cache` are not projects you scan. Failing both, the state goes
+ * Two things bound the walk. A dot-directory such as `~/.claude` can hold a
+ * package.json and so look like a project by the marker rule, five levels
+ * above the scanned path. So: never a home directory or anything above one,
+ * and never a dot-directory — `.claude`, `.config`, `.cache` are not projects
+ * you scan. Failing both, the state goes
  * beside what was scanned, which is always defensible even when it is not
  * tidy.
  */
@@ -179,12 +174,10 @@ export interface Baseline {
   /**
    * The two axes, recorded separately because that is what `check` gates on.
    *
-   * A combined score cannot see a regression on the healthier axis, and until
-   * these were stored there was nothing else to compare. Optional because
-   * baselines written before they existed have none — and because `score` meant
-   * something different then (the union of both axes rather than the worse of
-   * them), such a baseline is not comparable and `check` refuses it outright
-   * rather than gating on two numbers that were never the same quantity.
+   * A combined score cannot see a regression on the healthier axis. Optional
+   * because older baselines have none, and since their `score` is the union of
+   * both axes rather than the worse of them, `check` refuses such a baseline
+   * outright rather than gating on two numbers that are not the same quantity.
    */
   slop?: number;
   quality?: number;
@@ -194,7 +187,7 @@ export interface Baseline {
   /**
    * Channels that produced this score. A later check that runs fewer of them
    * sees fewer findings and a *higher* score, so it passes for having looked
-   * at less. Optional because baselines recorded before this existed have none.
+   * at less. Optional because older baselines have none.
    */
   channels?: string[];
 }

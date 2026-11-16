@@ -8,10 +8,9 @@ import { renderTerminal } from '../dist/report/terminal.js';
  * limit redpen enforces on the pages it scans is about running text, which a
  * single-line heading is not.
  *
- * Before this was pinned, the category strip ran to 138 columns, every `fix`
- * paragraph overshot by exactly the width of its own label, and evidence
- * excerpts ran unbounded. redpen was breaking its own `line-length` rule
- * (typography.yaml, 45-78ch, weight 60) in the act of reporting it.
+ * The category strip, every `fix` paragraph and every evidence excerpt are
+ * held to it, or redpen breaks its own `line-length` rule (typography.yaml,
+ * 45-78ch, weight 60) in the act of reporting it.
  */
 
 const MARKS = ['●', '◐', '○'];
@@ -107,10 +106,9 @@ test('a roster line carries the rule id whole, so it can be looked up', () => {
 });
 
 test('the possible tier says which of the two things happened', () => {
-  // It said the render pass "checked the same thing and did not confirm it",
-  // which was true while only a disagreement landed here. Folding the
-  // never-ran case into the same tier made that sentence a lie half the time,
-  // and the two are not the same thing to whoever is deciding what to fix.
+  // "Checked the same thing and did not confirm it" is only true when render
+  // ran. The never-ran case shares the tier, and the two are not the same
+  // thing to whoever is deciding what to fix.
   const base = busy();
   base.findings = base.findings.map((f) => ({ ...f, confidence: 'possible' }));
 

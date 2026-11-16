@@ -93,11 +93,10 @@ export interface ScoreContribution {
 /**
  * Where the score came from.
  *
- * The number was the one output in this tool with no provenance, which is a
- * strange gap in a tool whose whole design is provenance — and it cost someone
- * a wasted afternoon: four true findings fixed, and the score went *down*,
- * with nothing to explain why. `worth` answers the only question that matters
- * when deciding what to fix next: how many points do I get back for this one.
+ * Every other output carries its provenance, and the score should too: fixing
+ * true findings can still move the number in a surprising direction, and the
+ * breakdown says why. `worth` answers the question that matters when deciding
+ * what to fix next: how many points come back for this one.
  */
 export function explainScore(findings: Finding[]): {
   score: number;
@@ -107,10 +106,8 @@ export function explainScore(findings: Finding[]): {
   contributions: ScoreContribution[];
 } {
   const scored = findings.filter((f) => !f.advisory);
-  // The same headline `scan` prints, computed the same way. When this returned
-  // the union score instead, `why-score` and `scan` disagreed by nine points
-  // and a whole verdict band — and the command you run to work out what to fix
-  // was the one telling you the wrong number.
+  // The same headline `scan` prints, computed the same way, so the command
+  // you run to work out what to fix never reports a different number.
   const slop = scoreKind(scored, 'slop');
   const quality = scoreKind(scored, 'quality');
   const total = headline(slop, quality);
@@ -136,9 +133,8 @@ export function explainScore(findings: Finding[]): {
       // apportioned.
       // Filter by identity, not by rule id. promote.ts emits one finding per
       // rule so the two agree today, but if that ever stops holding, matching
-      // on the id removes every sibling too and reports each of them as worth
-      // the whole group — the exact wrong-number-to-act-on this function was
-      // written to prevent.
+      // on the id would remove every sibling too and report each of them as
+      // worth the whole group.
       const axis = scored.filter((x) => x.kind === f.kind);
       const without = score(axis.filter((x) => x !== f));
       return {
@@ -178,9 +174,9 @@ function qualityGrade(value: number): string {
  * The headline verdict, named after whichever axis is actually worse.
  *
  * `grade()` alone speaks only slop ("templated", "generated"), so a page that
- * scored 78 on slop and 55 on quality was headlined "heavily templated" while
- * the report under it listed clipped text and unhittable controls and not one
- * sameness finding. The word has to match the evidence.
+ * scores 78 on slop and 55 on quality would be headlined "heavily templated"
+ * over a report of clipped text and unhittable controls. The word has to match
+ * the evidence.
  */
 export function verdict(slop: number, quality: number): string {
   return quality < slop ? qualityGrade(quality) : grade(slop);
@@ -189,16 +185,12 @@ export function verdict(slop: number, quality: number): string {
 /**
  * The single number on the header line: whichever axis is worse.
  *
- * It used to be `score()` over both axes at once, which reads like a summary
- * and is not one. Penalties add before the curve is applied, so the union is
- * always at or below *both* parts — two axes of 89 headlined 79, and two of 39
- * headlined 15. The decomposition printed underneath did not decompose, and
- * worse, `verdict()` names the worse axis while the number came from the union,
- * so the header could read "heavily templated" over a 15 that grades as slop.
+ * Not `score()` over both axes at once: penalties add before the curve is
+ * applied, so the union is always at or below *both* parts (two axes of 89
+ * would headline 79), and the breakdown underneath would not add up to it.
  *
  * A page is as good as its weakest dimension. Taking the worse axis makes the
- * word and the number come from the same place by construction, and the two
- * lines below the header now add up to the one above them.
+ * word and the number come from the same place by construction.
  *
  * `redpen check` does not gate on this. It gates on each axis separately, which
  * is strictly stronger: a regression on the healthier axis is invisible to any

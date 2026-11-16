@@ -125,9 +125,9 @@ test('a single-field newsletter form is not flagged for missing validation', () 
 });
 
 test('a couplet is a good line; six of them is a cadence', async () => {
-  // Reported from a slide deck: `aphoristic-cadence` only matches the literal
-  // "not just X, but Y", so the two-beat setup/payoff couplet — "Push a button.
-  // Get the site." — went unseen across eight slides that each closed on one.
+  // `aphoristic-cadence` must see more than the literal "not just X, but Y":
+  // the two-beat setup/payoff couplet — "Push a button. Get the site." — is
+  // the same tell when every slide closes on one.
   const { runScan } = await import('../dist/scan.js');
   const { mkdtempSync, writeFileSync, rmSync } = await import('node:fs');
   const { tmpdir } = await import('node:os');
@@ -156,8 +156,7 @@ test('a couplet is a good line; six of them is a cadence', async () => {
     '<p>Less to configure. More that connects itself.</p>',
     '<h3>Pick the region. We wire the rest.</h3>',
   ].join('\n'));
-  // Functional microcopy is a statement and the next action, not a cadence —
-  // one app produced twelve of these.
+  // Functional microcopy is a statement and the next action, not a cadence.
   const microcopy = page([
     '<p>No expeditions found. Create your first one.</p>',
     '<p>Export failed. Please try again.</p>',

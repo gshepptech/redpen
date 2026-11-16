@@ -12,6 +12,7 @@ import { findClashes, fingerprintFindings } from './fingerprint/distance.js';
 import * as store from './fingerprint/store.js';
 import { scoreKind, headline } from './score.js';
 import { loadConfig, configIgnores, stateRoot, type RedpenConfig } from './config.js';
+import { CODE_CATEGORIES } from './types.js';
 import type { ScanResult, RawFinding, Channel, Finding, Surface, Category } from './types.js';
 
 /**
@@ -21,18 +22,6 @@ import type { ScanResult, RawFinding, Channel, Finding, Surface, Category } from
  * swallowed — `channelsRun` is part of the output precisely so a caller can
  * never mistake "we did not look" for "there was nothing there".
  */
-
-/** The categories that describe source rather than the page it renders. */
-/**
- * The categories that describe a repository rather than a page.
- *
- * `prose` is here because a README, a changelog and a course script are files
- * in the project, not markup the browser serves — and until it existed redpen
- * read no `.md` at all, so every document in every repository it scanned was
- * invisible to a tool whose subject is writing that reads as machine-made.
- */
-export const CODE_CATEGORIES: ReadonlySet<string> = new Set(['craft', 'residue', 'prose']);
-
 
 export interface ScanOptions {
   root: string;
@@ -53,18 +42,17 @@ export interface ScanOptions {
   codeCategories?: boolean;
   /**
    * Neither read nor write the fingerprint store. Used by `redpen check` on
-   * throwaway branches and by tests. Skipping only the write was wrong: the run
-   * still compared against whatever was on disk, so an unrelated project's
-   * pages could produce a sameness finding.
+   * throwaway branches and by tests. Skipping only the write is not enough: the
+   * run would still compare against whatever is on disk, so an unrelated
+   * project's pages could produce a sameness finding.
    */
   ephemeral?: boolean;
   /**
    * Skip the external analysers even where the project has them.
    *
    * Their output depends on what is installed on the machine, which is right
-   * for a scan and wrong for a test: the code fixtures started failing the day
-   * jscpd went on to a PATH, because a result that changes with the
-   * environment is not a fixture.
+   * for a scan and wrong for a test: a result that changes when jscpd lands on
+   * the PATH is not a fixture.
    */
   tools?: boolean;
   onProgress?: (message: string) => void;
@@ -86,11 +74,10 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
   /**
    * One bare origin means "the whole app", not "the home page".
    *
-   * `redpen scan . http://localhost:3000` used to read exactly one page, which
-   * is almost never what someone pointing redpen at their dev server wants —
-   * and the sameness channel, which compares a project's pages against each
-   * other, cannot run at all on a single page. The routes are already in the
-   * repository, so they are used.
+   * Reading exactly one page is almost never what someone pointing redpen at
+   * their dev server wants, and the sameness channel, which compares a
+   * project's pages against each other, cannot run at all on a single page.
+   * The routes are already in the repository, so they are used.
    *
    * Only for a bare origin. Any explicit path is an instruction to read that
    * page and is obeyed exactly.
@@ -165,10 +152,8 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
   let screenshots = new Map<string, string>();
   const surfaces: ScanResult['surfaces'] = {};
   // A code scan never opens a browser. Every craft and residue rule is
-  // source-channel, so rendering answers nothing they ask — and on the first
-  // real repository it launched chromium against eight configured urls with no
-  // server behind them, then printed the connection failures as though the run
-  // had lost something.
+  // source-channel, so rendering answers nothing they ask, and configured urls
+  // with no server behind them would only print connection failures.
   if (urls.length && !opts.codeCategories) {
     opts.onProgress?.(`rendering ${urls.length} url(s) at ${viewports.join(', ')}px`);
     const t1 = Date.now();
@@ -246,12 +231,10 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
 
       // Inherit from the neighbours.
       //
-      // Abstaining used to enable every rule — the most punishing default,
-      // applied exactly when confidence is lowest. But within one scan of one
+      // Abstaining would enable every rule, the most punishing default,
+      // applied exactly when confidence is lowest. Within one scan of one
       // origin, "unclassified" does not mean "could be anything": if five
-      // routes of a product are operate surfaces, the sixth is too. Reported
-      // from the field, where every abstention across four runs would have
-      // been fixed by this and none by the config advice we were printing.
+      // routes of a product are operate surfaces, the sixth is too.
       if (undecided.length && Object.keys(surfaces).length) {
         const tally = new Map<Surface, number>();
         for (const v of Object.values(surfaces)) {
@@ -287,13 +270,11 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
     }
   } else if (!opts.codeCategories) {
     // Not on a code scan. No craft or residue rule has a render half, so
-    // "findings that render could confirm are capped" describes nothing here —
-    // and it said so on a project that has urls configured, which makes it
-    // wrong twice.
-    // Naming the routes rather than asking for them. redpen has the source, so
+    // "findings that render could confirm are capped" describes nothing here.
+    //
+    // Name the routes rather than asking for them. redpen has the source, so
     // "add urls" is asking someone to retype what the repository already
-    // states — and the cost of not bothering is invisible: the same fixture
-    // scored 76 with no url and 3 with one.
+    // states, and the cost of not bothering is invisible in the score.
     const routes = discoverRoutes(root);
     const listed = routes.slice(0, 8).map((r: { path: string }) => r.path).join(' ');
     warnings.push(
@@ -406,10 +387,8 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
 
   // A code scan that read almost nothing must not answer "clean".
   //
-  // The extension list was the UI one, so `redpen code` on a 174-file Go
-  // repository read the fourteen HTML files in it and reported 100/100. The
-  // list is fixed; this says so out loud when a project still holds source in
-  // a language nothing here knows.
+  // Say so out loud when a project holds source in a language nothing here
+  // reads, rather than scoring the handful of files it could read as 100/100.
   if (opts.codeCategories) {
     const unread = unreadLanguages(root);
     if (unread.length) {
@@ -460,14 +439,13 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
   /**
    * The ignores written in the source, which were collected and dropped.
    *
-   * `--show-ignored` says it lists findings suppressed by redpen-ignore, and it
-   * listed only the ones named in `.redpen/config.json` — the channel silenced
-   * the in-source ones and threw the record away at the call above. So the
-   * reason a person is required to write, on the argument that an ignore with a
-   * reason is a decision on record, went nowhere and could not be read back.
+   * `--show-ignored` lists findings suppressed by redpen-ignore as well as the
+   * ones named in `.redpen/config.json`. A person is required to write a reason
+   * on an ignore so it is a decision on record, and this is where it is read
+   * back.
    *
    * They never became findings, so there is nothing to demote; they are
-   * reported from the rule and the line that carried the directive.
+   * listed by the rule and the line that carried the directive.
    */
   for (const [ruleId, directives] of src.ignored) {
     const rule = ruleById(ruleId);
@@ -501,7 +479,7 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
    *
    * craft and residue are about the source a project is written in, not the
    * page it serves, and folding them into `scan` would move every score anyone
-   * holds a baseline against — on redpen's own source they fired immediately.
+   * holds a baseline against.
    * `redpen code` asks for them; `redpen scan` never returns them.
    */
   const codeOnly = opts.codeCategories === true;
@@ -515,8 +493,7 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
     const wanted = new Set(opts.only);
     // A filter that matches no category is not an empty result, it is a typo.
     // `--only` takes categories and reads like it takes rule ids, so
-    // `--only nested-cards` printed a confident 100/100 clean — the one answer
-    // a filter must never give for a name it did not recognise.
+    // `--only nested-cards` must not print a confident 100/100 clean.
     const known = new Set(loadCorpus().map((r) => r.category));
     const unknown = [...wanted].filter((c) => !known.has(c as Category));
     if (unknown.length) {

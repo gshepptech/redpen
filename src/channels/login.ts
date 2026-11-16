@@ -16,8 +16,8 @@ import { dirname } from 'node:path';
  * and all of the remembering. It opens a real browser, gets out of the way, and
  * writes the state down when you say you are through.
  *
- * The file is a live credential. It is written under `.redpen/`, and
- * `redpen init` puts that directory in .gitignore for exactly this reason.
+ * The file is a live credential. It is written under `.redpen/`, and the
+ * login command puts that directory in .gitignore for exactly this reason.
  */
 
 export interface LoginResult {

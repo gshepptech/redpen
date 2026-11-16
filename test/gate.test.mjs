@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import { compareToBaseline } from '../dist/gate.js';
 
 /**
- * The gate is the only part of redpen that can block someone's work, and until
- * these existed every decision it makes was unchecked. A gate that passes for
- * the wrong reason is worse than no gate, so each of those reasons gets a test.
+ * The gate is the only part of redpen that can block someone's work. A gate
+ * that passes for the wrong reason is worse than no gate, so each decision it
+ * makes gets a test.
  */
 
 const BASE = {

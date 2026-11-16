@@ -22,23 +22,22 @@ a fix.
 
 ## Features
 
-- **184 rules in 16 categories**, merged from five public catalogues of AI
-  design and writing tells, with each rule's provenance kept (`redpen why <id>`).
-- **Cross-checked evidence.** Source patterns, computed styles in Chromium via
+- 184 rules in 16 categories, merged from five public catalogues of AI design
+  and writing tells, with each rule's provenance kept (`redpen why <id>`).
+- Cross-checked evidence: source patterns, computed styles in Chromium via
   Playwright, and an optional screenshot review are reconciled into
   `confirmed`, `likely` and `possible`.
-- **Two scores.** `slop` (reads as machine-made) and `quality` (broken
-  regardless of taste) are kept separate, so you can see which one is the
-  problem.
-- **Surface-aware.** It detects whether a page is marketing, app UI or docs,
+- Two scores: `slop` (reads as machine-made) and `quality` (broken regardless
+  of taste) are kept separate, so you can see which one is the problem.
+- Surface detection: it works out whether a page is marketing, app UI or docs,
   and turns off rules that do not hold there. A single type family is fine on a
   dashboard and a tell on a landing page.
-- **Sameness across pages.** It records a structural fingerprint for every page
+- Sameness across pages: it records a structural fingerprint for every page
   and reports pages that are the same layout with a different palette.
-- **Code and docs mode.** `redpen code` checks source and Markdown for stubs,
+- Code and docs mode: `redpen code` checks source and Markdown for stubs,
   swallowed errors, edit-history comments, agent bylines and generated prose.
   It also runs jscpd, madge and knip when the project already has them.
-- **A CI gate that ratchets.** `redpen check` fails when the score drops below a
+- A CI gate that ratchets: `redpen check` fails when the score drops below a
   recorded baseline or a new tell appears. It does not demand a perfect score.
 
 ## Quick start
@@ -209,11 +208,11 @@ fires that was not present at baseline.
 
 ## Scope and limits
 
-The corpus is 184 rules across 16 categories, and the suite is 283 tests.
+The corpus is 184 rules across 16 categories, and the suite is 284 tests.
 
 The upstream catalogues use different vocabularies and overlap heavily, so
-running them side by side doubles the false positives. redpen merges them into 184 rules
-and records which catalogue named each one. Some tells, such as the em dash,
+running them side by side doubles the false positives.
+redpen merges them into 184 rules and records which catalogue named each one. Some tells, such as the em dash,
 are common in human writing too, so they are advisory: reported, never scored.
 12 rules are marked this way. Rules that only hold on one kind of page carry a
 surface list, and 38 rules are scoped accordingly.
