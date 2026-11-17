@@ -2,7 +2,7 @@
 #
 # Font choice ranks 8th in the complaint data, but typographic *execution*
 # (leading, measure, hierarchy) is where generated pages lose to hand-built ones
-# even when the face is fine — so execution rules carry real weight here despite
+# even when the face is fine, so execution rules carry real weight here despite
 # never being named by a Reddit commenter.
 
 - id: default-sans
@@ -32,7 +32,7 @@
       maxDistinctFamilies: 1
   why: >-
     These are the starter fonts every scaffold ships with. Used alone they read
-    as "no typographic decision was made" — which is exactly what commenters say.
+    as "no typographic decision was made", which is exactly what commenters say.
   fix: >-
     Pair a display face with a body face. Keeping Inter for body is defensible;
     keeping it for the hero is not.
@@ -82,7 +82,7 @@
     check: italic-heading
   vision:
     ask: >-
-      Is any heading, hero title, or large display line set in italic — including
+      Is any heading, hero title, or large display line set in italic, including
       a single italicised word inside an otherwise upright headline?
   why: >-
     The one italicised emphasis word inside an upright headline is a top-tier

@@ -9,7 +9,7 @@ import { discoverRoutes } from '../dist/channels/routes.js';
  * Routes read out of the project instead of typed in.
  *
  * Every case here is a layout real repositories have. The expensive failure is
- * not missing a route — it is inventing one, because a scan of a url that does
+ * not missing a route; it is inventing one, because a scan of a url that does
  * not exist reports a 404 page as though it were the product.
  */
 
@@ -126,7 +126,7 @@ test('one bare origin scans the whole app; an explicit path is obeyed exactly', 
     'app/pricing/page.tsx': '<h1>Pricing</h1>',
   }));
   try {
-    // No server is running, so render fails on every url — what is asserted is
+    // No server is running, so render fails on every url. What is asserted is
     // which urls were *attempted*, which the progress line reports.
     const lines = [];
     await runScan({

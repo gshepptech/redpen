@@ -5,7 +5,7 @@
 # to, the ticket it came from, the agent that wrote it. All of it made sense in
 # the run that emitted it and none of it means anything a week later.
 #
-# Source channel only, and outside a UI scan — `redpen code` runs these.
+# Source channel only, and outside a UI scan: `redpen code` runs these.
 
 - id: orchestration-marker
   kind: slop
@@ -20,7 +20,7 @@
   source:
     patterns:
       # The optional TODO( is not decoration. The id almost never sits bare
-      # against the comment marker in real code — it arrives as `TODO(L2-04):`
+      # against the comment marker in real code: it arrives as `TODO(L2-04):`
       # or `FIXME(P3-11)`, and requiring the marker adjacent meant the most
       # common shape there is went straight past.
       - '(//|#|\*|<!--)\s*((TODO|FIXME|NOTE|HACK|XXX)\s*[([])?\s*\b(L[0-9]{1,2}|P[0-9]{1,2}|M[0-9]{1,2})\s*[-–—:]\s*\S'
@@ -30,7 +30,7 @@
   why: >-
     "L1- we had to add this because the phase required it" is a note to the run
     that produced it. Whoever reads the file next has no phase, no plan, and no
-    way to look up what L1 was — so the sentence explains the code with a fact
+    way to look up what L1 was, so the sentence explains the code with a fact
     they cannot check.
   fix: >-
     Say the reason without the reference. If the phase document held the real
@@ -108,7 +108,7 @@
     patterns:
       - '(//|#|\*)\s*(See|see|Refer to|refer to)\s+[\w./-]+\.(md|txt|yaml|yml|json)\b[^\n]{0,30}\b(for (details|context|the plan|why))'
       # Case-sensitive: the tell is a SCREAMING_CASE plan document, and under
-      # the default `i` flag [A-Z_]{3,} matched `readme.md` and `notes.md` —
+      # the default `i` flag [A-Z_]{3,} matched `readme.md` and `notes.md`,
       # every filename, which is every comment that mentions one.
       - '(//|#|\*)[^\n]{0,30}\b([Dd]escribed|[Dd]ocumented|[Ss]pecified|[Pp]lanned) in\s+[A-Z][A-Z_0-9]{2,}\.md\b'
       - '(//|#|\*)\s*(TODO|NOTE)[^\n]{0,20}\bsee\s+(the\s+)?(plan|spec|roadmap|handoff|brief)\b'
@@ -142,6 +142,6 @@
     it stays right; a suffix freezes one moment of a file's life into the thing
     everyone types for the rest of it.
   fix: >-
-    Delete the old one — it is in the history — and let the good name go to the
+    Delete the old one (it is in the history) and let the good name go to the
     file that survived. Where both are live, name them for what makes them
     different rather than for which came second.

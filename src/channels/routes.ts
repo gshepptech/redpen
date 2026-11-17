@@ -6,7 +6,7 @@ import { SKIP_DIRS } from './source.js';
  * Routes, read out of the project rather than typed in by hand.
  *
  * redpen already has the source. Asking someone to list their own URLs is
- * asking them to do work the repository can answer — and getting it wrong is
+ * asking them to do work the repository can answer, and getting it wrong is
  * expensive in a way that is invisible: a scan with no urls caps every
  * render-observable finding at `possible`, so the same page scored 76 with no
  * url and 3 with one. A tool that quietly rewards being pointed at nothing is
@@ -53,7 +53,7 @@ function frameworks(root: string): Set<string> {
 }
 
 export interface DiscoveredRoute {
-  /** Path only — `/pricing`. Never an absolute url. */
+  /** Path only, like `/pricing`. Never an absolute url. */
   path: string;
   /** Where it was found, so a wrong guess can be traced to a file. */
   from: string;
@@ -113,7 +113,7 @@ function fileRoute(rel: string, use: Set<string>): DiscoveredRoute | null {
     const m = base.exec(path);
     if (!m || !leaf.test(path)) continue;
     let route = path.slice(m.index + m[0].length).replace(leaf, '');
-    // A route group — `(marketing)` in Next — is organisation, not url.
+    // A route group (`(marketing)` in Next) is organisation, not url.
     route = route
       .split('/')
       .filter((s) => s && !/^\(.*\)$/.test(s))

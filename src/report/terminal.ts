@@ -141,7 +141,7 @@ export function renderTerminal(result: ScanResult, opts: TerminalOptions): strin
       const idWidth = idColumn(rest);
       for (const f of rest) out.push(rosterLine(f, idWidth));
       // Named, not hidden. The count on its own is the failure this project
-      // keeps finding in itself — a report that says how much it is not saying
+      // keeps finding in itself. A report that says how much it is not saying
       // reads as complete, and a reader cannot tell what they were not shown.
       out.push(
         pc.dim(
@@ -188,7 +188,7 @@ const MEASURE = 80;
 
 /**
  * One finding on one line: enough to recognise it, enough to look it up. The
- * title is truncated here and nowhere else — in a roster the title is a list
+ * title is truncated here and nowhere else; in a roster the title is a list
  * item, not a heading, and the rule id beside it recovers anything the cut lost.
  */
 function rosterLine(f: Finding, idWidth: number): string {
@@ -213,8 +213,8 @@ function renderFinding(f: Finding, opts: TerminalOptions): string[] {
   const channels = pc.dim(`[${f.channels.join('+')}]`);
 
   // The title line is deliberately exempt from MEASURE. The 78-character limit
-  // redpen enforces on the pages it scans is about running text — past that the
-  // eye loses the line return — and a single heading has no line return to
+  // redpen enforces on the pages it scans is about running text (past that the
+  // eye loses the line return), and a single heading has no line return to
   // lose. Truncating a title costs the reader the one thing they scan for.
   out.push(`  ${mark(f.confidence)} ${pc.bold(f.title)} ${channels} ${pc.dim(`${f.ruleId} · ${f.weight}`)}`);
   out.push(`    ${wrap(f.why, MEASURE - 4, '    ')}`);

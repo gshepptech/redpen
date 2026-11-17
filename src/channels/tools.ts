@@ -103,8 +103,8 @@ export function resolveBin(root: string, bin: string): string | null {
     for (const name of names) {
       const candidate = join(dir, name);
       try {
-        // X_OK is meaningless on Windows — every readable file reports as
-        // executable — so existence is the check there.
+        // X_OK is meaningless on Windows (every readable file reports as
+        // executable), so existence is the check there.
         if (process.platform === 'win32') {
           if (existsSync(candidate)) return candidate;
         } else {
@@ -174,7 +174,7 @@ const madge: Analyser = {
   run(exe, root) {
     try {
       // Without `--extensions` madge resolves `./d.js` against a `d.ts` file
-      // and reports no cycle where there are two — the NodeNext import style
+      // and reports no cycle where there are two: the NodeNext import style
       // every current TypeScript project writes.
       // madge exits non-zero precisely when it finds a cycle, so the throw is
       // the success case and the output rides on it.
@@ -220,7 +220,7 @@ const knip: Analyser = {
   run(exe, root) {
     try {
       // knip exits non-zero when it finds anything, which is the normal case
-      // here — the output is on stdout either way, so the throw carries it.
+      // here: the output is on stdout either way, so the throw carries it.
       let raw: string;
       try {
         raw = execFileSync(exe, ['--reporter', 'json', '--no-progress'], {

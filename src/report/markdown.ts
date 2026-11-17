@@ -4,7 +4,7 @@ import type { Confidence } from '../types.js';
 
 /**
  * How many findings each tier argues in full before the rest become a table.
- * Matches the terminal report — a reader who has seen one should not have to
+ * Matches the terminal report: a reader who has seen one should not have to
  * learn the other.
  */
 const DETAIL: Record<Confidence, number> = {
@@ -16,7 +16,7 @@ const DETAIL: Record<Confidence, number> = {
 const MARK: Record<Confidence, string> = { confirmed: '●', likely: '◐', possible: '○' };
 
 /**
- * Markdown report — the format an agent reads back and a human pastes into a
+ * Markdown report: the format an agent reads back and a human pastes into a
  * PR. Deliberately keeps provenance on every finding so a reviewer can argue
  * with the rule, not just the result.
  */
@@ -26,7 +26,7 @@ export function renderMarkdown(result: ScanResult): string {
 
   out.push(`# redpen — ${score}/100 (${verdict(result.slopScore, result.qualityScore)})`);
   out.push('');
-  // The bare gloss on its own reads as a verdict — "slop 100 | reads as
+  // The bare gloss on its own reads as a verdict ("slop 100 | reads as
   // machine-made" invites exactly the wrong conclusion. The terminal report
   // disambiguates with a finding count; this one has to as well.
   const slopCount = findings.filter((f) => f.kind === 'slop').length;

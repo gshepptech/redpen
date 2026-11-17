@@ -78,7 +78,7 @@ test('one restored selector does not excuse its siblings', () => {
 
 test('all three are reported when the one fix only covers coarse pointers', () => {
   // The stylesheet as it actually is. The .qacts restore is real but narrow,
-  // so it earns a caveat rather than an exemption — it is still 32px on every
+  // so it earns a caveat rather than an exemption: it is still 32px on every
   // desktop, and the other two are short everywhere.
   const css = `
     .btn { min-height: 44px }

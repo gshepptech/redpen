@@ -59,9 +59,8 @@ test('a hero is a screenful, not a page that happens to start with one', async (
   // centred prose measure naturally puts two dozen elements on one axis.
   // Height alone cannot separate it; what makes it not a hero is structural: an
   // opener does not contain the rest of the sections.
-  const src = await import('node:fs').then((fs) =>
-    fs.readFileSync(new URL('../src/channels/detectors.ts', import.meta.url), 'utf8'),
-  );
+  const { detectorSource } = await import('../dist/channels/detectors.js');
+  const src = detectorSource();
   const check = src.slice(src.indexOf("CHECKS['centered-axis-stack']"), src.indexOf("CHECKS['centered-axis-stack']") + 2200);
   assert.match(check, /querySelectorAll\('section, article'\)\.length > 1/);
   assert.match(check, /maxHeroVh/);
@@ -70,20 +69,18 @@ test('a hero is a screenful, not a page that happens to start with one', async (
 test('a face the page loads is declared, however the framework declared it', async () => {
   // next/font emits @font-face and sets no font custom property, so the
   // framework's own recommended setup must not read as type-system drift.
-  const src = await import('node:fs').then((fs) =>
-    fs.readFileSync(new URL('../src/channels/detectors.ts', import.meta.url), 'utf8'),
-  );
+  const { detectorSource } = await import('../dist/channels/detectors.js');
+  const src = detectorSource();
   const check = src.slice(src.indexOf("CHECKS['font-family-drift']"));
   assert.match(check.slice(0, 1600), /document\.fonts/);
   assert.match(check.slice(0, 1600), /f in loaded/);
 });
 
 test('background texture is not an assembled illustration', async () => {
-  // A full-bleed topographic wash — pointer-events:none, fixed, behind the
-  // content — is background texture, not an assembled illustration.
-  const src = await import('node:fs').then((fs) =>
-    fs.readFileSync(new URL('../src/channels/detectors.ts', import.meta.url), 'utf8'),
-  );
+  // A full-bleed topographic wash (pointer-events:none, fixed, behind the
+  // content) is background texture, not an assembled illustration.
+  const { detectorSource } = await import('../dist/channels/detectors.js');
+  const src = detectorSource();
   const check = src.slice(src.indexOf("CHECKS['primitive-shape-cluster']"));
   assert.match(check.slice(0, 900), /pointerEvents === 'none'/);
   assert.match(check.slice(0, 900), /zIndex/);
@@ -92,9 +89,8 @@ test('background texture is not an assembled illustration', async () => {
 test('a measure finding says which bound it crossed', async () => {
   // It is a range check, so 44ch and 79ch are opposite problems with opposite
   // fixes, and the message has to say which one it is.
-  const src = await import('node:fs').then((fs) =>
-    fs.readFileSync(new URL('../src/channels/detectors.ts', import.meta.url), 'utf8'),
-  );
+  const { detectorSource } = await import('../dist/channels/detectors.js');
+  const src = detectorSource();
   const check = src.slice(src.indexOf("CHECKS['measure-range']"));
   assert.match(check.slice(0, 1600), /narrower than/);
   assert.match(check.slice(0, 1600), /wider than/);
@@ -104,9 +100,8 @@ test('framework dev tooling is not the product', async () => {
   // redpen is pointed at a dev server by design, and every stack mounts
   // something there. TanStack Query's devtools button is a 64px svg of 31
   // primitive shapes, and it is not part of the product.
-  const src = await import('node:fs').then((fs) =>
-    fs.readFileSync(new URL('../src/channels/detectors.ts', import.meta.url), 'utf8'),
-  );
+  const { detectorSource } = await import('../dist/channels/detectors.js');
+  const src = detectorSource();
   assert.match(src, /DEV_TOOL_SELECTOR/);
   for (const marker of ['tsqd-', 'nextjs-portal', 'vite-error-overlay']) {
     assert.ok(src.includes(marker), `${marker} must be excluded`);

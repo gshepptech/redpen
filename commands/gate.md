@@ -17,8 +17,8 @@ else                                         run() { redpen "$@"; }
 fi
 ```
 
-If neither resolves, the plugin is not installed and `redpen` is not on PATH —
-say so rather than guessing. **Never `npx redpen`**: that name belongs to an
+If neither resolves, the plugin is not installed and `redpen` is not on PATH.
+Say so rather than guessing. **Never `npx redpen`**: that name belongs to an
 unrelated package.
 
 ```bash
@@ -32,7 +32,7 @@ inventing a way to run it.
 Wire redpen into this project's CI as a regression gate.
 
 `redpen check` is not a grader. A codebase that starts at 46 should not have to
-reach 90 before CI goes green — it has to stop getting worse. The gate fails on
+reach 90 before CI goes green; it has to stop getting worse. The gate fails on
 a score **drop** past `tolerance`, or on a tell that was not present at
 baseline, so fixing one problem while introducing another still fails.
 
@@ -43,7 +43,7 @@ baseline, so fixing one problem while introducing another still fails.
 2. Run `run init` and put the real dev-server URLs in
    `.redpen/config.json`. List every route worth gating, not just the homepage.
 3. Start the server, run `run baseline . --url <url>`, and **commit
-   `.redpen/baseline.json`** — the gate is meaningless without it in the repo.
+   `.redpen/baseline.json`**. The gate is meaningless without it in the repo.
 4. Add the check to the existing CI workflow. Do not create a new workflow file
    if one already exists.
 

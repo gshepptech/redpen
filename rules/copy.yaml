@@ -1,7 +1,7 @@
 # Copy tells.
 #
 # Copy ranks low individually (11th band) but it is the cheapest category to
-# fix and the one non-designers notice first. Source channel only — the words
+# fix and the one non-designers notice first. Source channel only: the words
 # are the same in the file and on the screen.
 
 - id: marketing-buzzword
@@ -85,7 +85,7 @@
     # comment's continuation lines carry no comment marker to suppress on.
     extensions: ['.html', '.htm', '.tsx', '.jsx', '.ts', '.js', '.mjs', '.vue', '.svelte', '.astro', '.mdx']
     # A list item that opens with a bolded lead term or a link and separates it
-    # with a dash is typography, not a prose splice — `- **Term** — description`
+    # with a dash is typography, not a prose splice: `- **Term** — description`
     # is a definition list wearing markdown. The catalogue this rule comes from
     # carves those out by name, and redpen was counting them.
     suppress: '^\s*(\{\s*/\*|//|\*|/\*|#|<!--)|^\s*[-*+]\s+(\*\*[^*]+\*\*|\[[^\]]+\]\([^)]*\))\s*—'
@@ -224,7 +224,7 @@
       - '\b\d{1,3}(,\d{3})+\+\s+\w+'
   vision:
     ask: >-
-      Does the page state numbers — user counts, percentage gains, uptime —
+      Does the page state numbers (user counts, percentage gains, uptime)
       without attributing them to anything?
   why: >-
     "10,000+ developers" on a site with no users. Fabricated numbers are a
@@ -320,7 +320,7 @@
       - '\bcan (help|potentially) (you )?(reduce|improve|increase|save|boost)\b'
   why: >-
     "Designed to improve accuracy" tells the reader you are not sure it does.
-    Stacking a modal on a hedge adverb — "could potentially", "may eventually" —
+    Stacking a modal on a hedge adverb ("could potentially", "may eventually")
     is the same move twice: each word cancels the next, and the sentence asserts
     nothing while sounding careful.
   fix: >-
@@ -447,7 +447,7 @@
       - '\b(leverages?|utili[sz]es?) (the power of|cutting-edge|advanced)\b'
       - '\bdelivers (unparalleled|unmatched|best-in-class)\b'
   why: >-
-    "Serves as", "boasts", "represents" — fancier verbs standing in for "is" and
+    "Serves as", "boasts", "represents": fancier verbs standing in for "is" and
     "has". Individually harmless; together they are the register of a press
     release rather than a person explaining something.
   fix: >-
@@ -476,8 +476,8 @@
     real list has items of different lengths and at least one that does not fit
     the pattern.
   fix: >-
-    Rewrite each item as a claim — "failed shares stayed under 1% across a
-    twelve-hour run" beats "low failed share rates" — or turn the list into a
+    Rewrite each item as a claim ("failed shares stayed under 1% across a
+    twelve-hour run" beats "low failed share rates"), or turn the list into a
     paragraph. Where a bare list is genuinely right, vary the items.
 
 # ---------------------------------------------------------------------------
@@ -518,7 +518,7 @@
     need to reach.
   fix: >-
     Say the mechanism or the measurement. Faster than what, by how much, and
-    because of what — one of those turns an adjective into a reason.
+    because of what. One of those turns an adjective into a reason.
 
 - id: no-exclusions
   kind: slop
@@ -631,7 +631,7 @@
     #
     # "No expeditions found. Create your first one." and "Export failed. Please
     # try again." are the correct shape for an empty state and a status message
-    # — a statement of what happened and the next action — and one app produced
+    # (a statement of what happened and the next action), and one app produced
     # twelve of them. What separates them from display copy is that the first
     # half reports a state rather than making a claim.
     suppress: '^\s*(\{\s*/\*|//|\*|/\*|#|<!--)|\bNo [a-z]+ (found|available|yet|attached|configured|selected)|\b(failed|succeeded|imported|exported|saved|deleted|updated|created|copied|removed|cancelled|canceled)\.|\b(Nothing|Please)\b|\.{3}'
@@ -649,7 +649,7 @@
   legitimateWhen: >-
     A slide, a headline, or anything read in a glance. Short couplets are how
     display copy works, and one is a good line. The finding is only ever the
-    density — every slide closing on the same beat — so a deck that uses two
+    density (every slide closing on the same beat), so a deck that uses two
     deliberately is not what this is about.
   why: >-
     "Push a button. Get the site." is a good sentence. Six of them across eight

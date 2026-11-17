@@ -107,7 +107,7 @@ const TEMPLATE_RHYTHM = ['hero-full', 'card-grid-3', 'cta'];
  * Macrostructures that describe an application rather than a page.
  *
  * Two app routes sharing a skeleton is the consistency heuristic working, not
- * repetition — so sameness does not fire between them. It still fires between
+ * repetition, so sameness does not fire between them. It still fires between
  * two *marketing* pages that share a skeleton, which is the case it exists for.
  */
 const APP_SHAPES: ReadonlySet<string> = new Set([
@@ -195,7 +195,7 @@ export function fingerprintFindings(
     });
   }
 
-  // The remaining sameness rules need a corpus, not a pair — and none of them
+  // The remaining sameness rules need a corpus, not a pair, and none of them
   // apply to an application, where a shared vocabulary is the goal.
   const pages = prints.filter((p) => !isAppShape(p, operatePages));
   if (pages.length >= 3) {

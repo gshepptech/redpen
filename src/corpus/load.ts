@@ -128,7 +128,7 @@ function validate(rule: unknown, file: string, index: number): Rule {
   // A rule that declares a channel but gives it no matcher can never fire on
   // that channel, which silently weakens cross-channel promotion.
   for (const ch of r.channels) {
-    // A cascade matcher is a source matcher — it reads the stylesheet rather
+    // A cascade matcher is a source matcher: it reads the stylesheet rather
     // than running a regex over it, but it observes the same channel.
     if (ch === 'source' && !r.source && !r.cascade) {
       throw new Error(`rule "${r.id}" declares the source channel but has no matcher`);
@@ -153,8 +153,8 @@ function validate(rule: unknown, file: string, index: number): Rule {
   }
 
   const complete = r as Rule;
-  // `evidenceRank: null` is meaningful — it says the tell was never measured
-  // against human complaint data — so default it rather than leaving undefined.
+  // `evidenceRank: null` is meaningful: it says the tell was never measured
+  // against human complaint data, so default it rather than leaving undefined.
   return {
     ...complete,
     evidenceRank: complete.evidenceRank ?? null,
@@ -203,7 +203,7 @@ export function rulesForChannel(channel: Channel): Rule[] {
  * Does this rule apply on this surface?
  *
  * A rule with no `surfaces` holds everywhere. One that names surfaces holds
- * only there — which is how "a single type family" stops being a finding on a
+ * only there, which is how "a single type family" stops being a finding on a
  * dashboard, where it is the correct choice.
  */
 export function appliesTo(rule: Rule, surface: Surface | null): boolean {

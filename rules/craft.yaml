@@ -15,7 +15,7 @@
 # look like generated code.
 #
 #   density          7.6% to 35.7% of lines, and the generated fixture was the
-#                    highest of the lot at 35.7% — just ahead of the most
+#                    highest of the lot at 35.7%, just ahead of the most
 #                    carefully maintained project at 30.2%. No threshold
 #                    separates them.
 #
@@ -24,7 +24,7 @@
 #                    projects (42.5%, 40.6%, 38.0%) and 0% in the generated one.
 #
 # The signal runs backwards. Long comments on short code are what careful
-# authorship looks like — the longest single block found was 232 lines above two
+# authorship looks like: the longest single block found was 232 lines above two
 # lines of data, explaining why a product appears twice in a seed catalogue. A
 # rule on either measure would fire hardest on the best-commented codebases and
 # never on the generated one, which is the definition of a rule that costs more
@@ -48,9 +48,9 @@
     patterns:
       # Past tense about the author's own edit. Gerunds are out: "Adding a fifth
       # advisory means adding a row here" is an instruction to whoever comes
-      # next, not a note about what happened. "Fixed" is out too — it is more
-      # often "fixed order" or "fixed width" than "I fixed it", and it cost this
-      # rule a false positive on `// Fixed, not the marks' insertion order`.
+      # next, not a note about what happened. "Fixed" is out too: it is more
+      # often "fixed order" or "fixed width" than "I fixed it", and it would
+      # flag `// Fixed, not the marks' insertion order`.
       - '(//|#|\*)\s*(Added|Updated|Changed|Removed|Refactored|Renamed|Moved|Replaced)\b[^\n]{0,60}\b(here|above|below|this|to (use|be|match|support)|from|for (now|clarity|consistency))\b'
       - '(//|#|\*)\s*(NEW|OLD|WAS|BEFORE|AFTER)\s*[::-]'
       - '(//|#|\*)\s*(As (requested|discussed|per)|Per (the|your) (request|feedback|review))\b'
@@ -75,7 +75,7 @@
   why: >-
     "Updated to use the new API" tells the next reader what happened one
     afternoon, not what the code does. The edit it describes is in the history
-    already, and the comment outlives the moment it made sense — six months on
+    already, and the comment outlives the moment it made sense. Six months on
     it is describing a change against a version nobody remembers.
   fix: >-
     Say why the code is the way it is, or delete the line. If the change needs
@@ -95,8 +95,8 @@
   source:
     patterns:
       - '/\*\*\s*\n\s*\*\s*(Gets?|Sets?|Returns?|Creates?|Handles?|Processes?|Exports?|Imports?|Updates?|Deletes?|Fetches|Builds?|Runs?|Sends?|Loads?|Saves?) the \w+\.?\s*\n\s*\*\s*@(returns?|param)'
-      # Two shapes of the same line. JSDoc with a type — `@param {string} format
-      # The format` — and without one, which is what TypeScript writes because
+      # Two shapes of the same line. JSDoc with a type (`@param {string} format
+      # The format`) and without one, which is what TypeScript writes because
       # the type is already in the signature. Both are matched, so a
       # TypeScript codebase can trip this rule too.
       - '@param\s+\{\w+\}\s+(\w+)\s+[Tt]he\s+\1\b'
@@ -109,7 +109,7 @@
   fix: >-
     Document what the signature cannot say: the units, the failure mode, the
     thing the caller has to have done first. If there is nothing like that,
-    leave it undocumented — the name is doing the work.
+    leave it undocumented; the name is doing the work.
 
 - id: stub-shipped
   kind: quality
@@ -175,7 +175,7 @@
     else entirely, hours later, with nothing in the log to connect them.
   fix: >-
     Handle it, or let it propagate. If it is genuinely ignorable, say which
-    error and why in the block — a caught exception with a reason is a decision,
+    error and why in the block. A caught exception with a reason is a decision,
     an empty block is an omission.
 
 - id: defensive-impossible-check
@@ -192,7 +192,7 @@
     patterns:
       - 'if\s*\(\s*typeof\s+\w+\s*===\s*[''"]undefined[''"]\s*\)\s*\{\s*\w+\s*=\s*(\[\]|\{\}|0|[''"]{2})'
       # "defensive" on its own is gone. It matched
-      # `// this is load-bearing, not\n// defensive padding` — a comment arguing
+      # `// this is load-bearing, not\n// defensive padding`, a comment arguing
       # the exact opposite of the finding, with the negation on the line above
       # where a same-line suppression cannot see it. A word that reads the same
       # asserted and denied is not a signal.
@@ -211,7 +211,7 @@
     cannot.
   fix: >-
     Trust the type, or fix the boundary where the value actually enters. Guard
-    at the edge, once, where untrusted input arrives — not at every function it
+    at the edge, once, where untrusted input arrives, not at every function it
     passes through afterwards.
 
 - id: grandiose-identifier
@@ -237,7 +237,7 @@
   why: >-
     Nobody sits down to write `enhancedDataProcessor`. The adjective is there
     because something had to distinguish this from a previous attempt, and it
-    describes the author's opinion of the code rather than what the code does —
+    describes the author's opinion of the code rather than what the code does,
     which leaves the next reader with no way to guess what is inside it.
   fix: >-
     Name it for the difference. If it is enhanced relative to something, the
@@ -261,7 +261,7 @@
       # factory convention (`newToken`, `newCompileCmd`), and `tempDir` and
       # `testService` are test helpers named exactly right. What is left is the
       # set nobody chooses on purpose. Not `sample` either: it is a real word
-      # doing real work — sampleProfile takes samples along a path,
+      # doing real work: sampleProfile takes samples along a path,
       # sampleTemplates returns sample templates.
       - '\b(function|const|let|var|class|def|func|type|interface)\s+(my|example|demo|foo|bar|baz|qux)[A-Z]\w*'
       - '\b(function|def|func)\s+(doSomething|doStuff|handleIt|myFunction|newFunction|exampleFunction|testFunction)\b'
@@ -270,7 +270,7 @@
   why: >-
     `myHandler`, `exampleService`, `doSomething`, `data2`. These are the names a
     thing gets before anyone knows what it is, and they survive because the code
-    works — so the file ends up describing a tutorial rather than the system it
+    works, so the file ends up describing a tutorial rather than the system it
     became part of.
   fix: >-
     Name it for what it does in this system. If that is genuinely hard to say,
@@ -298,7 +298,7 @@
     # prefer any of them.
     minHits: 3
   why: >-
-    A module named for what it is not — not a parser, not a client, not a store —
+    A module named for what it is not (not a parser, not a client, not a store)
     accumulates whatever had nowhere else to go. Several of them means the
     question "where does this belong" has stopped having an answer, and the next
     function lands in whichever one the author opened last.
@@ -328,7 +328,7 @@
   channels: [source]
   source:
     # Three, not one. A codebase is entitled to a handful of genuine boundaries
-    # — a freshly parsed body, a dynamic dispatch — and firing on the first one
+    # (a freshly parsed body, a dynamic dispatch), and firing on the first one
     # would report the boundary rather than the habit.
     minHits: 3
     # Only the languages that have a widening escape hatch. Without this the
@@ -341,7 +341,7 @@
       # Measured and rejected: Go's `interface{}`.
       #
       # On a 1,872-file Go repository every hit was the language rather than a
-      # habit — `var obj map[string]interface{}` unmarshalling arbitrary JSON,
+      # habit: `var obj map[string]interface{}` unmarshalling arbitrary JSON,
       # and `func walkAllStrings(obj interface{})` fronting a type switch. Both
       # are the only way Go expresses those, so the rule was firing on Go. A
       # signal present in every member of the population is not a signal.
@@ -357,7 +357,7 @@
     #
     # A comment is not a type. `// structToMap converts a reflect.Value to a
     # map[string]interface{}` is a sentence explaining a signature, and
-    # `// is NOT recorded as any other manifest's` is English — the same
+    # `// is NOT recorded as any other manifest's` is English, the same
     # "as any" that a shell script produced before extensions were narrowed.
     # Craft rules read comments on purpose, so the skip has to be written here.
     #
@@ -366,7 +366,7 @@
   why: >-
     A widened type is a type error that was in the way. It moves the failure
     from the compiler, which would have named the line, to runtime, which will
-    name something three calls away — and it does it silently, so nobody
+    name something three calls away, and it does it silently, so nobody
     revisits the decision.
   fix: >-
     Find the real type by reading what produces the value, not what consumes
@@ -402,7 +402,7 @@
       - '\([^()\[\]{}<>]*?(?:\w+\?:[^,()\[\]{}<>]+,\s*){3,}\w+\?:[^,()\[\]{}<>]+\)'
   why: >-
     Six parameters is a function that was never asked what it is for. Each one
-    is a decision deferred to the caller, and the callers do not agree — which
+    is a decision deferred to the caller, and the callers do not agree, which
     is why most of them are optional and most of those are never passed.
   fix: >-
     Parameters for what actually varies between call sites, and nothing else.
@@ -442,7 +442,7 @@
     `structuredClone`, `Object.groupBy`, `crypto.randomUUID` and
     `Array.prototype.flat` already exist and are already correct. A hand-rolled
     copy is a second implementation to keep right, and the ones that get
-    written from memory are usually subtly wrong at the edges — empty input,
+    written from memory are usually subtly wrong at the edges: empty input,
     sparse arrays, prototype keys.
   fix: >-
     Use the built-in. If you need behaviour it does not have, keep the local
@@ -462,7 +462,7 @@
   channels: [source]
   source:
     # Case-sensitive, because the suppression below turns on a name being
-    # SCREAMING_CASE, and under the `i` flag `const food` looked like one —
+    # SCREAMING_CASE, and under the `i` flag `const food` looked like one,
     # which silenced the rule on the very lines it was written for.
     caseSensitive: true
     patterns:
@@ -485,7 +485,7 @@
     # comment is explaining the cap rather than standing in for a name.
     #
     # `staleTime: 5 * 60 * 1000, // 5 minutes` is the shape this rule is asking
-    # for — the arithmetic spells the unit out and the comment confirms it. So
+    # for: the arithmetic spells the unit out and the comment confirms it. So
     # is a digit inside a quoted string:
     # `"capi-ubun2-2404", // default` is a version, not a limit.
     suppress: '\b(const|final|static|let|var|#define)\s+[A-Z][A-Z0-9_]{2,}\s*[=:]|(^|\n)\s*[A-Z][A-Z0-9_]{2,}\s*[=:]|\d\s*\*\s*\d|["\x27][^"\x27]*\d[^"\x27]*["\x27]'
@@ -518,7 +518,7 @@
       #
       # Only the star form. `export { StatusBadge } from './StatusBadge'` names
       # what it forwards, so the graph is still readable and the importer still
-      # resolves one file — that shape is a directory's public surface, and a
+      # resolves one file: that shape is a directory's public surface, and a
       # components directory is entitled to one. `export *` is the form that
       # makes every importer transitively import every sibling.
       - '(^|\n)\s*export\s+\*\s+from\s'
@@ -532,13 +532,13 @@
     every importer now transitively imports every sibling.
   fix: >-
     Import from the module that defines the thing. Keep a barrel only where it
-    is a real public surface — a package entry point — and not as a convenience
+    is a real public surface (a package entry point) and not as a convenience
     over a handful of files in the same directory.
 
 # ---------------------------------------------------------------------------
 # The three tells that need a parse of the whole project rather than a pattern.
-# Each is produced by an analyser the project already carries — see
-# src/channels/tools.ts — and none of them runs unless that analyser is present.
+# Each is produced by an analyser the project already carries (see
+# src/channels/tools.ts), and none of them runs unless that analyser is present.
 # ---------------------------------------------------------------------------
 
 - id: copy-paste-duplication
@@ -555,13 +555,13 @@
   # The industry figures are deliberately not in `why`.
   #
   # `why` is printed directly under the finding, so a sentence about 623
-  # million changes across every codebase read as a claim about *this* one —
-  # the first person to see it asked whether redpen thought their repository
-  # had millions of commits and three years of history. The provenance line
+  # million changes across every codebase would read as a claim about *this*
+  # one, as if redpen thought the repository had millions of commits and three
+  # years of history. The provenance line
   # carries the study; the argument has to be about the code in front of you.
   why: >-
     A second copy is cheaper to write than a shared function is to find, and
-    the cost lands on whoever has to change both — usually months later,
+    the cost lands on whoever has to change both, usually months later,
     usually someone who does not know the other copy exists. It is the tell
     that best separates code that was generated from code that was maintained,
     because generating is cheap and consolidating never happens by itself.
@@ -583,8 +583,8 @@
   channels: [tools]
   why: >-
     A cycle means neither module can be understood, tested or loaded without
-    the other. Most are introduced by accident — a barrel file, or a type
-    pulled back across a boundary — and they surface as an undefined value at
+    the other. Most are introduced by accident (a barrel file, or a type
+    pulled back across a boundary), and they surface as an undefined value at
     import time, which is the hardest failure in the language to read.
   fix: >-
     Move what both need into a third module that depends on neither. Breaking

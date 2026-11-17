@@ -87,7 +87,7 @@
     It is the single most reproduced component in generated marketing pages.
   fix: >-
     Drop the tile. A bare icon at the same optical size, a number, or nothing at
-    all — the heading is doing the work anyway.
+    all. The heading is doing the work anyway.
 
 - id: broken-image
   kind: quality
@@ -185,9 +185,8 @@
   title: Artwork from the free illustration sets
   category: iconography
   severity: low
-  # Rank 11 in the study, at 0.2% of comments — the lowest band it measures.
-  # It shipped at 58, above the rank-1 tell, for the same reason: added from
-  # the prose without reading the ranking beside it.
+  # Rank 11 in the study, at 0.2% of comments, the lowest band it measures.
+  # The weight follows the rank, so it sits well below the rank-1 tell.
   weight: 52
   evidenceRank: 11
   sources:

@@ -7,7 +7,7 @@ import { buildBrief, readAnswers, MIN_CONFIDENCE } from '../dist/channels/vision
 import { rulesForChannel } from '../dist/corpus/load.js';
 
 /**
- * The vision channel takes no credentials and calls no API — whatever runs
+ * The vision channel takes no credentials and calls no API: whatever runs
  * redpen answers the questions itself. So what is tested here is the contract
  * on both sides of that handoff: the brief has to be answerable without
  * external docs, and the answer reader has to be strict enough that a
@@ -19,7 +19,7 @@ const shots = (n = 1) =>
 
 /**
  * Answers are keyed by an opaque question id, resolved through the brief's own
- * key — so a test writes both, exactly as a real brief does.
+ * key, so a test writes both, exactly as a real brief does.
  */
 function answerFile(rows) {
   const brief = buildBrief({ screenshots: shots() });
@@ -55,7 +55,7 @@ test('the brief pre-builds one answer row per page and question', () => {
 
 test('the brief leaks nothing that telegraphs the answer', () => {
   const brief = buildBrief({ screenshots: shots() });
-  // Rule ids state the expected answer — `no-focal-point`, `nothing-memorable`.
+  // Rule ids state the expected answer: `no-focal-point`, `nothing-memorable`.
   // A reader who sees them is being led, so questions carry opaque handles and
   // the mapping lives in `key`, which the answerer has no reason to open.
   for (const q of brief.questions) {
@@ -193,7 +193,7 @@ test('every vision rule asks a question whose yes-answer means the tell is prese
 
     // An either/or question breaks the contract: the reader answers "yes" and
     // the channel cannot tell which half they meant. The ambiguous shape is a
-    // second *clause* after "or" — "does X, or does Y". A plain list of ways
+    // second *clause* after "or": "does X, or does Y". A plain list of ways
     // the same tell can appear ("cut off, running under, or clipped") is fine,
     // and so is a "rather than" contrast, which names the tell first.
     const flat = ask.replace(/\s+/g, ' ');

@@ -4,7 +4,7 @@ import { renderTerminal } from '../dist/report/terminal.js';
 
 /**
  * The terminal report holds an 80-column right edge. Everything except a
- * finding's title line respects it — a title is a heading, and the 78-character
+ * finding's title line respects it: a title is a heading, and the 78-character
  * limit redpen enforces on the pages it scans is about running text, which a
  * single-line heading is not.
  *

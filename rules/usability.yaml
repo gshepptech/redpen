@@ -1,6 +1,6 @@
 # Usability rules, merged from the frontend-design-audit heuristic set.
 #
-# These never appear in the Reddit complaint data — nobody on Reddit says "this
+# These never appear in the Reddit complaint data; nobody on Reddit says "this
 # site lacks an undo affordance". They are here because a page can pass every
 # slop check and still be unusable, and because these are the findings that
 # survive contact with an actual user. Weights are assigned by consequence, not
@@ -20,8 +20,8 @@
   channels: [source]
   source:
     patterns:
-      # The inline handler is the tutorial shape. Real components extract it —
-      # `onSubmit={submit}` with `async function submit()` above — and the rule
+      # The inline handler is the tutorial shape. Real components extract it
+      # (`onSubmit={submit}` with `async function submit()` above), and the rule
       # could not see that at all, which is most React ever written.
       - 'onClick=\{[^}]*await\s'
       - 'onSubmit=\{[^}]*(fetch|axios|api)\.'
@@ -80,8 +80,8 @@
   source:
     patterns:
       # Not `remove`, `clear` or `reset`. Form builders use them for unsaved
-      # work — removeService in a deploy wizard, removeComponent on a chip in a
-      # draft, a Remove button beside a row being composed — and the rule is
+      # work (removeService in a deploy wizard, removeComponent on a chip in a
+      # draft, a Remove button beside a row being composed), and the rule is
       # about work that is saved.
       #
       # delete, destroy and wipe are what a codebase says when the data is real,
@@ -173,7 +173,7 @@
       - '[''"`](Something went wrong|An error occurred|An unexpected error|Invalid input|Operation failed|Request failed|Please try again|Try again later)[.!]?[''"`]'
       # The same phrase written as markup rather than as a string. The rule read
       # only quoted literals for its whole life, so `<p role="alert">Something
-      # went wrong.</p>` — the most ordinary way there is to render one — went
+      # went wrong.</p>`, the most ordinary way there is to render one, went
       # straight past it.
       - '>\s*(Something went wrong|An error occurred|An unexpected error|Invalid input|Operation failed|Request failed|Please try again|Try again later)[.!]?'
     caseSensitive: true
@@ -417,7 +417,7 @@
     iOS Safari zooms the entire page when a text field under 16px takes focus,
     and does not zoom back out when the field is blurred. The layout the author
     tested is not the layout the user ends up in, and nothing looks wrong until
-    someone taps a field — which is why this survives review and ships.
+    someone taps a field, which is why this survives review and ships.
 
     It is a separate rule from the general type floor on purpose: 14px is a
     perfectly good size for a label and a defect on an input, and one number
@@ -449,7 +449,7 @@
     edge to edge is the usual shape.
   fix: >-
     8px minimum between adjacent controls, measured between their boxes rather
-    than their icons. Padding inside a control does not count — the gap has to
+    than their icons. Padding inside a control does not count: the gap has to
     be outside it.
   legitimateWhen: >-
     Segmented controls and button groups are deliberately contiguous, because
@@ -472,7 +472,7 @@
   why: >-
     The control was sized for a shorter string than the one it holds. It reads
     as an accident rather than a decision, and it is the first thing a longer
-    translation breaks — German runs about a third longer than English, so a
+    translation breaks: German runs about a third longer than English, so a
     label that just fits in English does not.
   fix: >-
     Shorten the label or let the control size to its content. A fixed width on

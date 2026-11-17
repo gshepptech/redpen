@@ -78,7 +78,7 @@ Output, trimmed:
     choice. It also degrades legibility, because the contrast ratio varies
     across the word.
     fix Solid colour on every heading. If the hero needs more presence, get it
-        from scale, weight, or a drawn rule under the line — not from the fill.
+        from scale, weight, or a drawn rule under the line, not from the fill.
       style.css:32  -webkit-background-clip: text;
       style.css:33  background-clip: text;
       localhost:8765 section.hero > h1.hero__title @1440px  Supercharge your te…

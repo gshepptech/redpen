@@ -14,7 +14,7 @@ import { loadCorpus } from '../dist/corpus/load.js';
  * Three tells need a parse of the whole project rather than a pattern, and
  * each already has a tool that does it. What has to be true is that redpen
  * borrows those tools rather than installing them, and says so when they are
- * not there — because a missing analyser means a finding is absent, not that
+ * not there, because a missing analyser means a finding is absent, not that
  * the project is clean.
  */
 

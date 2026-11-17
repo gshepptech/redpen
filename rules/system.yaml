@@ -9,7 +9,7 @@
 # :root. A project that defines --color-* and then writes #7c3aed in a component
 # has drifted from its own system, and no external file is needed to prove it.
 #
-# Every rule here is silent on a project with no declared tokens — there is
+# Every rule here is silent on a project with no declared tokens: there is
 # nothing to drift from, and "you have no design system" is a different finding
 # that these rules would state badly.
 
@@ -30,11 +30,11 @@
       minDrift: 3
   why: >-
     The tokens exist and later components stopped using them. This is how a
-    generated page ends up with nineteen near-identical greys — each one written
+    generated page ends up with nineteen near-identical greys, each one written
     where it was needed rather than referenced.
   fix: >-
     Replace each literal with the token it is approximating. If a value is
-    genuinely new, add it to the token block first — the point is that the
+    genuinely new, add it to the token block first. The point is that the
     addition is a decision rather than a side effect.
 
 - id: radius-token-drift
@@ -53,7 +53,7 @@
       minTokens: 2
       minDrift: 3
   why: >-
-    A radius scale is information — small for controls, medium for cards, full
+    A radius scale is information: small for controls, medium for cards, full
     for avatars. Improvised values erase the distinction the scale was carrying.
   fix: >-
     Snap each value to a declared step. If none fits, the scale is missing a
@@ -122,7 +122,7 @@
   why: >-
     The base rule promises `min-height: 44px` and a more specific rule pins
     `height` below it. `height` beats `min-height` when it wins the cascade,
-    so the floor is silently void wherever the component rule applies — and
+    so the floor is silently void wherever the component rule applies, and
     because the two declarations usually sit hundreds of lines apart, the
     person reading either one sees nothing wrong.
 
@@ -134,10 +134,10 @@
   fix: >-
     Decide which rule owns the size. Either drop the `height` and let the
     floor stand, or if the component genuinely needs to be smaller, say so
-    where the floor is defined rather than overriding it from a distance —
+    where the floor is defined rather than overriding it from a distance:
     a `:where()` wrapper on the base rule drops its specificity to zero and
     makes the component rule's win explicit rather than accidental.
   legitimateWhen: >-
-    A control that is never a touch target — a dense data-grid affordance
-    shown only on hover, for instance — can legitimately sit below the floor.
+    A control that is never a touch target (a dense data-grid affordance
+    shown only on hover, for instance) can legitimately sit below the floor.
     Say so at the base rule, so the exception is visible where the promise is.

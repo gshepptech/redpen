@@ -6,9 +6,9 @@ import type { Surface } from '../types.js';
  * The idea redpen most needed: what the
  * visitor is doing on a page decides which rules are true there:
  *
- *   persuade — the visitor decides and acts. Landing, marketing, pricing.
- *   operate  — the visitor completes a task. App UI, dashboards, settings.
- *   read     — the visitor understands something. Docs, articles, changelogs.
+ *   persuade: the visitor decides and acts. Landing, marketing, pricing.
+ *   operate:  the visitor completes a task. App UI, dashboards, settings.
+ *   read:     the visitor understands something. Docs, articles, changelogs.
  *
  * On an operate surface, familiarity is a feature. A single type family, uniform
  * spacing, and identical repeating components are the correct answers there and
@@ -17,7 +17,7 @@ import type { Surface } from '../types.js';
  *
  * Detection is a heuristic and it says so: the result carries a confidence, and
  * a declared surface in .redpen/config.json always wins. When nothing is
- * declared and nothing is confident, every rule stays on — the safe failure is
+ * declared and nothing is confident, every rule stays on. The safe failure is
  * a false positive the reader can dismiss, not a silently skipped check.
  */
 
@@ -83,7 +83,7 @@ export function surfaceSource(): string {
       var kids = Array.prototype.slice.call(parent.children).filter(visible);
       if (kids.length < 3) return;
       // Actions only. Counting inputs and selects would make a form's field
-      // wrappers — one label and one input each — look exactly like record rows.
+      // wrappers (one label and one input each) look exactly like record rows.
       var ACTIONS = 'button, a[class], a[href], [role="button"]';
       var withControls = kids.filter(function (k) {
         if (!k.querySelector(ACTIONS)) return false;
@@ -93,7 +93,7 @@ export function surfaceSource(): string {
       if (withControls.length < 3) return;
 
       // Compare structure, not labels. Row actions legitimately differ by
-      // state — Start / Claim / Close — and matching on text would fail a real
+      // state (Start / Claim / Close), and matching on text would fail a real
       // list with per-row state while passing a uniform form.
       var sig = withControls.map(function (k) {
         return Array.prototype.slice.call(k.querySelectorAll(ACTIONS))
@@ -124,14 +124,14 @@ export function surfaceSource(): string {
   }).length;
 
   // Repeated structure with no controls at all. A read-only data list is still
-  // a task surface — controls are one way of showing repetition, not the
+  // a task surface; controls are one way of showing repetition, not the
   // definition of it. An 11-row queue view with zero buttons is an operate page.
   var repeatedShape = (function () {
     var best = 0;
     all('*').forEach(function (parent) {
       var kids = Array.prototype.slice.call(parent.children).filter(visible);
       if (kids.length < 4) return;
-      // Signature is the child's own tag skeleton — same shape repeated is the
+      // Signature is the child's own tag skeleton: same shape repeated is the
       // signal, whatever it contains.
       var sig = kids.map(function (k) {
         return Array.prototype.slice.call(k.children)
@@ -221,7 +221,7 @@ export function classify(s: SurfaceSignals): SurfaceVerdict {
   let persuade = 0;
   let read = 0;
 
-  // operate — controls, data, and a task chrome
+  // operate: controls, data, and a task chrome
   //
   // recordRows and a labelled form are the two shapes marketing pages never
   // have. They are weighted to win on their own, because a list of records or
@@ -248,12 +248,12 @@ export function classify(s: SurfaceSignals): SurfaceVerdict {
   if (s.authish > 0) { operate += 1; reasons.operate.push('account chrome'); }
   if (s.buttons >= 12) { operate += 1; reasons.operate.push(`${s.buttons} buttons`); }
 
-  // persuade — a hero, a pitch, and a call to action
+  // persuade: a hero, a pitch, and a call to action
   if (s.hero) { persuade += 2.5; reasons.persuade.push('full-height opener'); }
   if (s.pricing) { persuade += 2; reasons.persuade.push('pricing or signup language'); }
   if (s.testimonial > 0) { persuade += 1.5; reasons.persuade.push('testimonial'); }
   if (s.logoWall >= 3) { persuade += 1.5; reasons.persuade.push('logo wall'); }
-  // Only counts standalone calls to action — row actions are excluded above.
+  // Only counts standalone calls to action; row actions are excluded above.
   // A page with almost no content is not evidence of a landing page: an empty
   // list and a hero look alike.
   if (s.h1 === 1 && s.ctas >= 2 && s.prose < 2500 && s.recordRows < 3 && s.total > 600) {
@@ -261,7 +261,7 @@ export function classify(s: SurfaceSignals): SurfaceVerdict {
     reasons.persuade.push('single headline with repeated CTAs and little prose');
   }
 
-  // read — sustained prose with structure
+  // read: sustained prose with structure
   if (s.prose > 4000) { read += 3; reasons.read.push(`${Math.round(s.prose / 1000)}k characters of prose`); }
   else if (s.prose > 2000) { read += 1.5; reasons.read.push('substantial prose'); }
   if (s.article > 0) { read += 2; reasons.read.push('article or prose container'); }

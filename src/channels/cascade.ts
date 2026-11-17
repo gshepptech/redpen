@@ -13,8 +13,8 @@
  *   rule setting `min-height` at or above that floor, with nothing restoring
  *   it?
  *
- * Reporting the pair — `.qacts .btn { height: 32px }` (0,2,0) cancels
- * `.btn { min-height: 44px }` (0,1,0) — names the cause, which is the thing
+ * Reporting the pair (`.qacts .btn { height: 32px }` (0,2,0) cancels
+ * `.btn { min-height: 44px }` (0,1,0)) names the cause, which is the thing
  * the reader can act on.
  *
  * Soundness is the whole design constraint here. This does not implement a
@@ -22,8 +22,8 @@
  * the weak selector must be a single compound that appears whole inside the
  * strong selector's rightmost compound. `.btn` subsumes `.qacts .btn` because
  * anything matching the latter matches the former, by definition. Anything
- * needing real matching — a `:where()` wrapper, a parent restoring the value,
- * a utility class — is left alone rather than guessed at, because a cascade
+ * needing real matching (a `:where()` wrapper, a parent restoring the value,
+ * a utility class) is left alone rather than guessed at, because a cascade
  * false positive costs more than a missed pair: it sends someone hunting for
  * a bug that is not there.
  */
@@ -36,7 +36,7 @@ export interface CascadeConflict {
   /** 1-indexed line of the offending declaration. */
   line: number;
   /**
-   * Set when a conditional rule restores the floor for part of the space —
+   * Set when a conditional rule restores the floor for part of the space;
    * the finding still stands for everywhere that condition does not match.
    */
   restoredUnder?: string | null;
@@ -61,7 +61,7 @@ function blankComments(css: string): string {
  * CSS specificity as (ids, classes, elements).
  *
  * Pseudo-elements count as elements, `:not()`/`:is()`/`:has()` contribute
- * their most specific argument, and `:where()` contributes nothing — which is
+ * their most specific argument, and `:where()` contributes nothing, which is
  * exactly why `:where()` wrappers are excluded from the subsumption test.
  */
 export function specificity(selector: string): [number, number, number] {
@@ -157,7 +157,7 @@ function px(value: string): number | null {
 }
 
 /**
- * The winning value for a property in one block — which is the *last* one.
+ * The winning value for a property in one block, which is the *last* one.
  *
  * Taking the first would read `height: 32px; height: 48px` (the
  * fallback-then-real pattern) as a cancelled floor when 48px is what the
@@ -185,7 +185,7 @@ export function parse(css: string): RuleSet[] {
   /**
    * Index just past a quoted string starting at `from`.
    *
-   * Braces live inside strings — `content: "{"` is ordinary CSS — and counting
+   * Braces live inside strings (`content: "{"` is ordinary CSS), and counting
    * them would desynchronise the brace depth and drop every rule after it.
    */
   const skipString = (from: number): number => {
@@ -265,8 +265,8 @@ export interface CascadeOptions {
  * Find rules that pin a dimension below a floor another rule promised.
  *
  * Only `height` against `min-height` today, the case seen most in practice.
- * The shape generalises — a specific rule
- * opting out of a guarantee a base rule made — and `max-width`/`min-width`
+ * The shape generalises (a specific rule
+ * opting out of a guarantee a base rule made), and `max-width`/`min-width`
  * and `overflow` are the obvious next instances.
  */
 export function findCancelledFloors(css: string, opts: CascadeOptions = {}): CascadeConflict[] {

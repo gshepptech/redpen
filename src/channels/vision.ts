@@ -8,19 +8,19 @@ import type { RawFinding, Evidence } from '../types.js';
  *
  * Source reads text, render reads computed styles. Neither can answer "does the
  * hierarchy read in two seconds" or "is the highlight band sitting at the
- * baseline instead of the x-height" — those are judgements about the rendered
+ * baseline instead of the x-height". Those are judgements about the rendered
  * image, and hallmark's own gate for the second one literally instructs the
  * model to *imagine* the output.
  *
- * redpen does not call a model to answer them. Whatever is running redpen —
- * Claude Code, Cursor, a person — can already open a PNG, and it is a better
+ * redpen does not call a model to answer them. Whatever is running redpen
+ * (Claude Code, Cursor, a person) can already open a PNG, and it is a better
  * judge than any model redpen would pick on your behalf. So this channel emits
  * a brief (screenshots + questions) and consumes answers. No API key, no second
  * bill, no credential setup, and it works identically in every harness.
  *
  * Every question is phrased so "yes" means the tell is present, and every answer
  * carries a confidence so a hedge doesn't get promoted into a finding. A vision
- * hit never confirms a finding alone — it corroborates another channel, or
+ * hit never confirms a finding alone: it corroborates another channel, or
  * reports as `likely` on its own.
  */
 
@@ -29,7 +29,7 @@ export const MIN_CONFIDENCE = 0.7;
 
 export interface VisionQuestion {
   /**
-   * An opaque handle — q1, q2, … — deliberately not the rule id.
+   * An opaque handle (q1, q2, …), deliberately not the rule id.
    *
    * `no-focal-point` and `nothing-memorable` are not neutral labels: they state
    * the answer the author expects, and a reader who sees them is being led. The
@@ -52,15 +52,15 @@ export interface VisionContext {
 
 export interface VisionBrief {
   version: 2;
-  /** How to answer, in the file itself — the reader may not have the docs open. */
+  /** How to answer, in the file itself; the reader may not have the docs open. */
   instructions: string;
   /**
    * What a reader needs to judge the page without having seen the project.
    *
    * The point of this file is that it can be handed to someone who was not
    * there. Half these questions are unanswerable without knowing what the thing
-   * is — "could this hold a different product's content" means nothing if you
-   * do not know what this product's content is — and the person who built the
+   * is ("could this hold a different product's content" means nothing if you
+   * do not know what this product's content is), and the person who built the
    * page is the worst possible judge of them, because they cannot unsee it.
    */
   context: VisionContext;
@@ -106,7 +106,7 @@ const INSTRUCTIONS = [
 export interface BriefOptions {
   /** url -> screenshot path, from the render channel. */
   screenshots: Map<string, string>;
-  /** Rules two channels already agree on — no point asking about them. */
+  /** Rules two channels already agree on; no point asking about them. */
   alreadyConfirmed?: Set<string>;
   /** url -> detected or declared surface, for the context block. */
   surfaces?: Record<string, { surface: string }>;
@@ -210,7 +210,7 @@ export interface AnswerResult {
    * Questions answered "no, I looked, it is not there" with confidence.
    *
    * These matter as much as the yeses. Without them a fully answered pass is
-   * indistinguishable from one where nobody opened a screenshot — which undoes
+   * indistinguishable from one where nobody opened a screenshot, which undoes
    * the whole reason redpen refuses to let a channel fail silently.
    */
   cleared: number;

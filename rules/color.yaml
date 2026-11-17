@@ -70,7 +70,7 @@
     across the word.
   fix: >-
     Solid colour on every heading. If the hero needs more presence, get it from
-    scale, weight, or a drawn rule under the line — not from the fill.
+    scale, weight, or a drawn rule under the line, not from the fill.
 
 - id: purple-blue-gradient
   kind: slop
@@ -129,10 +129,10 @@
   why: >-
     The second-generation default. Warm cream ground plus a high-contrast serif
     display face was the escape route from AI purple, which made it the new
-    tell — recognisable precisely because it is now everywhere.
+    tell, recognisable precisely because it is now everywhere.
   fix: >-
     Keep it only if the brand already lived there. Otherwise move the ground off
-    the 60-110 hue band or pair the serif with a ground that isn't cream — the
+    the 60-110 hue band or pair the serif with a ground that isn't cream; the
     combination is the tell, not either half alone.
 
 - id: pure-black-white
@@ -184,7 +184,7 @@
     carry colour. It is the palette equivalent of unstyled text.
   fix: >-
     Rebuild the neutral ramp in OKLCH with chroma between 0.005 and 0.02, hue
-    locked to the anchor. Note the floor is measured in OKLCH, not RGB spread —
+    locked to the anchor. Note the floor is measured in OKLCH, not RGB spread:
     a warm grey with 2% channel spread can still sit under 0.005 chroma, so
     check the number rather than the intent. The evidence line reports the
     measured value for each colour.
@@ -303,7 +303,7 @@
     that this tell scored far lower in real complaint data than in design
     Twitter, so treat it as polish, not as a blocker.
   fix: >-
-    Remove it, or commit to it — one bloom, one hue, fixed attachment, no
+    Remove it, or commit to it: one bloom, one hue, fixed attachment, no
     animation, and let it carry the composition instead of hiding in the corner.
 
 - id: design-system-color

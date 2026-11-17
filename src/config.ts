@@ -8,14 +8,14 @@ import type { Category, Confidence, Surface } from './types.js';
  *
  * The baseline is what makes `redpen check` a regression gate rather than a
  * grader. A codebase that starts at 46 should not have to reach 90 before CI
- * goes green — it has to stop getting worse.
+ * goes green; it has to stop getting worse.
  */
 
 export interface RedpenConfig {
   urls: string[];
   /**
    * What the visitor is doing here: persuade | operate | read. A declared
-   * surface always beats detection, and detection is a heuristic — so on a
+   * surface always beats detection, and detection is a heuristic, so on a
    * project whose pages are all one kind, declaring it once is the single
    * highest-value line in this file.
    *
@@ -38,13 +38,13 @@ export interface RedpenConfig {
   /**
    * Rule ids suppressed project-wide. A bare string is the reason; the object
    * form scopes the suppression to elements matching a selector, which is the
-   * only way to excuse a render finding on one component — those have no source
+   * only way to excuse a render finding on one component, since those have no source
    * line to annotate with a comment.
    */
   ignore: Record<string, string | IgnoreRule>;
   /**
    * What this project is able to do. A rule whose fix requires a capability the
-   * project does not have is not a finding — it is a standing complaint the
+   * project does not have is not a finding; it is a standing complaint the
    * reader can never act on: a deliberately no-JavaScript dashboard cannot add
    * inline validation, an unsaved-changes warning or autosave.
    */
@@ -52,14 +52,14 @@ export interface RedpenConfig {
   /**
    * What this project is, for the vision brief.
    *
-   * Several composition questions cannot be answered fairly without it — "could
+   * Several composition questions cannot be answered fairly without it ("could
    * this page hold a different product's content" is meaningless if you do not
    * know what this product's content is. The brief is meant to be handed to
    * someone who was not there, and this is what makes that possible.
    */
   product: Product;
   /**
-   * Path to a Playwright storage state — the cookie jar `redpen login` writes.
+   * Path to a Playwright storage state: the cookie jar `redpen login` writes.
    *
    * Relative to the project root. Null means every scan is anonymous, which on
    * an app that requires a session means the render channel reads the login
@@ -121,7 +121,7 @@ const BASELINE_FILE = 'baseline.json';
  * Two things bound the walk. A dot-directory such as `~/.claude` can hold a
  * package.json and so look like a project by the marker rule, five levels
  * above the scanned path. So: never a home directory or anything above one,
- * and never a dot-directory — `.claude`, `.config`, `.cache` are not projects
+ * and never a dot-directory: `.claude`, `.config`, `.cache` are not projects
  * you scan. Failing both, the state goes
  * beside what was scanned, which is always defensible even when it is not
  * tidy.

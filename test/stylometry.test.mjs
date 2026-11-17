@@ -74,7 +74,7 @@ test('markdown furniture is not prose', () => {
 
 test('the rule reports as advisory and never as a score', () => {
   // This is the class of check with the worst false-positive record in the
-  // literature — independent audits put commercial detectors above 60% on
+  // literature: independent audits put commercial detectors above 60% on
   // non-native English writers. It corroborates; it never convicts.
   const rule = loadCorpus().find((r) => r.id === 'uniform-sentence-length');
   assert.ok(rule, 'the rule exists');
@@ -92,7 +92,7 @@ test('the threshold is recorded with the measurement behind it', () => {
 test('type-token ratio is computable and deliberately unused', () => {
   // Kept as a function because the measurement is the evidence for not shipping
   // a rule: across the same 1,113 documents the machine-written ones scored
-  // 0.58-0.63 against a population median of 0.645 — inside the ordinary range,
+  // 0.58-0.63 against a population median of 0.645, inside the ordinary range,
   // overlapping it on both sides.
   const t = typeTokenRatio(varied + ' ' + uniform);
   assert.ok(t === null || (t > 0 && t <= 1), 'it computes a ratio');

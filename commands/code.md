@@ -17,8 +17,8 @@ else                                         run() { redpen "$@"; }
 fi
 ```
 
-If neither resolves, the plugin is not installed and `redpen` is not on PATH —
-say so rather than guessing. **Never `npx redpen`**: that name belongs to an
+If neither resolves, the plugin is not installed and `redpen` is not on PATH.
+Say so rather than guessing. **Never `npx redpen`**: that name belongs to an
 unrelated package.
 
 ```bash
@@ -31,23 +31,23 @@ run --help    # confirm the binary resolved before doing anything else
 
 This is a different question from `/redpen:audit`. That one reads the page a
 project serves; this one reads the source it is written in, and the two never
-mix — a code scan returns no UI findings and a UI scan returns no code ones,
+mix: a code scan returns no UI findings and a UI scan returns no code ones,
 because averaging them into a single number answers neither.
 
 Two categories:
 
-- **craft** — code that reads as machine-written. Comments addressed to the
+- **craft**: code that reads as machine-written. Comments addressed to the
   reviewer rather than the reader, docstrings that read the signature back,
   stubs shipped in the live path, a catch that hides what it caught, marketing
   adjectives and tutorial names in identifiers, several modules named after
   nothing.
-- **residue** — what the process that built it left behind. Phase and task ids,
+- **residue**: what the process that built it left behind. Phase and task ids,
   the tool named as an author, half a conversation committed, pointers to plan
   files that were deleted after the run that wrote them.
 
 No browser is involved and none is needed. Most rules here read the source
 directly; three need a parse of the whole project and come from analysers the
-project already carries — `jscpd` for blocks repeated instead of shared,
+project already carries: `jscpd` for blocks repeated instead of shared,
 `madge` for modules that import each other, `knip` for exports nothing imports.
 redpen installs none of them. If they are absent the run says so, and those
 three findings are *absent* rather than clean:
@@ -80,7 +80,7 @@ Things that have already been wrong, and will be again:
 
 So: if the code disagrees with the finding, the finding is wrong. Say so plainly
 rather than editing around it, and offer `redpen-ignore: <reason>` on the line
-if the shape is deliberate — an ignore with a reason is a decision on record.
+if the shape is deliberate; an ignore with a reason is a decision on record.
 
 ## Fixing
 
