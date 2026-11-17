@@ -8209,46 +8209,7 @@ function dedupe(evidence) {
   return out;
 }
 
-// src/channels/detectors.ts
-function detectorSource() {
-  return `(specs) => {
-${OKLCH_LIB}
-${CONTRAST_LIB}
-${HELPERS_LIB}
-${CHECKS_LIB}
-
-  const hits = [];
-  const byCheck = {};
-  for (const spec of specs) {
-    (byCheck[spec.check] = byCheck[spec.check] || []).push(spec);
-  }
-
-  for (const name in byCheck) {
-    const fn = CHECKS[name];
-    if (!fn) continue;
-    for (const spec of byCheck[name]) {
-      let found = [];
-      try {
-        found = fn(spec.params || {}) || [];
-      } catch (err) {
-        // A detector that throws must not take the whole run with it. Report
-        // the failure as a hit against a reserved id so it is visible.
-        hits.push({
-          ruleId: '__detector_error__',
-          selector: name,
-          excerpt: String((err && err.message) || err).slice(0, 160),
-        });
-        continue;
-      }
-      if (found.length < (spec.minHits || 1)) continue;
-      for (const f of found.slice(0, 12)) {
-        hits.push({ ruleId: spec.ruleId, selector: f.selector, excerpt: f.excerpt });
-      }
-    }
-  }
-  return hits;
-}`;
-}
+// src/channels/detectors/lib.ts
 var OKLCH_LIB = `
   function parseColor(str) {
     if (!str) return null;
@@ -8510,9 +8471,9 @@ var HELPERS_LIB = `
     return Math.sqrt(variance) / mean;
   }
 `;
-var CHECKS_LIB = `
-  var CHECKS = {};
 
+// src/channels/detectors/color.ts
+var COLOR_CHECKS = `
   CHECKS['hue-band-share'] = function (p) {
     var range = p.hueRange || [265, 305];
     var minChroma = p.minChroma || 0.1;
@@ -8712,7 +8673,10 @@ var CHECKS_LIB = `
     if (keys.length <= (p.maxDistinctColors || 14)) return [];
     return [hit(document.body, keys.length + ' distinct colours in use (ceiling ' + (p.maxDistinctColors || 14) + ')')];
   };
+`;
 
+// src/channels/detectors/typography.ts
+var TYPOGRAPHY_CHECKS = `
   CHECKS['single-family-default'] = function (p) {
     var defaults = (p.defaults || []).map(function (d) { return d.toLowerCase(); });
     var families = {};
@@ -8967,7 +8931,10 @@ var CHECKS_LIB = `
     if (withEyebrow.length < (p.minSections || 3)) return [];
     return withEyebrow.map(function (el) { return hit(el, 'eyebrow: "' + textOf(el.querySelector('p, span, div')) + '"'); });
   };
+`;
 
+// src/channels/detectors/layout.ts
+var LAYOUT_CHECKS = `
   CHECKS['icon-above-heading-triptych'] = function (p) {
     var grids = all('*').filter(function (el) {
       var s = getComputedStyle(el);
@@ -9396,7 +9363,10 @@ var CHECKS_LIB = `
       return area(el) / total >= (p.minAreaShare || 0.3);
     }).map(function (el) { return hit(el, getComputedStyle(el).backgroundImage.slice(0, 120)); });
   };
+`;
 
+// src/channels/detectors/motion.ts
+var MOTION_CHECKS = `
   CHECKS['uniform-entrance-animation'] = function (p) {
     var sections = topLevelSections();
     var animated = sections.filter(function (s) {
@@ -9528,7 +9498,10 @@ var CHECKS_LIB = `
     }
     return out;
   };
+`;
 
+// src/channels/detectors/depth.ts
+var DEPTH_CHECKS = `
   CHECKS['radius-uniformity'] = function (p) {
     var radii = {};
     all('*').forEach(function (el) {
@@ -9732,7 +9705,10 @@ var CHECKS_LIB = `
       .filter(function (img) { return !img.hasAttribute('alt'); })
       .map(function (img) { return hit(img, 'no alt attribute: ' + img.getAttribute('src')); });
   };
+`;
 
+// src/channels/detectors/interaction.ts
+var INTERACTION_CHECKS = `
   CHECKS['duplicate-cta-label'] = function (p) {
     var counts = {};
     all('a, button').forEach(function (el) {
@@ -9860,8 +9836,10 @@ var CHECKS_LIB = `
       return channels < min;
     }).map(function (el) { return hit(el, 'disabled signalled through too few channels'); });
   };
+`;
 
-
+// src/channels/detectors/chrome.ts
+var CHROME_CHECKS = `
   /* ---- browser surfaces -------------------------------------------------
    * The parts nobody drew still carry the design. Selection, caret, scrollbar,
    * focus ring, underline offset and tabular numerals all ship with browser
@@ -9985,7 +9963,10 @@ var CHECKS_LIB = `
     });
     return out;
   };
+`;
 
+// src/channels/detectors/tokens.ts
+var TOKEN_CHECKS = `
   /* ---- token drift ------------------------------------------------------
    * the prior art checks literal values against a declared DESIGN.md. redpen
    * reads the declaration the project already has: the custom properties on
@@ -10126,7 +10107,10 @@ var CHECKS_LIB = `
     return [hit(document.body,
       'face(s) not in the declared type system: ' + off.slice(0, 4).join(', '))];
   };
+`;
 
+// src/channels/detectors/catalogue.ts
+var CATALOGUE_CHECKS = `
   // ---- the tells the upstream catalogues name above their fortieth gate ----
   // Cited densely up to gate 40 and not at all above it, which is where the
   // most specific and most recent ones live.
@@ -10357,7 +10341,10 @@ var CHECKS_LIB = `
     });
     return out;
   };
+`;
 
+// src/channels/detectors/wcag.ts
+var WCAG_CHECKS = `
   // ---- WCAG criteria the corpus had no rule for ----
 
   function accessibleName(el) {
@@ -10515,6 +10502,57 @@ var CHECKS_LIB = `
     return errs.slice(0, 8).map(function (e) { return { selector: 'window', excerpt: e }; });
   };
 `;
+
+// src/channels/detectors.ts
+function detectorSource() {
+  return `(specs) => {
+${OKLCH_LIB}
+${CONTRAST_LIB}
+${HELPERS_LIB}
+  var CHECKS = {};
+${COLOR_CHECKS}
+${TYPOGRAPHY_CHECKS}
+${LAYOUT_CHECKS}
+${MOTION_CHECKS}
+${DEPTH_CHECKS}
+${INTERACTION_CHECKS}
+${CHROME_CHECKS}
+${TOKEN_CHECKS}
+${CATALOGUE_CHECKS}
+${WCAG_CHECKS}
+
+  const hits = [];
+  const byCheck = {};
+  for (const spec of specs) {
+    (byCheck[spec.check] = byCheck[spec.check] || []).push(spec);
+  }
+
+  for (const name in byCheck) {
+    const fn = CHECKS[name];
+    if (!fn) continue;
+    for (const spec of byCheck[name]) {
+      let found = [];
+      try {
+        found = fn(spec.params || {}) || [];
+      } catch (err) {
+        // A detector that throws must not take the whole run with it. Report
+        // the failure as a hit against a reserved id so it is visible.
+        hits.push({
+          ruleId: '__detector_error__',
+          selector: name,
+          excerpt: String((err && err.message) || err).slice(0, 160),
+        });
+        continue;
+      }
+      if (found.length < (spec.minHits || 1)) continue;
+      for (const f of found.slice(0, 12)) {
+        hits.push({ ruleId: spec.ruleId, selector: f.selector, excerpt: f.excerpt });
+      }
+    }
+  }
+  return hits;
+}`;
+}
 
 // src/fingerprint/extract.ts
 function fingerprintSource() {
