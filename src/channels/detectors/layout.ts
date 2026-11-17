@@ -158,7 +158,7 @@ export const LAYOUT_CHECKS = `
       if (r.right <= vw + 1 && r.left >= -1) return false;
 
       // A wide table inside its own overflow-x: auto wrapper is the correct
-      // pattern, not a defect — measuring it against the viewport rather than
+      // pattern, not a defect; measuring it against the viewport rather than
       // against its scroll parent manufactures a finding.
       for (var p = el.parentElement; p && p !== document.documentElement; p = p.parentElement) {
         var ps = getComputedStyle(p);
@@ -310,7 +310,7 @@ export const LAYOUT_CHECKS = `
       if (!isTextBearing(el)) return false;
       // A visually-hidden label is clipped on purpose.
       if (isVisuallyHidden(el)) return false;
-      // A textarea scrolls by contract — scrollHeight > clientHeight is its
+      // A textarea scrolls by contract: scrollHeight > clientHeight is its
       // resting state, not clipped content. Same for a multi-row select.
       var tag = el.tagName;
       if (tag === 'TEXTAREA' || tag === 'SELECT') return false;
@@ -340,7 +340,7 @@ export const LAYOUT_CHECKS = `
       var r = el.getBoundingClientRect();
       if (r.height === 0) return false;
 
-      // Off-canvas by design — skip links, focus-revealed controls. Their
+      // Off-canvas by design: skip links, focus-revealed controls. Their
       // resting geometry is not what the user ever touches.
       if (r.right < 0 || r.left > window.innerWidth) return false;
 

@@ -19,7 +19,7 @@ import type { ScanResult, RawFinding, Channel, Finding, Surface, Category } from
  * The orchestrator. Runs every available channel, promotes, scores.
  *
  * Channel failures degrade the *confidence* of the result rather than being
- * swallowed — `channelsRun` is part of the output precisely so a caller can
+ * swallowed: `channelsRun` is part of the output precisely so a caller can
  * never mistake "we did not look" for "there was nothing there".
  */
 
@@ -511,7 +511,7 @@ export async function runScan(opts: ScanOptions): Promise<ScanResult & {
   // score. A source-only guess should never cost a project points.
   const scored = inScope.filter((f) => meetsThreshold(f, config.minConfidence));
 
-  // Advisory findings are reported and never scored — for tells humans use
+  // Advisory findings are reported and never scored, for tells humans use
   // legitimately often enough that counting them would be noise, not signal.
   const advisory = inScope.filter((f) => f.advisory);
 

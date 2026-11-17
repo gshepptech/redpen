@@ -6,7 +6,7 @@ import { dirname } from 'node:path';
  *
  * Every attempt to automate this generically fails on the second app. Login
  * pages live at different urls, want different fields, and are frequently not
- * forms at all — an OAuth hop to a provider, a magic link in an inbox, SSO
+ * forms at all: an OAuth hop to a provider, a magic link in an inbox, SSO
  * through a corporate IdP, a TOTP prompt, a "check your phone" tap. A config
  * schema that covered them would be a browser automation language, and redpen
  * would then own every app's login flow forever.
@@ -95,18 +95,18 @@ export async function captureLogin(
 /**
  * The same cookie jar, captured without a person in the room.
  *
- * `captureLogin` above is the honest general answer and it cannot run in CI —
+ * `captureLogin` above is the honest general answer and it cannot run in CI,
  * which is where `redpen check` lives, so the gate could never cover a route
  * behind a session. This is the narrow answer: one shape of login, a form with
  * a username field, a password field and a submit, filled from the environment.
  *
  * It deliberately covers nothing else. OAuth hops, magic links, SSO redirects
  * and second factors are still `redpen login`'s headed flow, and this throws
- * rather than pretending. The narrowness is the point — every generic version
+ * rather than pretending. The narrowness is the point: every generic version
  * of this becomes a browser automation language redpen then owns forever.
  *
- * `expect` is not a convenience. A failed login still sets cookies — a CSRF
- * token, an anonymous session id — so the empty-jar check that guards the
+ * `expect` is not a convenience. A failed login still sets cookies (a CSRF
+ * token, an anonymous session id), so the empty-jar check that guards the
  * headed flow passes happily on a rejected password, and the saved file would
  * then scan every authenticated route as a login page. The only thing that
  * distinguishes a real session from a refused one is something on the page
@@ -172,7 +172,7 @@ export async function captureLoginHeadless(
 
     // Nothing below ever puts a credential in a message. Playwright's own
     // errors name the selector, not the value, and the failure path reports
-    // the url and the title only — a login form that echoes what you typed
+    // the url and the title only. A login form that echoes what you typed
     // would otherwise put the account into a CI log.
     await page.fill(login.userSelector, login.user, { timeout: login.timeoutMs });
     await page.fill(login.passwordSelector, login.password, { timeout: login.timeoutMs });

@@ -50,7 +50,7 @@ export function score(findings: Finding[]): number {
  * Score one kind on its own.
  *
  * "Does it look machine-made" and "is it broken" are different questions, and a
- * single number answers neither — a page can be immaculate taste over a broken
+ * single number answers neither: a page can be immaculate taste over a broken
  * form, or flawless mechanics wearing every default in the corpus. Advisory
  * findings are excluded from every score by definition.
  */

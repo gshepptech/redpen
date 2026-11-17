@@ -77,8 +77,8 @@ test('a face the page loads is declared, however the framework declared it', asy
 });
 
 test('background texture is not an assembled illustration', async () => {
-  // A full-bleed topographic wash — pointer-events:none, fixed, behind the
-  // content — is background texture, not an assembled illustration.
+  // A full-bleed topographic wash (pointer-events:none, fixed, behind the
+  // content) is background texture, not an assembled illustration.
   const { detectorSource } = await import('../dist/channels/detectors.js');
   const src = detectorSource();
   const check = src.slice(src.indexOf("CHECKS['primitive-shape-cluster']"));

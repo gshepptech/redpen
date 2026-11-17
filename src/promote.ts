@@ -8,11 +8,11 @@ import type { RawFinding, Finding, Confidence, Channel, Rule } from './types.js'
  * louder. Concatenating four catalogues doubles the rules and doubles the false
  * positives; the fix is to require agreement.
  *
- *   confirmed — two or more channels saw it independently, or the only channel
+ *   confirmed:  two or more channels saw it independently, or the only channel
  *               that *can* see it saw it and that channel is authoritative
- *   likely    — one channel of several possible saw it, and it is a channel
+ *   likely:     one channel of several possible saw it, and it is a channel
  *               that reads real state rather than text
- *   possible  — source-only hit on a rule the render channel could also have
+ *   possible:   source-only hit on a rule the render channel could also have
  *               caught, meaning the render pass disagreed or never ran
  *
  * The asymmetry matters. A source-only hit for `gradient-text` is weak, because
@@ -38,7 +38,7 @@ function confidenceFor(rule: Rule, observed: Set<Channel>): Confidence {
   }
 
   if (AUTHORITATIVE.has(only)) {
-    // Render found it and source could not have — computed styles, geometry,
+    // Render found it and source could not have: computed styles, geometry,
     // contrast. Nothing is disagreeing.
     if (!possible.has('source')) return 'confirmed';
     return 'likely';
@@ -86,7 +86,7 @@ export function promote(raw: RawFinding[], opts: PromoteOptions): {
   const unknownRules: string[] = [];
 
   for (const f of raw) {
-    // A rule that does not hold on this surface never becomes a finding — it is
+    // A rule that does not hold on this surface never becomes a finding; it is
     // not a low-confidence finding, it is not a finding at all.
     if (opts.offSurface?.has(f.ruleId)) continue;
     if (!ruleById(f.ruleId)) {
@@ -162,7 +162,7 @@ const CONFIDENCE_ORDER: Record<Confidence, number> = {
 
 /**
  * Order by confidence first, then by measured weight. Deliberately *not* by
- * severity — severity is one catalogue author's opinion, weight is how often
+ * severity. Severity is one catalogue author's opinion, weight is how often
  * humans actually name the tell.
  */
 function rank(a: Finding, b: Finding): number {

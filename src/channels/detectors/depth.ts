@@ -69,7 +69,7 @@ export const DEPTH_CHECKS = `
       if (cards.length < (p.minCards || 3)) return;
 
       // Only judge things drawn as cards. An <ol> of numbered steps is a
-      // sequence — items of similar length there are a sign of good editing,
+      // sequence, where items of similar length there are a sign of good editing,
       // not of content written to fill a component.
       var cardish = cards.filter(function (c) {
         var cs = getComputedStyle(c);
@@ -80,7 +80,7 @@ export const DEPTH_CHECKS = `
       });
       if (cardish.length < cards.length) return;
 
-      // Full text length, not the truncated excerpt — textOf caps at 80 chars,
+      // Full text length, not the truncated excerpt: textOf caps at 80 chars,
       // which made every card of any real length look identical.
       var lengths = cards.map(function (c) {
         return (c.textContent || '').replace(/\\s+/g, ' ').trim().length;
@@ -126,7 +126,7 @@ export const DEPTH_CHECKS = `
     var widths = {};
     all('svg').forEach(function (svg) {
       // A filled mark draws no stroke, so its *computed* stroke-width is the
-      // SVG initial value of 1 — a number nobody authored. Counting it made a
+      // SVG initial value of 1, a number nobody authored. Counting it made a
       // brand mark beside stroked nav icons read as two icon libraries, which
       // is a normal and deliberate pairing.
       var parts = Array.prototype.slice.call(svg.querySelectorAll('*'));

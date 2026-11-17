@@ -16,7 +16,7 @@ import { fileURLToPath } from 'node:url';
  *
  * A developer machine with `redpen` linked into the working tree would answer
  * for the package. So this test exports a clean tree out of git and runs with
- * PATH stripped to /usr/bin:/bin — nothing of the developer's setup survives
+ * PATH stripped to /usr/bin:/bin, so nothing of the developer's setup survives
  * that.
  */
 
@@ -24,7 +24,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 /**
  * Exactly the block every command file tells the agent to run, read out of a
- * command file rather than copied — a preamble that drifts from the one under
+ * command file rather than copied: a preamble that drifts from the one under
  * test is a test of nothing.
  */
 function commandPreamble() {
@@ -63,7 +63,7 @@ test('a plugin install carries the binary it tells people to run', () => {
 test('the commands run with nothing of the developer on PATH', () => {
   const dir = freshInstall();
   try {
-    // node has to be reachable — every Claude Code user has it — but the
+    // node has to be reachable (every Claude Code user has it), but the
     // directory it lives in may also hold a `redpen` linked into this working
     // tree, which would mask the failure. So node gets its own bin directory
     // and nothing else comes with it.
@@ -103,7 +103,7 @@ test('the committed build is the build the source produces', () => {
 
 test('no command file tells anyone to run a path that may not be there', () => {
   // Every command file carries the same preamble, and a file can carry a
-  // second block pointing straight at dist/cli.js — a path a plugin install
+  // second block pointing straight at dist/cli.js, a path a plugin install
   // does not have. Every block, not the first.
   const commands = execFileSync('ls', [join(ROOT, 'commands')], { encoding: 'utf8' })
     .split('\n')
@@ -130,7 +130,7 @@ test('the version is answered, and answered from every install shape', () => {
   // wrong and they want to know which build produced it.
   //
   // It is read from package.json by walking up, not from a constant, because a
-  // constant drifts from what npm and the plugin manifest publish — and
+  // constant drifts from what npm and the plugin manifest publish, and
   // because dist/, bundle/ and a global install sit at three different depths.
   const expected = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')).version;
 

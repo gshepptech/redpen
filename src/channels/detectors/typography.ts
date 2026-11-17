@@ -139,7 +139,7 @@ export const TYPOGRAPHY_CHECKS = `
       var lh = s.lineHeight === 'normal' ? size * 1.2 : parseFloat(s.lineHeight);
       if (!size || !lh) return false;
 
-      // A heading is display type at any size — tight leading is correct there,
+      // A heading is display type at any size; tight leading is correct there,
       // and judging a 22px h2 by the body rule flags good typography as bad.
       var isHeading = /^H[1-6]$/.test(el.tagName);
       var ratio = lh / size;
@@ -168,7 +168,7 @@ export const TYPOGRAPHY_CHECKS = `
       // A short, sentence-less label is chrome. Prose has sentences.
       if (t.length <= 24 && !/[.!?]\\s/.test(t)) return true;
       // Nothing without a space in it is prose. A file path, a url, a hash or
-      // an id is chrome at any length — a 68-character temp path in a menu was
+      // an id is chrome at any length. A 68-character temp path in a menu was
       // being held to the 14px prose floor with no way to satisfy the rule.
       if (!/\\s/.test(t)) return true;
       // Monospace is how a page says "this is an identifier, not sentences".

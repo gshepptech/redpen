@@ -20,7 +20,7 @@ export const CATALOGUE_CHECKS = `
       if (s.display.indexOf('grid') === -1) return;
       if (el.scrollWidth <= el.clientWidth + 1) return;
       var imgs = Array.prototype.slice.call(el.querySelectorAll('img, picture img, video')).filter(function (im) {
-        // Not "rendered smaller than natural" — when the track cannot shrink the
+        // Not "rendered smaller than natural": when the track cannot shrink the
         // image is rendered AT its natural width, which is the defect. What
         // matters is that its own width is what the grid cannot fit.
         var natural = im.naturalWidth || im.videoWidth || 0;
@@ -171,7 +171,7 @@ export const CATALOGUE_CHECKS = `
 
   CHECKS['nav-fingerprint'] = function () {
     // The banner is the element carrying the rule and the width, which is not
-    // always the <nav> — a header with a nav inside it wears both, and reading
+    // always the <nav>. A header with a nav inside it wears both, and reading
     // the inner one finds a flex row with no border and no width.
     var banner = document.querySelector('header[role="banner"], body > header, header') ||
                  document.querySelector('body > nav, nav');

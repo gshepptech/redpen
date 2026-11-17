@@ -37,7 +37,7 @@ export type Category =
   | 'craft'
   /**
    * What the process that built it left behind: phase ids, task-file
-   * references, agent attribution. Nothing about the software — everything
+   * references, agent attribution. Nothing about the software; everything
    * about how it got written, still visible to whoever reads it next.
    */
   | 'residue';
@@ -53,7 +53,7 @@ export const CODE_CATEGORIES: ReadonlySet<string> = new Set<Category>(['craft', 
 export type Channel = 'source' | 'render' | 'vision' | 'fingerprint' | 'tools';
 
 /**
- * What kind of failure a rule describes — the most useful single distinction
+ * What kind of failure a rule describes: the most useful single distinction
  * in the corpus: "this looks machine-made" and "this
  * is broken" are different questions with different urgency, and collapsing
  * them into one score answers neither.
@@ -66,9 +66,9 @@ export type Kind = 'slop' | 'quality';
  * landing page, so a rule set that fires identically on both is wrong half the
  * time.
  *
- *   persuade — the visitor decides and acts. Landing, marketing, pricing.
- *   operate  — the visitor completes a task. App UI, dashboards, settings.
- *   read     — the visitor understands something. Docs, articles, changelogs.
+ *   persuade: the visitor decides and acts. Landing, marketing, pricing.
+ *   operate:  the visitor completes a task. App UI, dashboards, settings.
+ *   read:     the visitor understands something. Docs, articles, changelogs.
  */
 export type Surface = 'persuade' | 'operate' | 'read';
 
@@ -80,7 +80,7 @@ export type Confidence = 'confirmed' | 'likely' | 'possible';
 
 /**
  * Provenance for a merged rule. Keeping this per-rule is what lets `redpen why`
- * answer "who says so" — and what keeps the NOTICE file honest.
+ * answer "who says so", and what keeps the NOTICE file honest.
  *
  * `origin` records what *kind* of authority stands behind the rule, which is
  * the part a reader can act on: a rule backed by a measured study is a
@@ -89,10 +89,10 @@ export type Confidence = 'confirmed' | 'likely' | 'possible';
  */
 export interface Provenance {
   /**
-   * catalogue  — a curated list of design tells
-   * study      — the Reddit comment tabulation behind `evidenceRank`
-   * heuristics — the usability/a11y heuristic tradition
-   * redpen     — named here first
+   * catalogue:  a curated list of design tells
+   * study:      the Reddit comment tabulation behind `evidenceRank`
+   * heuristics: the usability/a11y heuristic tradition
+   * redpen:     named here first
    */
   origin: 'catalogue' | 'study' | 'heuristics' | 'redpen';
   /** The upstream identifier, verbatim where one exists. */
@@ -153,7 +153,7 @@ export interface SourceMatcher {
   extensions?: string[];
   /**
    * Minimum distinct lines that must match before the rule reports. Tells like
-   * "rounded corners everywhere" are only tells in aggregate — one pill button
+   * "rounded corners everywhere" are only tells in aggregate: one pill button
    * is a decision, thirty is a default.
    */
   minHits?: number;
@@ -162,7 +162,7 @@ export interface SourceMatcher {
 /**
  * Render-channel matcher. `check` names a detector implemented in
  * src/channels/detectors.ts and runs against computed styles in a real browser,
- * so it sees the same page a person does — including anything a build step,
+ * so it sees the same page a person does, including anything a build step,
  * a CSS-in-JS runtime, or a fetch produced after hydration.
  */
 export interface RenderMatcher {
@@ -176,7 +176,7 @@ export interface RenderMatcher {
  * Cascade matcher: a structural question about the stylesheet itself.
  *
  * The source channel is otherwise regex over text, which cannot answer
- * "does this rule cancel a promise another rule made" — that needs
+ * "does this rule cancel a promise another rule made"; that needs
  * specificity. Rules using this run over .css files only.
  */
 export interface CascadeMatcher {
@@ -215,12 +215,12 @@ export interface Rule {
   /**
    * Advisory rules are reported but never scored and never fail a gate.
    * For tells humans use legitimately often enough that firing on them is
-   * noise rather than a finding — em dashes being the canonical case.
+   * noise rather than a finding, em dashes being the canonical case.
    */
   advisory?: boolean;
   /**
    * Capabilities this rule's fix depends on. A project that declares it cannot
-   * do one of these is not failing the rule — the finding would be a standing
+   * do one of these is not failing the rule; the finding would be a standing
    * complaint it can never act on.
    */
   requires?: Array<'javascript' | 'externalAssets'>;
@@ -229,7 +229,7 @@ export interface Rule {
   /**
    * 0-100. Derived from the vibecoded-design-tells Reddit study where that
    * study measured the tell (see corpus/weights.ts), otherwise assigned by
-   * category default. This is the number that orders the report — not severity,
+   * category default. This is the number that orders the report, not severity,
    * which is only an author's opinion.
    */
   weight: number;
@@ -246,7 +246,7 @@ export interface Rule {
   cascade?: CascadeMatcher;
   /** Why it reads as machine-made. One or two sentences, shown in the report. */
   why: string;
-  /** What to do instead. Concrete — a value, a property, a structural move. */
+  /** What to do instead. Concrete: a value, a property, a structural move. */
   fix: string;
   /**
    * Free-text note on when the pattern is a legitimate choice, shown by
@@ -314,7 +314,7 @@ export interface Finding {
 
 /** A page's structural signature, for sameness detection across a repo. */
 export interface Fingerprint {
-  /** Stable id for the page — route path or repo-relative file path. */
+  /** Stable id for the page: route path or repo-relative file path. */
   page: string;
   /** ISO date, so a report can say how stale a record is. */
   recordedAt: string;
@@ -322,7 +322,7 @@ export interface Fingerprint {
   macrostructure: string;
   /**
    * Content-region section kinds, top to bottom, with the shell removed.
-   * The strongest sameness signal — and only once the shell is out of it.
+   * The strongest sameness signal, and only once the shell is out of it.
    */
   sectionRhythm: string[];
   /** The shared frame that was excluded: masthead, nav, footer, side rail. */
@@ -367,7 +367,7 @@ export interface ScanResult {
   advisory: Finding[];
   /**
    * How much the vision pass actually judged. `checked` counts every question
-   * answered with confidence, present or not — so a report can say a pass
+   * answered with confidence, present or not, so a report can say a pass
    * happened and found nothing, rather than looking identical to no pass.
    */
   vision: { checked: number; cleared: number };

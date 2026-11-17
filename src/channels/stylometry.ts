@@ -1,7 +1,7 @@
 /**
  * Measures over a whole document, rather than patterns inside it.
  *
- * The catalogue redpen draws its prose rules from lists four of these —
+ * The catalogue redpen draws its prose rules from lists four of these:
  * punctuation distribution, function-word trigram entropy, cross-paragraph
  * burstiness, and type-token ratio. They are a different kind of check: no
  * regex reaches them, because the signal is a property of the document rather
@@ -51,14 +51,14 @@ export interface Burstiness {
  * How much sentence length varies across a document.
  *
  * Measured against 1,113 markdown files from four real repositories. The
- * distribution runs p10 0.38, median 0.53, p90 0.68 — and below 0.35 sit 23
+ * distribution runs p10 0.38, median 0.53, p90 0.68, and below 0.35 sit 23
  * documents, of which 18 are machine-written on evidence independent of this
  * measure: twelve code reviews whose own front matter names an AI agent as the
  * reviewer, two agent-generated plan files, three from a documentation
  * generator's evidence directory, and one whose filename is a prompt.
  *
- * The five that are not machine-written are all reference documentation — API
- * pages, a getting-started guide, a table of credential types — where uniform
+ * The five that are not machine-written are all reference documentation (API
+ * pages, a getting-started guide, a table of credential types), where uniform
  * sentence length is the correct register rather than a tell. That is the
  * false-positive class, it is nameable, and it is why this reports as advisory
  * and never as a score.
@@ -91,7 +91,7 @@ export function burstiness(text: string): Burstiness | null {
  * Vocabulary diversity over a fixed 200-word window, so document length does
  * not drive the number. Across the same 1,113 documents it separated nothing:
  * the twelve machine-written code reviews scored 0.58 to 0.63 against a
- * population median of 0.645 and a p25 of 0.597 — inside the ordinary range,
+ * population median of 0.645 and a p25 of 0.597, inside the ordinary range,
  * and overlapping it on both sides. The most varied document in the sample and
  * one of the most uniform had almost the same ratio.
  *

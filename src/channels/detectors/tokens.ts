@@ -59,7 +59,7 @@ export const TOKEN_CHECKS = `
     var declared = tokens.__count;
     // No tokens for this role means there is no system to drift from. That is
     // a different (and weaker) finding, and stating it here would state it
-    // badly — so stay silent.
+    // badly, so stay silent.
     if (declared < opts.minTokens) return [];
     var off = usedLiterals(opts.props, opts.valuePattern).filter(function (v) {
       return !(v in tokens);

@@ -1,5 +1,5 @@
 /**
- * Fingerprint extraction — the thing no upstream catalogue does.
+ * Fingerprint extraction: the thing no upstream catalogue does.
  *
  * A fingerprint is a page's structural signature: the skeleton, the section
  * rhythm, the type scale, the palette anchor. Two pages that share one are the
@@ -16,7 +16,7 @@ export interface RawFingerprint {
    * The content region's rhythm, with the persistent shell removed.
    *
    * This is what sameness is compared on. Two app routes share a header, a nav
-   * and a footer by design — that is consistency, not repetition — so including
+   * and a footer by design (that is consistency, not repetition), so including
    * the shell would make every page of every app look identical to every
    * other.
    */
@@ -46,7 +46,7 @@ export function fingerprintSource(): string {
 
   // Decorative and non-layout nodes are children of body on plenty of pages.
   // Counting them would put noise into the signature, which is the one thing a
-  // signature cannot tolerate — it is compared against other pages.
+  // signature cannot tolerate: it is compared against other pages.
   var NON_SECTION = { SVG: 1, IMG: 1, SCRIPT: 1, STYLE: 1, NOSCRIPT: 1, CANVAS: 1, TEMPLATE: 1, LINK: 1, DIALOG: 1 };
 
   function layoutChildren(parent) {
@@ -64,7 +64,7 @@ export function fingerprintSource(): string {
   function sections() {
     var main = document.querySelector('main') || document.body;
     var kids = layoutChildren(main);
-    // A single wrapper div is the common case; descend through it once — but
+    // A single wrapper div is the common case; descend through it once, but
     // only when it is a layout wrapper. Descending into a list of records
     // turned every row into a "section", and since rows are short they were
     // then all filtered out, leaving an empty rhythm.
@@ -161,7 +161,7 @@ export function fingerprintSource(): string {
 
   /**
    * The macrostructure is the shape of the whole page, named from the rhythm.
-   * Deliberately coarse — two pages should collide here only when they really
+   * Deliberately coarse: two pages should collide here only when they really
    * are the same skeleton.
    */
   function macrostructure(rhythm, els) {
@@ -217,7 +217,7 @@ export function fingerprintSource(): string {
 
     if (r.height > window.innerHeight * 0.5) return 'side-rail';
     // A short row of peer links with one marked current is app navigation, not
-    // a marketing menu — even when it is pinned.
+    // a marketing menu, even when it is pinned.
     if (current && links <= 8) return 'app-tabs';
     if (s.position === 'fixed' || s.position === 'sticky') {
       if (radius > 16 && r.width < window.innerWidth * 0.9) return 'floating-pill';

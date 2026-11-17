@@ -46,7 +46,7 @@ export async function cmdWhyScore(root: string, args: Args): Promise<void> {
   w(pc.dim('  +pts  = what the score gains if it goes away, on its own.\n\n'));
 
   // On a badly-failing page the curve is saturated and every individual fix is
-  // worth a fraction of a point — true, and useless for deciding what to do.
+  // worth a fraction of a point. True, and useless for deciding what to do.
   // Share ranks correctly at any score.
   const saturated = contributions.every((c) => c.worth < 1);
   if (saturated && contributions.length > 3) {

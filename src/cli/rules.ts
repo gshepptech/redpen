@@ -21,7 +21,7 @@ export function cmdRules(args: Args): void {
       process.stdout.write(`  ${pc.bold(pc.underline(r.category))}\n`);
       lastCategory = r.category;
     }
-    // Rank 0 is reserved for the study's headline finding — "they all look the
+    // Rank 0 is reserved for the study's headline finding: "they all look the
     // same" outscored every individual tell, so it sits above the ranking.
     const rank =
       r.evidenceRank === 0

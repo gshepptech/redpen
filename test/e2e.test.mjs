@@ -139,7 +139,7 @@ test('the same page built from defaults scores as slop', opts, async () => {
     result.findings.filter((f) => f.confidence === 'confirmed').map((f) => f.ruleId),
   );
   // The tells the Reddit study ranks highest must all be caught, and caught by
-  // more than one channel — that is the entire promise of the merge.
+  // more than one channel; that is the entire promise of the merge.
   for (const id of ['ai-purple', 'gradient-text', 'hero-three-cards', 'emoji-as-icon', 'default-sans']) {
     assert.ok(confirmed.has(id), `${id} should be confirmed on the sloppy fixture`);
   }
@@ -249,7 +249,7 @@ test('an app surface raises no slop findings and still catches real defects', op
   });
   // Consistent chrome across an app is the point, not a tell.
   assert.equal(result.slopScore, 100, 'an app should not be penalised for looking like an app');
-  // But quality rules apply everywhere — broken is broken.
+  // But quality rules apply everywhere. Broken is broken.
   assert.ok(result.qualityScore < 100, 'quality rules must still run on an operate surface');
   assert.ok(
     !result.findings.some((f) => f.ruleId === 'repeated-macrostructure'),
@@ -278,7 +278,7 @@ test('scan and why-score report the same number', opts, async () => {
 test('visually-hidden content is not a finding', opts, async () => {
   // The standard clip-rect recipe looks like clipped text sitting off-canvas.
   // Flagging it would mean adding a skip link or an sr-only label *creates* two
-  // findings — the tool punishing the correct accessibility pattern.
+  // findings: the tool punishing the correct accessibility pattern.
   const dir = join(HERE, 'fixtures', 'clean');
   const result = await runScan({ root: dir, urls: [cleanUrl], viewports: [1440], ephemeral: true });
   for (const id of ['text-overflow', 'body-text-viewport-edge']) {
@@ -333,7 +333,7 @@ test('a run whose urls are unreachable says so rather than scoring blind', opts,
 
 test('content clipped past the viewport edge is found, not passed', opts, async () => {
   // `overflow-x: clip` on the root can put nav destinations past the right
-  // edge at 375px — unreachable, and measuring clean by every overflow metric,
+  // edge at 375px, unreachable, and measuring clean by every overflow metric,
   // because clip sets scrollWidth equal to clientWidth.
   const url = await serve(join(HERE, 'fixtures', 'clipped'));
   const result = await runScan({
@@ -416,7 +416,7 @@ test('a color-mix control is measured against its composited ground', opts, asyn
   // 1. color-mix serialises as color(srgb r g b / a), never rgb(), so a parser
   //    that only knows rgba() returns null for every tinted control.
   // 2. The alpha is on the element being measured, not behind it. Used
-  //    directly it yields 1.00:1 — the loudest possible finding, on a control
+  //    directly it yields 1.00:1, the loudest possible finding, on a control
   //    that is actually past 13:1.
   // 3. One level of compositing is not enough: the input sits on a panel which
   //    sits on the body.
@@ -442,7 +442,7 @@ test('a color-mix control is measured against its composited ground', opts, asyn
     'a control at >13:1 must not be reported as low contrast',
   );
 
-  // The discriminating case. A 7% tint is forgiving — dropping the unparsed
+  // The discriminating case. A 7% tint is forgiving: dropping the unparsed
   // layer barely moves the ground, so the answer stays right by accident. A
   // near-opaque wash is not: skip it and you measure light text against the
   // light panel underneath and report a failure that does not exist.
@@ -520,7 +520,7 @@ test('an unfilled grid row is a hole on a marketing page and a record count in a
   // and classified the page operate at 0.8, which switched the rule off along
   // with 20 others written for exactly this kind of page.
   //
-  // Abstaining is a fair outcome on a fixture this thin — what must not happen
+  // Abstaining is a fair outcome on a fixture this thin; what must not happen
   // is calling it operate, because that is a confident wrong answer rather
   // than an admitted absence of one.
   assert.notEqual(
@@ -555,7 +555,7 @@ test('a toggled-theme pass that cannot enter its theme is skipped, not relabelle
 
 test('a control inside a card is not a card inside a card', opts, async () => {
   // Every design system gives its inputs and buttons a background, a border, a
-  // radius and padding — every signal the nested-surface test looks for — so a
+  // radius and padding (every signal the nested-surface test looks for), so a
   // form inside a card must not read as card-in-card.
   //
   // The fixture carries both cases side by side: a card full of ordinary
@@ -769,7 +769,7 @@ test('the source rules find tells in a component that works', async () => {
   //
   // `invented-metrics` must not depend on a fixed list of nouns: "Trusted by
   // 50,000+ land managers" is the tell whatever the audience is called. And
-  // `no-loading-state` must see more than the inline handler —
+  // `no-loading-state` must see more than the inline handler:
   // `onClick={async () => await …}` is the tutorial shape; a real component
   // extracts the handler.
   const result = await runScan({
@@ -860,7 +860,7 @@ test('a live region one file away is still a live region', async () => {
 });
 
 test('deleting saved work is destructive; editing a draft is not', async () => {
-  // Form builders remove things that were never saved — removeService in a
+  // Form builders remove things that were never saved: removeService in a
   // deploy wizard, removeComponent on a chip in a draft, a Remove button beside
   // a row being composed. `destructive-without-confirm` is about work that is
   // saved, so it matches delete, destroy and wipe, not remove, clear or reset.
@@ -923,7 +923,7 @@ test('a guard written below the button still counts as a guard', async () => {
   // corpus. A guard is never written on the button's own line: one component
   // calls window.confirm seven lines above, another swaps the row for an
   // inline "Confirm?" step, and a third writes `onClick={async (e) => {` with
-  // the check two lines *below*, inside the handler — which is what
+  // the check two lines *below*, inside the handler, which is what
   // suppressAfter is for.
   //
   // The fixture never says "confirm" in its own prose, because the upward

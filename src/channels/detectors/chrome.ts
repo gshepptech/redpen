@@ -2,15 +2,16 @@ export const CHROME_CHECKS = `
   /* ---- browser surfaces -------------------------------------------------
    * The parts nobody drew still carry the design. Selection, caret, scrollbar,
    * focus ring, underline offset and tabular numerals all ship with browser
-   * defaults belonging to no design system — the cheapest signal a page was built
-   * rather than assembled, and the one models skip most reliably.
+   * defaults belonging to no design system. They are the cheapest signal a
+   * page was built rather than assembled, and the one models skip most
+   * reliably.
    *
    * All six read the stylesheets rather than computed styles, because a
    * pseudo-element that was never authored has no computed style to inspect.
    * ------------------------------------------------------------------- */
 
   function eachRule(fn) {
-    // Since CSS Nesting shipped, every CSSStyleRule carries a cssRules list —
+    // Since CSS Nesting shipped, every CSSStyleRule carries a cssRules list,
     // usually empty. An empty CSSRuleList is still an object, so a truthiness
     // check descends into nothing and never visits the rule itself. Visit
     // first, then recurse only when there is something to recurse into.

@@ -136,7 +136,7 @@ test('every prose rule reads documents and nothing else', () => {
 });
 
 test('a document is checked for em dashes; the page rule never saw one', async () => {
-  // The em-dash rule reads .md too — the format where the tell was named in
+  // The em-dash rule reads .md too, the format where the tell was named in
   // the first place.
   const dir = doc('README.md', 'A sentence — with an aside — and another one.\n'.repeat(8));
   try {

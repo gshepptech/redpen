@@ -51,7 +51,7 @@ export const WCAG_CHECKS = `
         // The WCAG exemption is for a target *in a sentence*, which means the
         // control flows with the text. A <p> used as a flex row is not running
         // text, and reading it as one exempted an 18px button sitting beside a
-        // label — so the control's own display has to be inline too.
+        // label, so the control's own display has to be inline too.
         var cs = getComputedStyle(el);
         if (cs.display === 'inline' || cs.display === 'inline-block') {
           var pnt = el.parentElement;
@@ -68,8 +68,8 @@ export const WCAG_CHECKS = `
       .filter(function (el) {
         // 2.5.8's spacing exemption, which is the rest of the criterion: an
         // undersized target passes if a min-diameter circle centred on it
-        // reaches no other target's circle. Without it a 23px nav link — one
-        // pixel under, with room around it — would read as a failure.
+        // reaches no other target's circle. Without it a 23px nav link (one
+        // pixel under, with room around it) would read as a failure.
         var r = el.getBoundingClientRect();
         var cx = r.left + r.width / 2, cy = r.top + r.height / 2;
         return targets.some(function (other) {

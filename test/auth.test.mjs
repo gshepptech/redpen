@@ -13,7 +13,7 @@ import { runScan } from '../dist/scan.js';
  * The failure this guards against is the worst one redpen can have: asking for
  * `/dashboard`, being sent to `/login`, and reporting a clean confident score
  * about the login page under the dashboard's url. Every safeguard downstream
- * would work correctly — on the wrong page.
+ * would work correctly, on the wrong page.
  */
 
 test('a redirect to a different path is a different page', () => {

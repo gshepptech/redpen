@@ -107,7 +107,7 @@ test('why-score and scan cannot report different numbers', () => {
 
 test('worth is what fixing it gives back on its own axis', () => {
   // A page failing hard on quality and mildly on slop. Measured against the
-  // headline, every slop fix would be worth zero — true, and no use to anyone
+  // headline, every slop fix would be worth zero: true, and no use to anyone
   // deciding what to do next.
   const fs = page(2, 9);
   const e = explainScore(fs);

@@ -126,7 +126,7 @@ test('a single-field newsletter form is not flagged for missing validation', () 
 
 test('a couplet is a good line; six of them is a cadence', async () => {
   // `aphoristic-cadence` must see more than the literal "not just X, but Y":
-  // the two-beat setup/payoff couplet — "Push a button. Get the site." — is
+  // the two-beat setup/payoff couplet ("Push a button. Get the site.") is
   // the same tell when every slide closes on one.
   const { runScan } = await import('../dist/scan.js');
   const { mkdtempSync, writeFileSync, rmSync } = await import('node:fs');

@@ -69,7 +69,7 @@ export function compareToBaseline(
 
   // Gate on each axis, not on the headline. The headline is the worse of the
   // two, so a page that regresses on its healthier axis moves the headline not
-  // at all — and a gate that cannot see a regression is not a gate.
+  // at all, and a gate that cannot see a regression is not a gate.
   const drops: AxisDrop[] = (
     [
       { axis: 'slop' as const, was: baseline.slop, now: run.slop },

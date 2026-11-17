@@ -7,7 +7,7 @@ export const OKLCH_LIB = `
 
     // Anything that went through color-mix() serialises as color(srgb r g b / a)
     // with 0-1 channels, not rgb(). A parser that only knows rgba() returns null
-    // for every control on a sheet that tints with color-mix — and null here
+    // for every control on a sheet that tints with color-mix, and null here
     // means the translucent layer silently drops out of the composite, so the
     // measured ground is the layer behind it rather than the one on screen.
     var fn = /color\\(\\s*srgb\\s+([^)]+)\\)/.exec(str);

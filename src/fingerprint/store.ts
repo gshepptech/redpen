@@ -41,7 +41,7 @@ export function load(root: string): Fingerprint[] {
  *
  * Merging by page id exists so a re-scanned page replaces its own record
  * instead of clashing with itself. That only works if the id is stable, and a
- * loopback port is the least stable thing about a local URL — Vite walks
+ * loopback port is the least stable thing about a local URL: Vite walks
  * 5173, 5174, 5175 as ports are taken, Next walks 3000, 3001. Two runs on two
  * ports would leave two records of one page, reported as two pages that share
  * a skeleton.

@@ -116,8 +116,8 @@ export const COLOR_CHECKS = `
     var keys = Object.keys(seen).filter(function (k) { return area[k] > 0; });
     if (keys.length < (p.minDistinctNeutrals || 3)) return [];
     // Say the measured chroma and the floor. "Tinted" is not actionable; a
-    // number is — someone tinted their greys twice because of this rule and it
-    // kept firing, because 2% RGB spread is still under 0.005 OKLCH chroma.
+    // number is. Greys tinted by 2% RGB spread still read as untinted and
+    // keep firing, because that is still under 0.005 OKLCH chroma.
     var detail = keys.slice(0, 5).map(function (k) {
       return k + ' (chroma ' + seen[k].toFixed(4) + ')';
     }).join(', ');
@@ -131,7 +131,7 @@ export const COLOR_CHECKS = `
       if (isVisuallyHidden(el)) return;
       // A gradient or image behind the text cannot be measured from computed
       // styles. Reporting a number derived from the wrong surface is worse
-      // than reporting nothing — this is a job for the vision channel.
+      // than reporting nothing; this is a job for the vision channel.
       if (hasPaintedAncestor(el)) return;
       var s = getComputedStyle(el);
       var fg = parseColor(s.color);

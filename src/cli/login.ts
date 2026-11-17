@@ -9,8 +9,8 @@ import { fail, type Args } from './args.js';
 /**
  * Capture a session by opening a browser and waiting.
  *
- * redpen automates none of the logging in. Every app's flow is different —
- * OAuth, SSO, a magic link, a second factor — and a config schema covering
+ * redpen automates none of the logging in. Every app's flow is different
+ * (OAuth, SSO, a magic link, a second factor), and a config schema covering
  * them would be a browser automation language redpen then owns forever. What
  * every flow produces is the same cookie jar, so that is the only part
  * automated.

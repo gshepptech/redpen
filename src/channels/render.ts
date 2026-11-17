@@ -12,7 +12,7 @@ import { pathToFileURL } from 'node:url';
  * The render channel: drive the real page and read computed styles.
  *
  * Playwright is an optional peer dependency, so `redpen scan` still works with
- * nothing installed — it just runs source-only and says so. Anything that
+ * nothing installed: it just runs source-only and says so. Anything that
  * requires a browser degrades loudly rather than silently reporting a clean
  * page, because "no findings" and "did not look" must never look the same.
  */
@@ -23,8 +23,8 @@ export interface RenderOptions {
    * The project being scanned, so playwright can be resolved from it.
    *
    * A plugin install is one bundled file with no node_modules of its own, so a
-   * bare import finds nothing and the render channel — the whole reason redpen
-   * cross-confirms anything — silently never runs. The project being scanned is
+   * bare import finds nothing and the render channel (the whole reason redpen
+   * cross-confirms anything) silently never runs. The project being scanned is
    * a web project, and usually already has playwright.
    */
   root?: string;
@@ -41,12 +41,12 @@ export interface RenderOptions {
   /** Probe the page for a dark theme and add the pass only if it has one. */
   autoScheme?: boolean;
   /**
-   * A Playwright storage state — cookies and localStorage captured after a
+   * A Playwright storage state: cookies and localStorage captured after a
    * successful login, by `redpen login`.
    *
    * This is the one universal thing about authentication. Every app's login
    * page lives somewhere different, wants different fields, and may not be a
-   * form at all — OAuth, a magic link, SSO, a second factor. What every one of
+   * form at all: OAuth, a magic link, SSO, a second factor. What every one of
    * them produces is the same artefact: a cookie jar the browser can be handed.
    * So redpen automates none of the logging in and all of the remembering.
    */
@@ -57,7 +57,7 @@ export interface RenderOptions {
  * How a page turns its own dark theme on, when it is not the media query.
  *
  * Emulating `prefers-color-scheme` never exercises a toggle, so a page can be
- * correct under the OS preference and broken under its own switch — different
+ * correct under the OS preference and broken under its own switch: different
  * code path, same claim of supporting dark mode.
  */
 export interface ThemeStamp {
@@ -149,15 +149,15 @@ export function summariseErrors(errors: string[]): string {
 
 export async function loadPlaywright(root?: string): Promise<PlaywrightModule | null> {
   // Indirect specifier so the compiler does not require playwright to be
-  // installed — it is an optional peer dependency, and a source-only scan must
+  // installed: it is an optional peer dependency, and a source-only scan must
   // keep working without a browser on the machine.
   const specifier = 'playwright';
   try {
     return (await import(specifier)) as unknown as PlaywrightModule;
   } catch {
     // Nothing beside redpen. Look in the project being scanned, which is a web
-    // project and has one more often than not. Without this a plugin install —
-    // one bundled file, no node_modules — can never render anything, and every
+    // project and has one more often than not. Without this a plugin install
+    // (one bundled file, no node_modules) can never render anything, and every
     // source finding stays capped at "possible" forever.
     if (!root) return null;
     try {
@@ -228,7 +228,7 @@ export async function scanRender(opts: RenderOptions): Promise<RenderResult> {
    * script runs, then invoke them by name.
    *
    * Playwright's string form of `evaluate` takes no arguments, and `new
-   * Function` is blocked by any page with a strict CSP — which real apps have.
+   * Function` is blocked by any page with a strict CSP, which real apps have.
    * Declaring the functions in an init script sidesteps both: no eval, no
    * argument marshalling, and the definitions survive client-side navigation.
    */
@@ -347,7 +347,7 @@ export async function scanRender(opts: RenderOptions): Promise<RenderResult> {
          * different question is the worst failure this tool can have, because
          * every safeguard downstream is working correctly on the wrong page.
          *
-         * A same-path redirect is normal — a trailing slash, a locale prefix,
+         * A same-path redirect is normal: a trailing slash, a locale prefix,
          * a canonical host. A different path is a different page.
          */
         const landed = page.url();
@@ -457,7 +457,7 @@ export async function scanRender(opts: RenderOptions): Promise<RenderResult> {
  * Two ways to have one: a prefers-color-scheme rule in a stylesheet, or a
  * repaint under an emulated dark preference. The second catches themes driven
  * by a class or a data attribute that follows the media query, which the first
- * cannot see. Same-origin stylesheets only — a cross-origin sheet throws on
+ * cannot see. Same-origin stylesheets only; a cross-origin sheet throws on
  * .cssRules and is not worth a permission fight.
  */
 async function probeDarkTheme(
