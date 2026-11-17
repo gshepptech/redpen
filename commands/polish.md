@@ -28,8 +28,8 @@ else                                         run() { redpen "$@"; }
 fi
 ```
 
-If neither resolves, the plugin is not installed and `redpen` is not on PATH —
-say so rather than guessing. **Never `npx redpen`**: that name belongs to an
+If neither resolves, the plugin is not installed and `redpen` is not on PATH.
+Say so rather than guessing. **Never `npx redpen`**: that name belongs to an
 unrelated package.
 
 Parse `$ARGUMENTS` for urls and a path. Never interpolate it raw: it is prose,
@@ -39,7 +39,7 @@ and it may carry a path, several urls, and a sentence of context in any order.
 visual world, content, behaviour and everything outside scope. If the concept
 itself is wrong, *say so and recommend a redesign* rather than smuggling one in.
 
-This command works the **quality axis only** — everything broken regardless of
+This command works the **quality axis only**: everything broken regardless of
 taste. It deliberately does not touch slop: no palette opinions, no structural
 restructuring. That constraint is what makes its diff reviewable and revertible.
 
@@ -51,7 +51,7 @@ yourself at the sizes people actually use before you believe the scan.
 Read the tokens, shared components and neighbouring flows. If there is no formal
 system, use the project's own conventions.
 
-Then **classify each drift before fixing it** — this decides where the fix goes:
+Then **classify each drift before fixing it**. This decides where the fix goes:
 
 | | |
 | --- | --- |
@@ -69,7 +69,7 @@ value to a token is not a fix, it is a bigger mistake.
 run scan <path> --url <url>
 ```
 
-Read the `quality` score and work only findings whose kind is `quality` — the
+Read the `quality` score and work only findings whose kind is `quality`; the
 JSON output tags every one, so `--json` and filter on `kind` if it helps. Then
 walk the path yourself at desktop and mobile widths and establish: whether it is
 functionally complete, what the intended quality bar is, and which states,
@@ -92,7 +92,7 @@ same bar.**
 loading, error and success. `outline: none` with nothing replacing it is the
 single most common line that breaks keyboard use.
 
-Reach for `!important` here and stop — it means the state rule is losing a
+Reach for `!important` here and stop: it means the state rule is losing a
 specificity fight, and the fix is the selector, not the flag.
 
 **Access.** Unlabelled controls, missing alt, missing lang, colour-only state,
@@ -100,7 +100,7 @@ skip link, heading order. Preserve visible focus, logical tab order and
 platform-appropriate touch targets.
 
 **Geometry.** Sideways scroll at any width, clipped text, controls under 44px,
-mismatched heights in a row. Fix leading **per role, never globally** — setting
+mismatched heights in a row. Fix leading **per role, never globally**. Setting
 `line-height` on `body` clears every prose finding and instantly creates one on
 the hero.
 
@@ -117,7 +117,7 @@ polish-created duplication.
 ## 5. Verify and finish
 
 Answer each of these with rendered or source evidence. **Do not
-substitute a bare "yes" for verification** — an unevidenced pass is the same
+substitute a bare "yes" for verification**: an unevidenced pass is the same
 failure mode as an unevidenced finding, which this tool rejects on the way in.
 
 - Walk the path again with mouse, keyboard and touch.

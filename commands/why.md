@@ -1,5 +1,5 @@
 ---
-description: Explain one redpen rule — what it means, who named it, and whether humans actually notice it
+description: Explain one redpen rule: what it means, who named it, and whether humans actually notice it
 argument-hint: "<rule-id>"
 allowed-tools: Bash
 ---
@@ -17,8 +17,8 @@ else                                         run() { redpen "$@"; }
 fi
 ```
 
-If neither resolves, the plugin is not installed and `redpen` is not on PATH —
-say so rather than guessing. **Never `npx redpen`**: that name belongs to an
+If neither resolves, the plugin is not installed and `redpen` is not on PATH.
+Say so rather than guessing. **Never `npx redpen`**: that name belongs to an
 unrelated package.
 
 ```bash
@@ -40,4 +40,4 @@ applies:
 - **an evidence rank** means the tell was measured against 3,033 real complaints.
   The rank is how often humans actually named it.
 - **"never measured"** means the weight is redpen's own judgement of consequence.
-  Say so — it is a weaker claim, and the user is entitled to disagree with it.
+  Say so. It is a weaker claim, and the user is entitled to disagree with it.

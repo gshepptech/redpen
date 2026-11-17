@@ -28,8 +28,8 @@ else                                         run() { redpen "$@"; }
 fi
 ```
 
-If neither resolves, the plugin is not installed and `redpen` is not on PATH —
-say so rather than guessing. **Never `npx redpen`**: that name belongs to an
+If neither resolves, the plugin is not installed and `redpen` is not on PATH.
+Say so rather than guessing. **Never `npx redpen`**: that name belongs to an
 unrelated package.
 
 Parse `$ARGUMENTS` for urls and a path. Never interpolate it raw: it is prose,
@@ -37,7 +37,7 @@ and it may carry a path, several urls, and a sentence of context in any order.
 
 
 Colour is hierarchy, meaning and atmosphere. Preserve confirmed brand and
-semantic conventions — do not replace a visual world under the guise of
+semantic conventions. Do not replace a visual world under the guise of
 adjusting its colour.
 
 ## Two isolated assessments
@@ -50,7 +50,7 @@ thing is any good. If you read the findings first, you will spend the pass
 closing them and call that done.
 
 1. **Assess.** Open the page and answer the questions below with a file, a
-   selector, or a computed value — not an impression. Do this before running
+   selector, or a computed value, not an impression. Do this before running
    anything.
 2. **Scan.** Then run the mechanical pass and synthesise both. Note what each
    caught that the other did not; that difference is the useful output.
@@ -66,7 +66,7 @@ roles; where grayscale is obscuring hierarchy or state; contrast failures and
 colour-only communication; light/dark requirements; and whether the task is
 asking for more colour or for a new identity.
 
-If it needs a new identity, this is the wrong command — say so.
+If it needs a new identity, this is the wrong command. Say so.
 
 ### 2. Then scan
 
@@ -75,7 +75,7 @@ run scan <path> --url <url> --only color,system
 ```
 
 On operate and read surfaces colour mainly encodes action, selection, status and
-wayfinding — **rarity is what gives an accent force**. On persuade it may own
+wayfinding; **rarity is what gives an accent force**. On persuade it may own
 large regions if the world calls for it.
 
 ## Choose a strategy
@@ -91,7 +91,7 @@ association.
 
 ## Apply
 
-1. **Contrast first** — the only thing here that is broken rather than
+1. **Contrast first**: the only thing here that is broken rather than
    tasteless. Body 4.5:1, large text and icons and focus rings 3:1, measured
    against the *computed* background. The usual miss is muted text on a
    secondary surface, and a focus ring that clears against its control but not
@@ -101,17 +101,17 @@ association.
    surface that changed and a colour that did not follow.
 
    redpen declines to measure contrast where a gradient or image sits behind the
-   text — it cannot be computed from computed styles, and a wrong number is
+   text. It cannot be computed from computed styles, and a wrong number is
    worse than none. Those are for the vision pass.
 2. **The anchor.** A primary in the 265-305 hue band is Tailwind's default and
    reads as unchosen. Derive the ramp from a hue you picked.
 3. **Neutrals.** Tint them toward the anchor *only when the brand hue genuinely
-   creates cohesion* — neutral grey is valid when it serves the world. The floor
+   creates cohesion*; neutral grey is valid when it serves the world. The floor
    is measured in OKLCH chroma, not RGB spread: a warm grey with 2% channel
    spread can still sit under 0.005. The evidence line reports the number.
 4. **On coloured surfaces, derive secondary text from the foreground or surface
    hue** rather than reaching for a washed-out generic grey.
-5. **Tokens.** Name by role, never by value — `--color-ink`, not
+5. **Tokens.** Name by role, never by value: `--color-ink`, not
    `--color-black`. Then route every literal through one. `color-token-drift`
    compares against the tokens the project itself declares, so this step is what
    gives the next scan something to check.
@@ -125,7 +125,7 @@ Information carried by colour also needs text, shape, icon or position.
 ## Verify
 
 Answer each of these with rendered or source evidence. **Do not
-substitute a bare "yes" for verification** — an unevidenced pass is the same
+substitute a bare "yes" for verification**: an unevidenced pass is the same
 failure mode as an unevidenced finding, which this tool rejects on the way in.
 
 - Every colour has a stable role or a specific atmospheric purpose.
@@ -137,7 +137,7 @@ failure mode as an unevidenced finding, which this tool rejects on the way in.
 
 ## Hand off
 
-When this holds, run `/redpen:polish` — the mechanical pass over everything
+When this holds, run `/redpen:polish`, the mechanical pass over everything
 broken regardless of taste. This command's job is one concern done well; polish
 is what makes the whole path consistent.
 

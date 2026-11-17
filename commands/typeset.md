@@ -1,5 +1,5 @@
 ---
-description: Fix a UI's typography — faces, scale, leading, measure, and the type tokens
+description: Fix a UI's typography: faces, scale, leading, measure, and the type tokens
 argument-hint: "[path] [--url <dev-server-url>]"
 allowed-tools: Bash, Read, Edit, MultiEdit, Glob, Grep
 ---
@@ -28,8 +28,8 @@ else                                         run() { redpen "$@"; }
 fi
 ```
 
-If neither resolves, the plugin is not installed and `redpen` is not on PATH —
-say so rather than guessing. **Never `npx redpen`**: that name belongs to an
+If neither resolves, the plugin is not installed and `redpen` is not on PATH.
+Say so rather than guessing. **Never `npx redpen`**: that name belongs to an
 unrelated package.
 
 Parse `$ARGUMENTS` for urls and a path. Never interpolate it raw: it is prose,
@@ -48,7 +48,7 @@ thing is any good. If you read the findings first, you will spend the pass
 closing them and call that done.
 
 1. **Assess.** Open the page and answer the questions below with a file, a
-   selector, or a computed value — not an impression. Do this before running
+   selector, or a computed value, not an impression. Do this before running
    anything.
 2. **Scan.** Then run the mechanical pass and synthesise both. Note what each
    caught that the other did not; that difference is the useful output.
@@ -96,7 +96,7 @@ Name tokens for purpose, never for value.
 Each step changes what the next one measures.
 
 1. **Faces.** One display, one body, at most one outlier. Then **route every
-   element through a token** — declaring `--font-body` and leaving a
+   element through a token**. Declaring `--font-body` and leaving a
    `<blockquote>`, a `<button>` or the form controls on the UA default finishes
    the step and still fails `font-family-drift`. It happened on the first real
    run of this command. Grep for `font-family` and check what is *not* listed.
@@ -104,7 +104,7 @@ Each step changes what the next one measures.
    (`--font-size-*`, `--text-*`). `font-size-token-drift` only fires once such
    tokens exist, so this is the step that makes the next scan mean anything.
 3. **Leading.** 1rem/16px is the ordinary web body floor. Tune leading **to the
-   face, width and contrast, not a universal ratio** — and *inversely with
+   face, width and contrast, not a universal ratio**, and *inversely with
    measure*: wider lines need more. Light text on a dark surface needs
    compensating on all three axes: slightly more leading, a touch more tracking,
    one step more weight if the face needs it.
@@ -119,7 +119,7 @@ Each step changes what the next one measures.
    is the obvious half; the hero at -0.06em is the half that gets missed,
    because it looks deliberate.
 6. **The floor.** 14px for anything read as prose, 12px for incidental chrome.
-   The evidence line says which floor it applied — read it before changing a
+   The evidence line says which floor it applied; read it before changing a
    size.
 7. **Paragraph rhythm.** Spacing *or* first-line indent. Both together
    double-marks the boundary.
@@ -137,7 +137,7 @@ unthemed one reads as assembled rather than built.
 ## Verify
 
 Answer each of these with rendered or source evidence. **Do not
-substitute a bare "yes" for verification** — an unevidenced pass is the same
+substitute a bare "yes" for verification**: an unevidenced pass is the same
 failure mode as an unevidenced finding, which this tool rejects on the way in.
 
 - Primary, secondary, body and metadata roles are recognisable **without
@@ -150,7 +150,7 @@ failure mode as an unevidenced finding, which this tool rejects on the way in.
 
 ## Hand off
 
-When this holds, run `/redpen:polish` — the mechanical pass over everything
+When this holds, run `/redpen:polish`, the mechanical pass over everything
 broken regardless of taste. This command's job is one concern done well; polish
 is what makes the whole path consistent.
 

@@ -28,8 +28,8 @@ else                                         run() { redpen "$@"; }
 fi
 ```
 
-If neither resolves, the plugin is not installed and `redpen` is not on PATH —
-say so rather than guessing. **Never `npx redpen`**: that name belongs to an
+If neither resolves, the plugin is not installed and `redpen` is not on PATH.
+Say so rather than guessing. **Never `npx redpen`**: that name belongs to an
 unrelated package.
 
 Parse `$ARGUMENTS` for urls and a path. Never interpolate it raw: it is prose,
@@ -49,7 +49,7 @@ thing is any good. If you read the findings first, you will spend the pass
 closing them and call that done.
 
 1. **Assess.** Open the page and answer the questions below with a file, a
-   selector, or a computed value — not an impression. Do this before running
+   selector, or a computed value, not an impression. Do this before running
    anything.
 2. **Scan.** Then run the mechanical pass and synthesise both. Note what each
    caught that the other did not; that difference is the useful output.
@@ -63,7 +63,7 @@ be the wrong page.
   from the screen. Can you still identify the primary element, the secondary
   element, and the major groups, in order? This is the single most useful
   question in the command and no measurement answers it.
-- **Grouping.** Are related items close and distinct groups separated — or are
+- **Grouping.** Are related items close and distinct groups separated, or are
   *containers compensating for weak proximity*? A card drawn around things that
   are not near each other is a box doing spacing's job.
 - **Rhythm.** Do tight and generous intervals create a deliberate cadence, or is
@@ -97,7 +97,7 @@ extremes.
 
 ## Apply
 
-Mechanics first — a page that scrolls sideways cannot be judged for rhythm.
+Mechanics first: a page that scrolls sideways cannot be judged for rhythm.
 Horizontal overflow at any width, clipped text, body text against the viewport
 edge, controls under 44px, mismatched control heights in a row, nested surfaces.
 
@@ -105,11 +105,11 @@ Then rhythm:
 
 - **Group by meaning. Use proximity before adding containers or decoration.**
 - Rhythm comes from deliberate contrast between tight and generous intervals.
-  **A perfect 4px scale applied uniformly is exactly the failure** — every gap
+  **A perfect 4px scale applied uniformly is exactly the failure**: every gap
   on the scale and still no groups. The ratio is the signal, not the values.
 - A 4-unit base gives the middle steps an 8-only scale misses.
 - Let hierarchy follow product priority, not framework defaults.
-- Make responsive behaviour *structural* — reorder, collapse, reflow — rather
+- Make responsive behaviour *structural* (reorder, collapse, reflow) rather
   than fluid type.
 - Use `gap` for sibling rhythm where it expresses the relationship more directly
   than child margins.
@@ -123,7 +123,7 @@ content or priority changes.
 ## Then composition, and only by looking
 
 `no-focal-point`, `sized-to-fit`, `undifferentiated-spacing` and
-`content-interchangeable` are vision-channel rules — no measurement reaches
+`content-interchangeable` are vision-channel rules; no measurement reaches
 them. Run with `--vision`, open the screenshots, answer the brief, re-run with
 `--answers`. A confident "no, I looked, it is not there" counts and is recorded.
 
@@ -134,7 +134,7 @@ looks AI generated".
 ## Verify
 
 Answer each of these with rendered or source evidence. **Do not
-substitute a bare "yes" for verification** — an unevidenced pass is the same
+substitute a bare "yes" for verification**: an unevidenced pass is the same
 failure mode as an unevidenced finding, which this tool rejects on the way in.
 
 - The squint test still reveals primary, secondary and major groups in order.
@@ -146,7 +146,7 @@ failure mode as an unevidenced finding, which this tool rejects on the way in.
 
 ## Hand off
 
-When this holds, run `/redpen:polish` — the mechanical pass over everything
+When this holds, run `/redpen:polish`, the mechanical pass over everything
 broken regardless of taste. This command's job is one concern done well; polish
 is what makes the whole path consistent.
 
