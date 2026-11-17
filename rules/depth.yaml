@@ -29,7 +29,7 @@
       maxShareAtMaxRadius: 0.6
   why: >-
     One radius applied to cards, buttons, inputs, images, and avatars alike.
-    A radius scale is information — when every corner is the same, it carries
+    A radius scale is information: when every corner is the same, it carries
     none.
   fix: >-
     Three steps by role: small for inputs and chips, medium for cards, full only
@@ -78,7 +78,7 @@
     check: border-and-shadow-double-edge
   why: >-
     Two separate devices doing the same job on the same edge. The border says
-    "this is a boundary" and the shadow says "this is floating" — pick one.
+    "this is a boundary" and the shadow says "this is floating". Pick one.
   fix: >-
     Border for flat, in-flow surfaces. Shadow for things that genuinely sit
     above the page, like menus and dialogs.
@@ -90,7 +90,7 @@
   category: depth
   severity: low
   weight: 43
-  # 0.2% of comments and contested — the study says allowed. Advisory already
+  # 0.2% of comments and contested; the study says allowed. Advisory already
   # keeps it out of the score; the rank records why.
   evidenceRank: 11
   sources:
@@ -107,7 +107,7 @@
     Frosted glass only means anything when there is something behind it worth
     obscuring. Over a flat colour it is just a lighter panel with extra cost.
   fix: >-
-    Keep it on overlays that sit above real content — sticky nav over a
+    Keep it on overlays that sit above real content: sticky nav over a
     scrolling page, a sheet over a document. Remove it elsewhere.
 
 - id: ghost-cards
@@ -136,7 +136,7 @@
     uneven; uniformity means the content was written to fill the component.
   fix: >-
     Let the content set the size, and give one card more weight if it deserves
-    it — a featured tier, a primary path.
+    it: a featured tier, a primary path.
 
 - id: status-chip-soup
   kind: slop
@@ -158,7 +158,7 @@
     Small rounded pills in five colours across one view. Each one was added to
     surface a state; together they cancel out.
   fix: >-
-    Two chip colours maximum — one neutral, one for the state that actually
+    Two chip colours maximum: one neutral, one for the state that actually
     needs attention. Everything else becomes plain text.
 
 - id: z-index-9999
@@ -179,7 +179,7 @@
   why: >-
     A stacking context nobody understood, fixed by outbidding it.
   fix: >-
-    Define a small named scale — base, dropdown, sticky, overlay, toast — and
+    Define a small named scale (base, dropdown, sticky, overlay, toast) and
     reference it.
 
 - id: shadcn-default-card
@@ -187,7 +187,7 @@
   title: Starter cards nobody opened
   category: depth
   severity: high
-  # Rank 1 in the study — named in 2.5% of on-topic comments, the single
+  # Rank 1 in the study, named in 2.5% of on-topic comments, the single
   # most-cited concrete cause of the "they all look the same" reaction, across
   # six subreddits. It shipped at 55 with no rank because it was added from the
   # prose rather than the ranking, which put the corpus's strongest measured
@@ -205,5 +205,5 @@
     defaults untouched is, because it says nobody opened the file.
   fix: >-
     Decide the card's own treatment. Drop the border and keep the ground, or
-    keep the border and drop the shadow — two of the three signals is usually
+    keep the border and drop the shadow; two of the three signals is usually
     one too many.

@@ -3,7 +3,7 @@
 # This is the category no upstream catalogue has, and the reason redpen exists.
 #
 # The Reddit study's headline finding was not any single feature. "They all look
-# the same" and "screams AI" each appeared in roughly 13% of on-topic posts —
+# the same" and "screams AI" each appeared in roughly 13% of on-topic posts,
 # higher than any individual tell. Every other catalogue attacks tells one page
 # at a time, which cannot see the thing people are actually complaining about.
 #
@@ -26,7 +26,7 @@
   why: >-
     Same macrostructure, same section rhythm, same hero treatment as another
     page in this project. Colour and copy differences do not register as
-    variety — readers register structure.
+    variety; readers register structure.
   fix: >-
     Change the skeleton, not the palette. Pick a different macrostructure for
     this page: a long document, a stat-led opener, a catalogue index, a split
@@ -46,7 +46,7 @@
     - { origin: study, ref: hero-three-cards }
   channels: [fingerprint]
   why: >-
-    Hero, three features, testimonial, CTA, footer — in that order. This exact
+    Hero, three features, testimonial, CTA, footer, in that order. This exact
     sequence is what people mean when they say every AI site looks the same.
   fix: >-
     Reorder or replace at least two sections. Lead with the product itself, or
@@ -63,8 +63,8 @@
     - { origin: redpen, ref: fingerprint-typography }
   channels: [fingerprint]
   why: >-
-    Shared type tokens across a site are correct. Identical *usage* — same
-    display size, same steps, same face in the same slots on every page — means
+    Shared type tokens across a site are correct. Identical *usage* (same
+    display size, same steps, same face in the same slots on every page) means
     no page was designed for its own content.
   fix: >-
     Keep the tokens, vary the application. A docs page and a landing page should
@@ -84,7 +84,7 @@
     Across every recorded page, the section kinds collapse to hero, card grid,
     and CTA. The site has one idea about how to present anything.
   fix: >-
-    Add section types the content actually calls for — a comparison table, a
+    Add section types the content actually calls for: a comparison table, a
     sequence, a specimen, an index, a quote, an annotated screenshot.
 
 - id: palette-monoculture
@@ -99,7 +99,7 @@
     - { origin: redpen, ref: fingerprint-palette }
   channels: [fingerprint]
   why: >-
-    Weaker than the structural rules and often correct — brand consistency is a
+    Weaker than the structural rules and often correct; brand consistency is a
     real goal. It fires only when hue, chroma, and the accent's area share are
     all identical, which usually means the palette was pasted rather than
     applied.

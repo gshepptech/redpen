@@ -4,7 +4,7 @@
 # design doc and a course script are files in the project, not markup the
 # browser serves. `redpen code` returns these; `redpen scan` never does.
 #
-# The `copy` category is the sibling question — words on a rendered page. The
+# The `copy` category is the sibling question: words on a rendered page. The
 # two share several tells and differ in where they look, which is why a page
 # scan reads .tsx and .html and this reads .md and .rst.
 #
@@ -48,7 +48,7 @@
       - '\b(intricacies|complexities|learnings|actionable|impactful)\b'
       - '\b(deep dive|dive into|unpack|unpacking) (the|this|these|our)\b'
     # A code fence is someone else's words, and a list of banned words is not a
-    # document using them — redpen's own corpus would fire on every line.
+    # document using them; redpen's own corpus would fire on every line.
     suppress: '^\s{4,}|^\s*(```|>|\||- \[)'
   why: >-
     Individually these are ordinary words. Together they are a register: the one
@@ -87,7 +87,7 @@
   # evidence of machine authorship is the error the split exists to prevent.
   why: >-
     Wordiness, not authorship. "Utilize" is "use" and "in order to" is "to", and
-    both are worth fixing — but people have always written this way, so a hit
+    both are worth fixing, but people have always written this way, so a hit
     here says something about the prose and nothing about who produced it.
   fix: >-
     Use the shorter word. It is the same sentence with less between the reader
@@ -221,7 +221,7 @@
   source:
     extensions: ['.md', '.markdown']
     # Case-sensitive, or the `i` flag makes [A-Z] match lowercase and every
-    # sentence-case heading reads as Title Case — which is the whole rule.
+    # sentence-case heading reads as Title Case, which is the whole rule.
     caseSensitive: true
     # Three, so a document with one proper-noun heading is not a document with a
     # habit.
@@ -262,14 +262,14 @@
       - '【[^】]*†[^】]*】'
       # A link copied out of a chat client, tracking parameter and all.
       - 'utm_source=(chatgpt|claude|perplexity|copilot|gemini)'
-      # A slot the template never filled. The bare single-letter forms — `[X]`,
-      # `[N]` — are gone: a checkbox, a citation and a redaction all wear them,
+      # A slot the template never filled. The bare single-letter forms (`[X]`,
+      # `[N]`) are gone: a checkbox, a citation and a redaction all wear them,
       # and none of that is a chat artefact.
       - '\[(Your Name|Your Company|Your Email|Insert [^\]]{2,30}|Add [^\]]{2,30} here)\]'
   why: >-
-    Not a style. These are strings only a chat client emits — a citation marker
+    Not a style. These are strings only a chat client emits: a citation marker
     from a transcript, a tracking parameter on a link someone copied, a bracket
-    the template never filled — and every one of them is proof the document was
+    the template never filled. Every one of them is proof the document was
     pasted rather than read. A reader who finds one stops trusting the rest.
   fix: >-
     Delete the marker, strip the tracking parameter from the link, and fill or
@@ -300,7 +300,7 @@
     conversation. It is the same failure as a chatbot sign-off and it is more
     embarrassing, because it reads as the document flattering its reader.
   fix: >-
-    Delete the sentence. It is never load-bearing — the paragraph after it says
+    Delete the sentence. It is never load-bearing; the paragraph after it says
     the same thing without the compliment.
 
 - id: cutoff-disclaimer
@@ -378,14 +378,14 @@
       # Measured, not chosen. Across 1,113 markdown files from four real
       # repositories the coefficient of variation runs p10 0.38, median 0.53,
       # p90 0.68. Below 0.35 sit 23 documents, 18 of them machine-written on
-      # evidence independent of this measure — twelve code reviews whose own
+      # evidence independent of this measure: twelve code reviews whose own
       # front matter names an AI agent as the reviewer, two agent-written plans,
       # three from a docs generator's evidence directory, one whose filename is
       # a prompt. 0.32 keeps the strongest of those and drops the tail.
       maxCv: 0.32
   legitimateWhen: >-
     Reference documentation. API pages, a getting-started guide, a table of
-    parameter descriptions — every human-written document that fell below the
+    parameter descriptions. Every human-written document that fell below the
     threshold was one of these, and uniform sentence length is the correct
     register there rather than a tell.
   why: >-

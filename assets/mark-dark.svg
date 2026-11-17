@@ -3,7 +3,7 @@
   <!--
     The mark: a nib held between two chevrons.
 
-    Geometry only, no text — the wordmark is set beside it in the page, so the
+    Geometry only, no text. The wordmark is set beside it in the page, so the
     lockup never depends on a font file being present. Drawn on a 132x112 grid
     with the nib centred on x=66, so the chevrons are exact mirrors.
 

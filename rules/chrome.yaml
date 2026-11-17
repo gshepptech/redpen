@@ -29,8 +29,8 @@
     first thing a reader does by accident and the last thing a generated page
     ever themes.
   fix: >-
-    One rule. `::selection { background: <accent at low alpha>; color: <ink>; }`
-    — and check the contrast of the pair, because the default blue is doing
+    One rule. `::selection { background: <accent at low alpha>; color: <ink>; }`.
+    Then check the contrast of the pair, because the default blue is doing
     that job for you today.
 
 - id: unthemed-caret
@@ -73,7 +73,7 @@
   fix: >-
     `scrollbar-color: <thumb> <track>` and `scrollbar-width: thin`, with a
     `::-webkit-scrollbar` block for the browsers that need it. Theme only the
-    containers you drew — never the document scrollbar without reason.
+    containers you drew, never the document scrollbar without reason.
 
 - id: unthemed-focus-ring
   kind: quality
@@ -131,7 +131,7 @@
   render:
     check: tabular-nums-missing
   why: >-
-    Proportional digits make a column of numbers ragged — the 1s are narrow and
+    Proportional digits make a column of numbers ragged: the 1s are narrow and
     nothing lines up, so the column cannot be scanned vertically, which is the
     only reason it is a column.
   fix: >-
@@ -152,7 +152,7 @@
   why: >-
     A URL pill and three traffic-light dots built out of divs, or a mock title
     bar wrapped around a code block. The model drew a window the reader's own
-    machine already provides, and it never quite matches any real one — which is
+    machine already provides, and it never quite matches any real one, which is
     why it reads as generated on sight.
   fix: >-
     A real screenshot in a `<figure>`, with a hairline border at most. Or no
@@ -177,7 +177,7 @@
     brief did not describe a navigation, and it is recognisable before anyone
     reads a word of it.
   fix: >-
-    Pick a different arrangement the content justifies — a stacked index, a
+    Pick a different arrangement the content justifies: a stacked index, a
     sidebar, a single destination, a menu that opens. If the bar is right, at
     least stop it announcing itself: drop the hairline, or let the wordmark and
     the links share a column.
@@ -196,7 +196,7 @@
   render:
     check: footer-fingerprint
   why: >-
-    Product, Company, Resources, Legal — four columns of links in a row above a
+    Product, Company, Resources, Legal: four columns of links in a row above a
     small copyright. On a site with twelve pages it is a directory of a site
     that does not exist.
   fix: >-

@@ -1,7 +1,7 @@
 # Motion tells.
 #
 # Ranked 4th in the complaint data. The pattern in the quotes is not "there is
-# animation" but "everything animates the same way on scroll" — so the rules
+# animation" but "everything animates the same way on scroll", so the rules
 # here mostly fire on uniformity, not on presence.
 
 - id: scroll-fade-everything
@@ -33,7 +33,7 @@
     content, breaks find-in-page, and is the motion equivalent of a template.
   fix: >-
     Animate at most one thing per screen, and only when the motion carries
-    meaning — a value changing, a panel opening, a state committing.
+    meaning: a value changing, a panel opening, a state committing.
 
 - id: transition-all
   kind: slop
@@ -86,7 +86,7 @@
     scale(1.05) on cards, buttons, images, and logos alike. Applying one gesture
     to unrelated elements says the gesture was not chosen for any of them.
   fix: >-
-    Pick a different affordance per element class — background shift for
+    Pick a different affordance per element class: background shift for
     buttons, border for cards, nothing at all for logos.
 
 - id: bounce-easing
@@ -283,7 +283,7 @@
       - 'translateZ\(\s*-?\d*\.?\d+px\s*\)[^;]*\bscale\('
   why: >-
     Depth that moves at a different rate to the content is a device for
-    revealing something — a horizon, a change of scene. Applied to a marketing
+    revealing something: a horizon, a change of scene. Applied to a marketing
     section it reveals nothing, costs a repaint on every scroll frame, and on
     iOS `background-attachment: fixed` does not work at all, so the effect the
     author is looking at is not the one the visitor gets.
@@ -312,7 +312,7 @@
       - 'mask-composite\s*:\s*(xor|exclude)'
       - '-webkit-mask-composite\s*:\s*(xor|destination-out)'
   why: >-
-    A gradient border is decoration with no state behind it — it does not mean
+    A gradient border is decoration with no state behind it. It does not mean
     focus, or selection, or error, so it is a colour the reader learns to
     ignore on the one element that most needs to be able to signal.
   fix: >-

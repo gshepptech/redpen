@@ -1,7 +1,7 @@
 # Accessibility rules that don't belong to another category.
 #
 # Contrast lives in color.yaml, heading order in typography.yaml, alt text and
-# SVG naming in iconography.yaml, focus and semantics in usability.yaml — each
+# SVG naming in iconography.yaml, focus and semantics in usability.yaml, each
 # next to the visual rule it interacts with, because that is how they get fixed.
 # What remains is here.
 
@@ -45,7 +45,7 @@
   render:
     check: control-accessible-name
   why: >-
-    A placeholder is not a label — it disappears on focus and is not announced
+    A placeholder is not a label: it disappears on focus and is not announced
     as a name. Unlabelled fields make a form unusable non-visually.
   fix: >-
     A `<label for>` bound to the control's id. Keep the placeholder for format
@@ -70,7 +70,7 @@
     Red border, green border, and nothing else. Around 8% of men cannot
     distinguish them.
   fix: >-
-    Pair every colour signal with a second channel — an icon, a text label, a
+    Pair every colour signal with a second channel: an icon, a text label, a
     weight change, or a shape.
 
 - id: no-live-region
@@ -160,7 +160,7 @@
   why: >-
     An icon with no text, no `aria-label` and no `title` is announced as
     "button" and nothing more. It is the most common failure on a toolbar and
-    the least visible, because on screen it looks finished — the icon is doing
+    the least visible, because on screen it looks finished. The icon is doing
     all the work and the icon is exactly what a screen reader cannot see.
   fix: >-
     `aria-label` naming the action, not the icon: "Delete row", never "trash".
@@ -183,7 +183,7 @@
       minPx: 24
   why: >-
     WCAG 2.2 puts the floor at 24 by 24 CSS pixels, and a fingertip is nearer
-    44. Below it people miss, hit the neighbour, and undo — which costs more
+    44. Below it people miss, hit the neighbour, and undo, which costs more
     than the space the control was saving. A link sitting inside a sentence is
     exempt, because there the line is the target.
   fix: >-
@@ -248,7 +248,7 @@
   why: >-
     Every `label for`, `aria-labelledby` and `aria-controls` pointing at a
     repeated id resolves to the first one. The second control silently loses
-    its label, and nothing in the markup looks wrong — which is why this
+    its label, and nothing in the markup looks wrong, which is why this
     survives review and ships.
   fix: >-
     Make ids unique. Where a component repeats, derive the id from the
@@ -271,5 +271,5 @@
     person sees the new tab appear; a screen-reader user finds the back button
     stops working and has no way to know why.
   fix: >-
-    Say so in the accessible name — "Read the spec (opens in a new tab)" — or
+    Say so in the accessible name, "Read the spec (opens in a new tab)", or
     drop the target and let people choose. Keep `rel="noopener"` either way.

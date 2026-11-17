@@ -170,7 +170,7 @@
   source:
     patterns:
       - '(?:padding|margin|gap|row-gap|column-gap)\s*:\s*(?!0)(?:\d*[13579]|\d*\d[13579])px'
-    # \b1px\b, not 1px — an unanchored "1px" also matches inside 11px and 21px,
+    # \b1px\b, not 1px: an unanchored "1px" also matches inside 11px and 21px,
     # which silently excused most of the odd values the rule exists to find.
     suppress: 'var\(--|calc\(|\b1px\b|redpen-ignore'
     minHits: 5
@@ -200,14 +200,14 @@
     Nobody dragged the window. A single 100vw element or an un-wrapped flex row
     breaks the whole page, and it is invisible at the width the author used.
   fix: >-
-    Find the element that exceeds the viewport and fix it at source — wrap the
+    Find the element that exceeds the viewport and fix it at source: wrap the
     flex row, drop the 100vw, or give the wide thing its own `overflow-x: auto`
     container.
 
     If a finding here says "unreachable", check first for `overflow-x: clip`
     or `hidden` on html or body. Earlier versions of this rule recommended that
     clip as the fix, so if you took redpen's advice at any point, that is where
-    to look — the clip hides the symptom while leaving the content off-screen,
+    to look. The clip hides the symptom while leaving the content off-screen,
     and because it also sets scrollWidth equal to clientWidth it defeats every
     measurement that would otherwise have caught it. One project that adopted
     it put three of five navigation destinations and a destructive action past
@@ -376,7 +376,7 @@
     surface felt empty, and it appears on an enormous number of generated pages.
   fix: >-
     Remove it and let the composition carry the space, or replace it with
-    something that means something — a real diagram, a real image.
+    something that means something: a real diagram, a real image.
 
 - id: empty-grid-cell
   kind: slop
@@ -396,7 +396,7 @@
   why: >-
     Five cards in a three-column grid leaves a hole, and the hole reads as a
     missing card rather than a choice. It happens when the layout was written
-    for a number of items the content did not supply — the grid was decided
+    for a number of items the content did not supply; the grid was decided
     first and the content counted afterwards.
   fix: >-
     Make the column count divide the item count, or let the last item span the
@@ -426,7 +426,7 @@
     On mobile browsers `100vh` is the viewport with the address bar hidden, so
     a section sized to it is taller than the screen on load and the page jumps
     as the bar retracts. The author never sees it, because desktop has no
-    retracting bar — it is a defect that only exists on the device most of the
+    retracting bar. It is a defect that only exists on the device most of the
     traffic uses.
   fix: >-
     Use `100dvh` for the height that follows the bar, or `100svh` for the
