@@ -7442,10 +7442,22 @@ var require_dist = __commonJS({
 });
 
 // src/cli.ts
-var import_picocolors2 = __toESM(require_picocolors(), 1);
-import { writeFileSync as writeFileSync4, readFileSync as readFileSync8, existsSync as existsSync6 } from "node:fs";
-import { resolve as resolve4, join as join9, dirname as dirname5, relative as relative3 } from "node:path";
+var import_picocolors13 = __toESM(require_picocolors(), 1);
+import { readFileSync as readFileSync10, existsSync as existsSync8 } from "node:fs";
+import { resolve as resolve4, join as join12, dirname as dirname5 } from "node:path";
 import { fileURLToPath as fileURLToPath2 } from "node:url";
+
+// src/cli/args.ts
+var import_picocolors = __toESM(require_picocolors(), 1);
+function fail(message) {
+  process.stderr.write(import_picocolors.default.red(`redpen: ${message}
+`));
+  process.exit(2);
+}
+
+// src/cli/scan.ts
+var import_picocolors3 = __toESM(require_picocolors(), 1);
+import { writeFileSync as writeFileSync4 } from "node:fs";
 
 // src/scan.ts
 import { resolve as resolve3, join as join8 } from "node:path";
@@ -12702,101 +12714,12 @@ function ruleIds(findings) {
   return [...new Set(findings.map((f) => f.ruleId))].sort();
 }
 
-// src/channels/login.ts
-import { mkdirSync as mkdirSync5 } from "node:fs";
-import { dirname as dirname4 } from "node:path";
-async function captureLogin(loadPlaywright2, url, out, prompt) {
-  const pw = await loadPlaywright2();
-  const browser = await pw.chromium.launch({ headless: false });
-  try {
-    const context = await browser.newContext();
-    const page = await context.newPage();
-    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 6e4 });
-    prompt.say(
-      "A browser window is open. Log in however this app works \u2014 password, SSO, a code, whatever it takes. redpen is not watching the form and never sees your credentials; it only keeps the session that comes out the other side."
-    );
-    await prompt.waitForOperator();
-    mkdirSync5(dirname4(out), { recursive: true });
-    await context.storageState({ path: out });
-    const landedOn = page.url();
-    await context.close();
-    const { readFileSync: readFileSync9 } = await import("node:fs");
-    const state = JSON.parse(readFileSync9(out, "utf8"));
-    const cookies = (state.cookies ?? []).length;
-    const origins = (state.origins ?? []).length;
-    if (!cookies && !origins) {
-      throw new Error(
-        `nothing to save: the browser held no cookies and no stored origins at ${landedOn}. If the login did complete, this app may keep its session somewhere a browser profile does not carry, and redpen cannot scan behind it.`
-      );
-    }
-    return { path: out, landedOn, cookies, origins };
-  } finally {
-    await browser.close();
-  }
-}
-async function captureLoginHeadless(loadPlaywright2, login, out) {
-  if (!login.expectSelector && !login.expectUrl) {
-    throw new Error(
-      "a headless login needs something to check for. A rejected password still sets cookies, so without --expect or --expect-url this would save a refused session and every authenticated scan would quietly read the login page."
-    );
-  }
-  const pw = await loadPlaywright2();
-  const browser = await pw.chromium.launch({ headless: true });
-  try {
-    const context = await browser.newContext();
-    const page = await context.newPage();
-    await page.goto(login.url, { waitUntil: "domcontentloaded", timeout: login.timeoutMs });
-    await page.fill(login.userSelector, login.user, { timeout: login.timeoutMs });
-    await page.fill(login.passwordSelector, login.password, { timeout: login.timeoutMs });
-    if (login.submitSelector) {
-      await page.click(login.submitSelector, { timeout: login.timeoutMs });
-    } else {
-      await page.press(login.passwordSelector, "Enter");
-    }
-    try {
-      if (login.expectSelector) {
-        await page.waitForSelector(login.expectSelector, { timeout: login.timeoutMs });
-      }
-      if (login.expectUrl) {
-        const wanted = login.expectUrl;
-        await page.waitForURL((u) => String(u).includes(wanted), { timeout: login.timeoutMs });
-      }
-    } catch {
-      const where = page.url();
-      let title = "";
-      try {
-        title = await page.title();
-      } catch {
-      }
-      throw new Error(
-        `the login did not complete: ${login.expectSelector ? `no element matched ${login.expectSelector}` : `the url never contained ${login.expectUrl}`} within ${login.timeoutMs}ms. The browser was left at ${where}${title ? ` (${title})` : ""}. Nothing was saved. Either the credentials were refused, or this app needs a step a form fill cannot do \u2014 in which case use the headed \`redpen login\`.`
-      );
-    }
-    mkdirSync5(dirname4(out), { recursive: true });
-    await context.storageState({ path: out });
-    const landedOn = page.url();
-    await context.close();
-    const { readFileSync: readFileSync9 } = await import("node:fs");
-    const state = JSON.parse(readFileSync9(out, "utf8"));
-    const cookies = (state.cookies ?? []).length;
-    const origins = (state.origins ?? []).length;
-    if (!cookies && !origins) {
-      throw new Error(
-        `nothing to save: the browser held no cookies and no stored origins at ${landedOn}, even though the login appeared to succeed. This app keeps its session somewhere a browser profile does not carry, and redpen cannot scan behind it.`
-      );
-    }
-    return { path: out, landedOn, cookies, origins };
-  } finally {
-    await browser.close();
-  }
-}
-
 // src/report/terminal.ts
-var import_picocolors = __toESM(require_picocolors(), 1);
+var import_picocolors2 = __toESM(require_picocolors(), 1);
 var CONFIDENCE_LABEL = {
-  confirmed: (s) => import_picocolors.default.red(import_picocolors.default.bold(s)),
-  likely: (s) => import_picocolors.default.yellow(s),
-  possible: (s) => import_picocolors.default.dim(s)
+  confirmed: (s) => import_picocolors2.default.red(import_picocolors2.default.bold(s)),
+  likely: (s) => import_picocolors2.default.yellow(s),
+  possible: (s) => import_picocolors2.default.dim(s)
 };
 var CONFIDENCE_MARK = {
   confirmed: "\u25CF",
@@ -12825,13 +12748,13 @@ function renderTerminal(result, opts) {
     out.push("");
   }
   if (result.channelsRun.length < 3) {
-    out.push(import_picocolors.default.dim(`  channels: ${result.channelsRun.join(", ")}`));
+    out.push(import_picocolors2.default.dim(`  channels: ${result.channelsRun.join(", ")}`));
     const missing = ["source", "render", "vision"].filter(
       (c) => !result.channelsRun.includes(c)
     );
     if (missing.length) {
       out.push(
-        import_picocolors.default.dim(
+        import_picocolors2.default.dim(
           `  not run: ${missing.join(", ")} \u2014 findings that need them are unconfirmed, not absent`
         )
       );
@@ -12839,7 +12762,7 @@ function renderTerminal(result, opts) {
     out.push("");
   }
   if (!findings.length) {
-    out.push(import_picocolors.default.green("  No findings."));
+    out.push(import_picocolors2.default.green("  No findings."));
     out.push("");
     if (opts.showIgnored && result.ignored.length) {
       out.push(...ignoredLines(result));
@@ -12847,7 +12770,7 @@ function renderTerminal(result, opts) {
     return out.join("\n");
   }
   const cats = scoreByCategory(findings);
-  out.push(import_picocolors.default.dim("  BY CATEGORY"));
+  out.push(import_picocolors2.default.dim("  BY CATEGORY"));
   const items = Object.entries(cats).sort((a, b) => a[1] - b[1]).map(([k, v]) => ({ plain: `${k} ${String(v).padStart(3)}`, shown: `${k} ${colorScore(v)}` }));
   const SEP = "  \xB7  ";
   let row = [];
@@ -12855,21 +12778,21 @@ function renderTerminal(result, opts) {
   for (const it of items) {
     const cost = it.plain.length + (row.length ? SEP.length : 0);
     if (row.length && used + cost > MEASURE - 2) {
-      out.push(`  ${row.map((r) => r.shown).join(import_picocolors.default.dim(SEP))}`);
+      out.push(`  ${row.map((r) => r.shown).join(import_picocolors2.default.dim(SEP))}`);
       row = [];
       used = 0;
     }
     row.push(it);
     used += it.plain.length + (row.length > 1 ? SEP.length : 0);
   }
-  if (row.length) out.push(`  ${row.map((r) => r.shown).join(import_picocolors.default.dim(SEP))}`);
+  if (row.length) out.push(`  ${row.map((r) => r.shown).join(import_picocolors2.default.dim(SEP))}`);
   out.push("");
   const byConfidence = group(findings);
   for (const conf of ["confirmed", "likely", "possible"]) {
     const list = byConfidence.get(conf);
     if (!list?.length) continue;
     out.push(CONFIDENCE_LABEL[conf](`  ${conf.toUpperCase()} (${list.length})`));
-    out.push(import_picocolors.default.dim(`  ${wrap(describeConfidence(conf, result.channelsRun.includes("render")), MEASURE - 2, "  ")}`));
+    out.push(import_picocolors2.default.dim(`  ${wrap(describeConfidence(conf, result.channelsRun.includes("render")), MEASURE - 2, "  ")}`));
     out.push("");
     const depth = opts.verbose ? list.length : DETAIL[conf];
     for (const f of list.slice(0, depth)) {
@@ -12880,7 +12803,7 @@ function renderTerminal(result, opts) {
       const idWidth = idColumn(rest);
       for (const f of rest) out.push(rosterLine(f, idWidth));
       out.push(
-        import_picocolors.default.dim(
+        import_picocolors2.default.dim(
           `      ${rest.length} listed, not argued \u2014 \`redpen why <rule-id>\`, or --verbose for all`
         )
       );
@@ -12888,23 +12811,23 @@ function renderTerminal(result, opts) {
     }
   }
   if (result.clashes.length) {
-    out.push(import_picocolors.default.red(import_picocolors.default.bold(`  SAMENESS (${result.clashes.length})`)));
-    out.push(import_picocolors.default.dim("  Pages in this project that share a skeleton."));
+    out.push(import_picocolors2.default.red(import_picocolors2.default.bold(`  SAMENESS (${result.clashes.length})`)));
+    out.push(import_picocolors2.default.dim("  Pages in this project that share a skeleton."));
     out.push("");
     for (const c of result.clashes.slice(0, 6)) {
-      out.push(`  ${import_picocolors.default.bold(short(c.page))} ${import_picocolors.default.dim("\u2248")} ${import_picocolors.default.bold(short(c.against))}  ${import_picocolors.default.dim(`distance ${c.distance}`)}`);
+      out.push(`  ${import_picocolors2.default.bold(short(c.page))} ${import_picocolors2.default.dim("\u2248")} ${import_picocolors2.default.bold(short(c.against))}  ${import_picocolors2.default.dim(`distance ${c.distance}`)}`);
       for (const dim of c.sharedDimensions) {
-        out.push(import_picocolors.default.dim(`      shares ${dim}`));
+        out.push(import_picocolors2.default.dim(`      shares ${dim}`));
       }
       out.push("");
     }
   }
   if (result.advisory.length) {
-    out.push(import_picocolors.default.dim(`  ADVISORY (${result.advisory.length}) \u2014 reported, never scored`));
+    out.push(import_picocolors2.default.dim(`  ADVISORY (${result.advisory.length}) \u2014 reported, never scored`));
     const advWidth = idColumn(result.advisory);
     for (const f of result.advisory) {
       out.push(
-        import_picocolors.default.dim(`         ${f.ruleId.padEnd(advWidth)}  ${f.title}`)
+        import_picocolors2.default.dim(`         ${f.ruleId.padEnd(advWidth)}  ${f.title}`)
       );
     }
     out.push("");
@@ -12920,25 +12843,25 @@ function rosterLine(f, idWidth) {
   const id = f.ruleId.padEnd(idWidth);
   const room = MEASURE - 4 - weight.length - 2 - id.length - 2;
   const title = f.title.length > room ? `${f.title.slice(0, room - 1)}\u2026` : f.title;
-  return `  ${mark(f.confidence)} ${import_picocolors.default.dim(weight)}  ${import_picocolors.default.dim(id)}  ${title}`;
+  return `  ${mark(f.confidence)} ${import_picocolors2.default.dim(weight)}  ${import_picocolors2.default.dim(id)}  ${title}`;
 }
 var idColumn = (list) => Math.max(...list.map((f) => f.ruleId.length));
 function renderFinding(f, opts) {
   const out = [];
-  const channels = import_picocolors.default.dim(`[${f.channels.join("+")}]`);
-  out.push(`  ${mark(f.confidence)} ${import_picocolors.default.bold(f.title)} ${channels} ${import_picocolors.default.dim(`${f.ruleId} \xB7 ${f.weight}`)}`);
+  const channels = import_picocolors2.default.dim(`[${f.channels.join("+")}]`);
+  out.push(`  ${mark(f.confidence)} ${import_picocolors2.default.bold(f.title)} ${channels} ${import_picocolors2.default.dim(`${f.ruleId} \xB7 ${f.weight}`)}`);
   out.push(`    ${wrap(f.why, MEASURE - 4, "    ")}`);
-  out.push(`    ${import_picocolors.default.green("fix")} ${wrap(f.fix, MEASURE - 8, "        ")}`);
+  out.push(`    ${import_picocolors2.default.green("fix")} ${wrap(f.fix, MEASURE - 8, "        ")}`);
   const shown = f.evidence.slice(0, opts.maxEvidence);
   for (const e of shown) {
-    out.push(import_picocolors.default.dim(`      ${formatEvidence(e)}`));
+    out.push(import_picocolors2.default.dim(`      ${formatEvidence(e)}`));
   }
   const total = f.evidenceTotal ?? f.evidence.length;
   if (total > shown.length) {
-    out.push(import_picocolors.default.dim(`      \u2026 and ${total - shown.length} more`));
+    out.push(import_picocolors2.default.dim(`      \u2026 and ${total - shown.length} more`));
   }
   if (opts.verbose) {
-    out.push(import_picocolors.default.dim(`      from ${f.sources.map((s) => `${s.origin}:${s.ref}`).join(", ")}`));
+    out.push(import_picocolors2.default.dim(`      from ${f.sources.map((s) => `${s.origin}:${s.ref}`).join(", ")}`));
   }
   out.push("");
   return out;
@@ -12966,7 +12889,7 @@ function describeConfidence(c, renderRan) {
 function kindLine(result) {
   const slop = result.findings.filter((f) => f.kind === "slop").length;
   const qual = result.findings.filter((f) => f.kind === "quality").length;
-  const row = (name, value, n, gloss) => `  ${import_picocolors.default.dim(name)}${" ".repeat(7 - name.length)}  ${colorScore(value)}  ${meter(value, 14)}  ` + import_picocolors.default.dim(`${n} finding${n === 1 ? "" : "s"} \u2014 ${gloss}`);
+  const row = (name, value, n, gloss) => `  ${import_picocolors2.default.dim(name)}${" ".repeat(7 - name.length)}  ${colorScore(value)}  ${meter(value, 14)}  ` + import_picocolors2.default.dim(`${n} finding${n === 1 ? "" : "s"} \u2014 ${gloss}`);
   return row("slop", result.slopScore, slop, "reads as machine-made") + "\n" + row("quality", result.qualityScore, qual, "broken regardless of taste");
 }
 function surfaceLine(result) {
@@ -12976,27 +12899,27 @@ function surfaceLine(result) {
   const declared = entries.every(([, v]) => v.declared);
   const how = declared ? "declared" : entries.some(([, v]) => v.declared) ? "mixed" : "detected";
   if (kinds.size === 1) {
-    return import_picocolors.default.dim(`  surface  ${[...kinds][0]} (${how}) \u2014 rules that only hold elsewhere are off`);
+    return import_picocolors2.default.dim(`  surface  ${[...kinds][0]} (${how}) \u2014 rules that only hold elsewhere are off`);
   }
-  return import_picocolors.default.dim(`  surface  ${entries.map(([u, v]) => `${short(u)}=${v.surface}`).join(", ")} (${how})`);
+  return import_picocolors2.default.dim(`  surface  ${entries.map(([u, v]) => `${short(u)}=${v.surface}`).join(", ")} (${how})`);
 }
 function scoreLine(value, slop, quality) {
-  return `  ${import_picocolors.default.bold("redpen")}  ${colorScore(value)}${import_picocolors.default.dim("/100")}  ${import_picocolors.default.dim(verdict(slop, quality))}`;
+  return `  ${import_picocolors2.default.bold("redpen")}  ${colorScore(value)}${import_picocolors2.default.dim("/100")}  ${import_picocolors2.default.dim(verdict(slop, quality))}`;
 }
 var BANDS = [
-  { floor: 90, paint: (s) => import_picocolors.default.green(s) },
-  { floor: 75, paint: (s) => import_picocolors.default.yellow(s) },
-  { floor: 55, paint: (s) => import_picocolors.default.yellow(s) },
-  { floor: 35, paint: (s) => import_picocolors.default.red(s) },
-  { floor: 0, paint: (s) => import_picocolors.default.red(s) }
+  { floor: 90, paint: (s) => import_picocolors2.default.green(s) },
+  { floor: 75, paint: (s) => import_picocolors2.default.yellow(s) },
+  { floor: 55, paint: (s) => import_picocolors2.default.yellow(s) },
+  { floor: 35, paint: (s) => import_picocolors2.default.red(s) },
+  { floor: 0, paint: (s) => import_picocolors2.default.red(s) }
 ];
 var band = (value) => BANDS.find((b) => value >= b.floor);
 function colorScore(value) {
-  return band(value).paint(import_picocolors.default.bold(String(value).padStart(3, " ")));
+  return band(value).paint(import_picocolors2.default.bold(String(value).padStart(3, " ")));
 }
 function meter(value, width = 24) {
   const filled = Math.round(value / 100 * width);
-  return band(value).paint("\u2588".repeat(filled)) + import_picocolors.default.dim("\u2591".repeat(width - filled));
+  return band(value).paint("\u2588".repeat(filled)) + import_picocolors2.default.dim("\u2591".repeat(width - filled));
 }
 function group(findings) {
   const m = /* @__PURE__ */ new Map();
@@ -13026,11 +12949,11 @@ function wrap(text, width, indent) {
   return lines.join("\n" + indent);
 }
 function ignoredLines(result) {
-  const out = [import_picocolors.default.dim(`  ${result.ignored.length} finding(s) suppressed by redpen-ignore:`)];
+  const out = [import_picocolors2.default.dim(`  ${result.ignored.length} finding(s) suppressed by redpen-ignore:`)];
   for (const f of result.ignored) {
     const ev = f.evidence?.[0];
     const at = ev?.location ? ` (${ev.location}${ev.line ? `:${ev.line}` : ""})` : "";
-    out.push(import_picocolors.default.dim(`    ${f.ruleId}${at} \u2014 ${f.ignored?.reason ?? "no reason given"}`));
+    out.push(import_picocolors2.default.dim(`    ${f.ruleId}${at} \u2014 ${f.ignored?.reason ?? "no reason given"}`));
   }
   out.push("");
   return out;
@@ -13208,24 +13131,676 @@ function compareToBaseline(baseline, run, tolerance) {
   return { status: "holding", slop: run.slop, quality: run.quality, notes };
 }
 
+// src/cli/scan.ts
+async function cmdScan(root, args, gating, code = false) {
+  const onProgress = args.quiet ? void 0 : (m) => process.stderr.write(import_picocolors3.default.dim(`  \u2026 ${m}
+`));
+  const result = await runScan({
+    root,
+    urls: args.urls,
+    viewports: args.viewports,
+    screenshots: args.screenshots,
+    vision: args.vision,
+    answers: args.answers,
+    only: args.only,
+    ephemeral: gating || code,
+    codeCategories: code,
+    onProgress
+  });
+  if (args.min) result.config.minConfidence = args.min;
+  for (const w of result.warnings) {
+    process.stderr.write(import_picocolors3.default.yellow(`  ! ${w}
+`));
+  }
+  if (args.json) {
+    const payload = JSON.stringify(
+      {
+        score: result.score,
+        slopScore: result.slopScore,
+        qualityScore: result.qualityScore,
+        grade: verdict(result.slopScore, result.qualityScore),
+        surfaces: result.surfaces,
+        channelsRun: result.channelsRun,
+        findings: result.findings,
+        advisory: result.advisory,
+        ignored: result.ignored,
+        clashes: result.clashes,
+        fingerprints: result.fingerprints,
+        warnings: result.warnings,
+        timing: result.timing
+      },
+      null,
+      2
+    );
+    if (typeof args.json === "string") {
+      writeFileSync4(args.json, payload + "\n", "utf8");
+      process.stderr.write(import_picocolors3.default.dim(`  wrote ${args.json}
+`));
+    } else {
+      process.stdout.write(payload + "\n");
+    }
+  }
+  if (args.markdown) {
+    const md = renderMarkdown(result);
+    if (typeof args.markdown === "string") {
+      writeFileSync4(args.markdown, md + "\n", "utf8");
+      process.stderr.write(import_picocolors3.default.dim(`  wrote ${args.markdown}
+`));
+    } else {
+      process.stdout.write(md + "\n");
+    }
+  }
+  if (!args.json && !args.markdown) {
+    process.stdout.write(
+      renderTerminal(result, {
+        verbose: args.verbose,
+        showIgnored: args.showIgnored,
+        maxEvidence: args.verbose ? 12 : 3
+      })
+    );
+  }
+  if (result.briefPath) {
+    process.stderr.write(
+      "\n" + import_picocolors3.default.bold("  vision brief ready\n") + import_picocolors3.default.dim(`  ${result.briefPath}
+`) + import_picocolors3.default.dim("  Open each screenshot it lists, fill in the pre-built answer rows, then re-run with\n") + import_picocolors3.default.dim(`  --answers ${result.briefPath}
+`)
+    );
+  }
+  if (!gating) return;
+  const baseline = loadBaseline(root);
+  if (!baseline) {
+    process.stderr.write(
+      import_picocolors3.default.yellow(
+        "  ! no baseline recorded \u2014 run `redpen baseline` to set the bar this check holds against\n"
+      )
+    );
+    process.exit(0);
+  }
+  const gate = compareToBaseline(
+    baseline,
+    {
+      slop: result.slopScore,
+      quality: result.qualityScore,
+      channelsRun: result.channelsRun,
+      findings: result.findings
+    },
+    result.config.tolerance
+  );
+  for (const note of gate.notes) {
+    process.stderr.write(import_picocolors3.default.yellow(`
+  ! ${note}.
+    Re-record it with \`redpen baseline\` to close that hole.
+`));
+  }
+  if (gate.status === "incomparable") {
+    if (gate.reason === "missing-channels") {
+      process.stderr.write(
+        import_picocolors3.default.red(
+          `
+  cannot check: the baseline was recorded with ${gate.had.join(", ")} but this run only managed ${gate.ran.join(", ")}.
+  Missing ${gate.missing.join(", ")} means fewer findings and a higher score, which would pass for the wrong reason.
+`
+        )
+      );
+    } else {
+      process.stderr.write(
+        import_picocolors3.default.red(
+          "\n  cannot check: this baseline predates the two-axis score, so its number is not\n  the same quantity as this run's. Re-record it with `redpen baseline`.\n"
+        )
+      );
+    }
+    process.exit(2);
+  }
+  process.stderr.write("\n");
+  if (gate.status === "regressed") {
+    for (const a of gate.drops) {
+      process.stderr.write(
+        import_picocolors3.default.red(
+          `  ${a.axis} dropped ${a.drop} point(s), ${a.was} to ${a.now} (tolerance ${result.config.tolerance})
+`
+        )
+      );
+    }
+    if (gate.introduced.length) {
+      process.stderr.write(import_picocolors3.default.red(`  new tells since baseline: ${gate.introduced.join(", ")}
+`));
+    }
+    process.exit(1);
+  }
+  process.stderr.write(
+    import_picocolors3.default.green(
+      `  holding: slop ${gate.slop} against ${baseline.slop}, quality ${gate.quality} against ${baseline.quality}
+`
+    )
+  );
+}
+
+// src/cli/baseline.ts
+var import_picocolors4 = __toESM(require_picocolors(), 1);
+async function cmdBaseline(root, args) {
+  const result = await runScan({
+    root,
+    urls: args.urls,
+    viewports: args.viewports,
+    onProgress: args.quiet ? void 0 : (m) => process.stderr.write(import_picocolors4.default.dim(`  \u2026 ${m}
+`))
+  });
+  for (const warning of result.warnings) {
+    process.stderr.write(import_picocolors4.default.yellow(`  ! ${warning}
+`));
+  }
+  saveBaseline(root, {
+    score: result.score,
+    slop: result.slopScore,
+    quality: result.qualityScore,
+    recordedAt: (/* @__PURE__ */ new Date()).toISOString(),
+    knownRules: ruleIds(result.findings.filter((f) => f.confidence !== "possible")),
+    channels: result.channelsRun
+  });
+  process.stdout.write(
+    `
+  baseline set at ${import_picocolors4.default.bold(String(result.score))} (${verdict(result.slopScore, result.qualityScore)}) with ${result.findings.length} finding(s) on record
+` + import_picocolors4.default.dim(`  channels: ${result.channelsRun.join(", ")}
+`) + import_picocolors4.default.dim("  `redpen check` now fails when the score drops or a new tell appears\n\n")
+  );
+  if (!result.channelsRun.includes("render")) {
+    process.stderr.write(
+      import_picocolors4.default.yellow("  ! recorded without the render channel \u2014 every later `redpen check` that does\n") + import_picocolors4.default.yellow("    render will see the extra findings as a regression. Re-record with --url.\n")
+    );
+  }
+}
+
+// src/cli/rules.ts
+var import_picocolors5 = __toESM(require_picocolors(), 1);
+function cmdRules(args) {
+  const rules = loadCorpus();
+  const filter = args.positional[0]?.toLowerCase();
+  const shown = (filter ? rules.filter((r) => r.category === filter || r.id.includes(filter)) : rules).slice().sort((a, b) => a.category.localeCompare(b.category) || b.weight - a.weight);
+  process.stdout.write(
+    `
+  ${import_picocolors5.default.bold(`${rules.length} rules`)}${filter ? import_picocolors5.default.dim(` \xB7 filtered to ${shown.length}`) : ""}
+
+`
+  );
+  let lastCategory = "";
+  for (const r of shown) {
+    if (r.category !== lastCategory) {
+      process.stdout.write(`  ${import_picocolors5.default.bold(import_picocolors5.default.underline(r.category))}
+`);
+      lastCategory = r.category;
+    }
+    const rank2 = r.evidenceRank === 0 ? import_picocolors5.default.green("top") : r.evidenceRank !== null ? import_picocolors5.default.green(`#${String(r.evidenceRank).padEnd(2)}`) : import_picocolors5.default.dim("  \u2014");
+    process.stdout.write(
+      `    ${String(r.weight).padStart(3)} ${rank2}  ${r.id.padEnd(32)} ${import_picocolors5.default.dim(r.channels.join("+"))}
+`
+    );
+  }
+  process.stdout.write(
+    import_picocolors5.default.dim(
+      '\n  weight = 0-100 \xB7 rank = position in the 3,033-comment Reddit sample\n  "top" = the headline finding (sameness outranked every individual tell)\n  "\u2014"  = never measured against human complaint data; weight is assigned by consequence\n\n'
+    )
+  );
+}
+
+// src/cli/why.ts
+var import_picocolors6 = __toESM(require_picocolors(), 1);
+function cmdWhy(args) {
+  const id = args.positional[0];
+  if (!id) fail("usage: redpen why <rule-id>");
+  const rule = ruleById(id);
+  if (!rule) fail(`no rule "${id}" \u2014 run \`redpen rules\` to list them`);
+  process.stdout.write(`
+  ${import_picocolors6.default.bold(rule.title)}  ${import_picocolors6.default.dim(rule.id)}
+
+`);
+  process.stdout.write(`  ${import_picocolors6.default.dim("category")}   ${rule.category}
+`);
+  process.stdout.write(
+    `  ${import_picocolors6.default.dim("kind")}       ${rule.kind === "slop" ? "slop \u2014 reads as machine-made" : "quality \u2014 broken regardless of taste"}${rule.advisory ? import_picocolors6.default.yellow("  (advisory: reported, never scored)") : ""}
+`
+  );
+  process.stdout.write(
+    `  ${import_picocolors6.default.dim("surfaces")}   ${rule.surfaces ? rule.surfaces.join(", ") + import_picocolors6.default.dim(" only") : "all (persuade, operate, read)"}
+`
+  );
+  process.stdout.write(`  ${import_picocolors6.default.dim("weight")}     ${rule.weight}/100
+`);
+  process.stdout.write(
+    `  ${import_picocolors6.default.dim("evidence")}   ${rule.evidenceRank === 0 ? "the headline finding of the 3,033-comment Reddit sample \u2014 it outranked every individual tell" : rule.evidenceRank !== null ? `rank #${rule.evidenceRank} in the 3,033-comment Reddit sample` : "never measured against human complaint data \u2014 weight is assigned by consequence"}
+`
+  );
+  process.stdout.write(`  ${import_picocolors6.default.dim("channels")}   ${rule.channels.join(", ")}
+`);
+  process.stdout.write(`  ${import_picocolors6.default.dim("from")}       ${rule.sources.map((s) => `${s.origin}:${s.ref}`).join("\n             ")}
+
+`);
+  process.stdout.write(`  ${rule.why}
+
+`);
+  process.stdout.write(`  ${import_picocolors6.default.green("fix")}  ${rule.fix}
+
+`);
+  if (rule.legitimateWhen) {
+    process.stdout.write(import_picocolors6.default.dim(`  legitimate when: ${rule.legitimateWhen}
+
+`));
+  }
+}
+
+// src/cli/why-score.ts
+var import_picocolors7 = __toESM(require_picocolors(), 1);
+async function cmdWhyScore(root, args) {
+  const result = await runScan({
+    root,
+    urls: args.urls,
+    viewports: args.viewports,
+    only: args.only,
+    ephemeral: true,
+    onProgress: args.quiet ? void 0 : (m) => process.stderr.write(import_picocolors7.default.dim(`  \u2026 ${m}
+`))
+  });
+  for (const warning of result.warnings) {
+    process.stderr.write(import_picocolors7.default.yellow(`  ! ${warning}
+`));
+  }
+  const scorable = result.findings.filter((f) => meetsThreshold(f, result.config.minConfidence));
+  const { score: total, contributions } = explainScore(scorable);
+  const excluded = result.findings.length - scorable.length;
+  const w = process.stdout.write.bind(process.stdout);
+  w(
+    `
+  ${import_picocolors7.default.bold("redpen")}  ${import_picocolors7.default.bold(String(total))}${import_picocolors7.default.dim("/100")}   ${import_picocolors7.default.dim(verdict(result.slopScore, result.qualityScore))}
+`
+  );
+  w(`  ${import_picocolors7.default.dim("slop")} ${result.slopScore}   ${import_picocolors7.default.dim("quality")} ${result.qualityScore}
+
+`);
+  if (!contributions.length) {
+    w(import_picocolors7.default.green("  Nothing is costing you anything.\n\n"));
+    return;
+  }
+  w(`  ${import_picocolors7.default.bold("What the score is made of")}
+`);
+  w(import_picocolors7.default.dim("  share = this finding's portion of the total problem.\n"));
+  w(import_picocolors7.default.dim("  +pts  = what the score gains if it goes away, on its own.\n\n"));
+  const saturated = contributions.every((c) => c.worth < 1);
+  if (saturated && contributions.length > 3) {
+    w(import_picocolors7.default.yellow("  The curve is saturated: there is enough here that no single fix\n"));
+    w(import_picocolors7.default.yellow("  moves the number much. Work down by share \u2014 the score starts\n"));
+    w(import_picocolors7.default.yellow("  responding once the top few are gone.\n\n"));
+  }
+  for (const c of contributions) {
+    const bar = "\u2588".repeat(Math.max(1, Math.round(c.share * 40)));
+    const pct = `${(c.share * 100).toFixed(1)}%`.padStart(6);
+    const pts = c.worth >= 1 ? import_picocolors7.default.green(`+${c.worth}`.padStart(5)) : import_picocolors7.default.dim(`+${c.worth}`.padStart(5));
+    w(`   ${pct} ${pts}  ${c.ruleId.padEnd(28)} ${import_picocolors7.default.dim(`${c.kind} \xB7 ${c.instances}\xD7`)}
+`);
+    w(`   ${" ".repeat(12)}${c.kind === "slop" ? import_picocolors7.default.yellow(bar) : import_picocolors7.default.red(bar)}
+`);
+  }
+  const best = contributions[0];
+  if (best) {
+    w(`
+  ${import_picocolors7.default.bold("Start here")}  ${best.ruleId} ${import_picocolors7.default.dim(`\u2014 ${(best.share * 100).toFixed(0)}% of the total`)}
+`);
+    w(import_picocolors7.default.dim(`  ${result.findings.find((f) => f.ruleId === best.ruleId)?.fix ?? ""}
+`));
+  }
+  const advisory = result.advisory.length;
+  if (advisory) {
+    w(import_picocolors7.default.dim(`
+  ${advisory} advisory finding(s) cost nothing and never will.
+`));
+  }
+  if (excluded) {
+    w(import_picocolors7.default.dim(
+      `  ${excluded} finding(s) below the "${result.config.minConfidence}" floor are not counted here \u2014 the render pass checked them and did not agree.
+`
+    ));
+  }
+  w("\n");
+}
+
+// src/cli/sources.ts
+var import_picocolors8 = __toESM(require_picocolors(), 1);
+function cmdSources() {
+  const counts = originCounts();
+  const total = loadCorpus().length;
+  process.stdout.write(`
+  ${import_picocolors8.default.bold(`${total} rules`)} merged from:
+
+`);
+  for (const [cat, n] of Object.entries(counts).sort((a, b) => b[1] - a[1])) {
+    process.stdout.write(`    ${String(n).padStart(4)}  ${cat}
+`);
+  }
+  process.stdout.write(
+    import_picocolors8.default.dim(
+      "\n  Counts exceed the rule total because most rules were named by more than one\n  catalogue \u2014 that overlap is what the merge collapsed. See NOTICE for licences.\n\n"
+    )
+  );
+}
+
+// src/cli/fingerprints.ts
+var import_picocolors9 = __toESM(require_picocolors(), 1);
+function cmdFingerprints(root) {
+  const prints = load(root);
+  if (!prints.length) {
+    process.stdout.write(
+      import_picocolors9.default.dim("\n  no fingerprints on record \u2014 run `redpen scan --url <u>` to record one\n\n")
+    );
+    return;
+  }
+  process.stdout.write(`
+  ${import_picocolors9.default.bold(`${prints.length} page(s) on record`)}
+
+`);
+  for (const p of prints) {
+    process.stdout.write(`  ${import_picocolors9.default.bold(p.page)}
+`);
+    process.stdout.write(`    ${import_picocolors9.default.dim("skeleton")}  ${p.macrostructure}
+`);
+    process.stdout.write(`    ${import_picocolors9.default.dim("rhythm")}    ${p.sectionRhythm.join(" \u2192 ")}
+`);
+    process.stdout.write(`    ${import_picocolors9.default.dim("hero/nav")}  ${p.hero} / ${p.nav}
+`);
+    process.stdout.write(`    ${import_picocolors9.default.dim("type")}      ${p.typeScale.join(", ")}px \xB7 ${p.families.join(", ")}
+`);
+    process.stdout.write(
+      `    ${import_picocolors9.default.dim("anchor")}    ${p.paletteAnchor === null ? "monochrome" : `hue ${p.paletteAnchor}`}
+
+`
+    );
+  }
+}
+
+// src/cli/brief.ts
+var import_picocolors10 = __toESM(require_picocolors(), 1);
+import { readFileSync as readFileSync8, existsSync as existsSync6 } from "node:fs";
+import { join as join9 } from "node:path";
+function cmdBrief(root) {
+  const file = join9(stateRoot(root), ".redpen", "vision-brief.json");
+  if (!existsSync6(file)) {
+    fail(`no brief at ${file} \u2014 run \`redpen scan <path> --url <url> --vision\` first`);
+  }
+  const brief = JSON.parse(readFileSync8(file, "utf8"));
+  const w = process.stdout.write.bind(process.stdout);
+  w(`
+  ${import_picocolors10.default.bold("Vision brief")}  ${import_picocolors10.default.dim(file)}
+
+`);
+  w(`  ${import_picocolors10.default.bold("What this is")}
+    ${wrapAt(brief.context.product, 72, "    ")}
+`);
+  w(`  ${import_picocolors10.default.bold("Who uses it")}
+    ${wrapAt(brief.context.audience, 72, "    ")}
+
+`);
+  w(`  ${import_picocolors10.default.bold("Pages")}
+`);
+  for (const [url, shot] of Object.entries(brief.screenshots)) {
+    w(`    ${import_picocolors10.default.bold(url)}
+      ${import_picocolors10.default.dim(shot)}
+      ${import_picocolors10.default.dim(brief.context.surface[url] ?? "")}
+`);
+  }
+  w("\n");
+  w(`  ${import_picocolors10.default.bold("Questions")}  ${import_picocolors10.default.dim("yes means the thing described IS there")}
+`);
+  for (const q of brief.questions) {
+    w(`    ${import_picocolors10.default.green(q.id.padEnd(4))} ${wrapAt(q.ask, 70, "         ")}
+`);
+  }
+  const answered = brief.answers.filter((a) => a.present !== null).length;
+  w(`
+  ${answered}/${brief.answers.length} rows answered.
+`);
+  w(import_picocolors10.default.dim(`  Open each screenshot, fill in present / confidence / evidence, then:
+`));
+  w(import_picocolors10.default.dim(`    redpen scan ${root} --url <url> --answers ${file}
+
+`));
+}
+function wrapAt(text, width, indent) {
+  const words = String(text).split(/\s+/);
+  const lines = [];
+  let line = "";
+  for (const word of words) {
+    if ((line + " " + word).trim().length > width) {
+      lines.push(line.trim());
+      line = word;
+    } else line += " " + word;
+  }
+  if (line.trim()) lines.push(line.trim());
+  return lines.join("\n" + indent);
+}
+
+// src/cli/login.ts
+var import_picocolors11 = __toESM(require_picocolors(), 1);
+import { writeFileSync as writeFileSync5, readFileSync as readFileSync9, existsSync as existsSync7 } from "node:fs";
+import { join as join10, relative as relative3 } from "node:path";
+
+// src/channels/login.ts
+import { mkdirSync as mkdirSync5 } from "node:fs";
+import { dirname as dirname4 } from "node:path";
+async function captureLogin(loadPlaywright2, url, out, prompt) {
+  const pw = await loadPlaywright2();
+  const browser = await pw.chromium.launch({ headless: false });
+  try {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 6e4 });
+    prompt.say(
+      "A browser window is open. Log in however this app works \u2014 password, SSO, a code, whatever it takes. redpen is not watching the form and never sees your credentials; it only keeps the session that comes out the other side."
+    );
+    await prompt.waitForOperator();
+    mkdirSync5(dirname4(out), { recursive: true });
+    await context.storageState({ path: out });
+    const landedOn = page.url();
+    await context.close();
+    const { readFileSync: readFileSync11 } = await import("node:fs");
+    const state = JSON.parse(readFileSync11(out, "utf8"));
+    const cookies = (state.cookies ?? []).length;
+    const origins = (state.origins ?? []).length;
+    if (!cookies && !origins) {
+      throw new Error(
+        `nothing to save: the browser held no cookies and no stored origins at ${landedOn}. If the login did complete, this app may keep its session somewhere a browser profile does not carry, and redpen cannot scan behind it.`
+      );
+    }
+    return { path: out, landedOn, cookies, origins };
+  } finally {
+    await browser.close();
+  }
+}
+async function captureLoginHeadless(loadPlaywright2, login, out) {
+  if (!login.expectSelector && !login.expectUrl) {
+    throw new Error(
+      "a headless login needs something to check for. A rejected password still sets cookies, so without --expect or --expect-url this would save a refused session and every authenticated scan would quietly read the login page."
+    );
+  }
+  const pw = await loadPlaywright2();
+  const browser = await pw.chromium.launch({ headless: true });
+  try {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await page.goto(login.url, { waitUntil: "domcontentloaded", timeout: login.timeoutMs });
+    await page.fill(login.userSelector, login.user, { timeout: login.timeoutMs });
+    await page.fill(login.passwordSelector, login.password, { timeout: login.timeoutMs });
+    if (login.submitSelector) {
+      await page.click(login.submitSelector, { timeout: login.timeoutMs });
+    } else {
+      await page.press(login.passwordSelector, "Enter");
+    }
+    try {
+      if (login.expectSelector) {
+        await page.waitForSelector(login.expectSelector, { timeout: login.timeoutMs });
+      }
+      if (login.expectUrl) {
+        const wanted = login.expectUrl;
+        await page.waitForURL((u) => String(u).includes(wanted), { timeout: login.timeoutMs });
+      }
+    } catch {
+      const where = page.url();
+      let title = "";
+      try {
+        title = await page.title();
+      } catch {
+      }
+      throw new Error(
+        `the login did not complete: ${login.expectSelector ? `no element matched ${login.expectSelector}` : `the url never contained ${login.expectUrl}`} within ${login.timeoutMs}ms. The browser was left at ${where}${title ? ` (${title})` : ""}. Nothing was saved. Either the credentials were refused, or this app needs a step a form fill cannot do \u2014 in which case use the headed \`redpen login\`.`
+      );
+    }
+    mkdirSync5(dirname4(out), { recursive: true });
+    await context.storageState({ path: out });
+    const landedOn = page.url();
+    await context.close();
+    const { readFileSync: readFileSync11 } = await import("node:fs");
+    const state = JSON.parse(readFileSync11(out, "utf8"));
+    const cookies = (state.cookies ?? []).length;
+    const origins = (state.origins ?? []).length;
+    if (!cookies && !origins) {
+      throw new Error(
+        `nothing to save: the browser held no cookies and no stored origins at ${landedOn}, even though the login appeared to succeed. This app keeps its session somewhere a browser profile does not carry, and redpen cannot scan behind it.`
+      );
+    }
+    return { path: out, landedOn, cookies, origins };
+  } finally {
+    await browser.close();
+  }
+}
+
+// src/cli/login.ts
+async function cmdLogin(root, args) {
+  const url = args.urls[0];
+  if (!url) {
+    fail("redpen login needs the url to log in at, e.g. `redpen login http://localhost:3000/login`");
+  }
+  const pw = await loadPlaywright(root);
+  if (!pw) {
+    fail(
+      "playwright is not installed here or in the project being scanned \u2014 `npm i -D playwright && npx playwright install chromium`"
+    );
+  }
+  const out = join10(stateRoot(root), ".redpen", "auth.json");
+  const result = args.headless ? await headlessLogin(pw, url, out, args) : await captureLogin(async () => pw, url, out, {
+    say: (m) => process.stderr.write(import_picocolors11.default.dim(`  ${m}
+`)),
+    waitForOperator: () => new Promise((done) => {
+      process.stderr.write(import_picocolors11.default.bold("\n  Press Enter here once you are logged in. "));
+      process.stdin.resume();
+      process.stdin.once("data", () => {
+        process.stdin.pause();
+        done();
+      });
+    })
+  });
+  process.stdout.write(
+    `
+  session saved to ${import_picocolors11.default.bold(relative3(root, result.path) || result.path)}
+` + import_picocolors11.default.dim(`  ${result.cookies} cookie(s), ${result.origins} stored origin(s), captured at ${result.landedOn}
+`)
+  );
+  const ignored = ensureGitignored(root, ".redpen/");
+  process.stderr.write(
+    import_picocolors11.default.yellow("\n  This file is a live credential, and it expires when the session does.\n") + import_picocolors11.default.yellow(
+      ignored === "added" ? "  Added .redpen/ to .gitignore so it cannot be committed.\n" : ignored === "present" ? "  .gitignore already covers .redpen/.\n" : ignored === "unwritable" ? "  Could not write .gitignore \u2014 add .redpen/ to it yourself before committing.\n" : "  This is not a git repository, so nothing was ignored \u2014 keep the file out of any archive you share.\n"
+    )
+  );
+  const config = loadConfig(root);
+  if (!config.storageState) {
+    saveConfig(root, { ...config, storageState: ".redpen/auth.json" });
+    process.stderr.write(import_picocolors11.default.dim("\n  .redpen/config.json now points at it; scans will use it automatically.\n"));
+  }
+}
+async function headlessLogin(pw, url, out, args) {
+  const user = process.env.REDPEN_LOGIN_USER;
+  const password = process.env.REDPEN_LOGIN_PASSWORD;
+  if (!user || !password) {
+    fail(
+      "redpen login --headless reads the account from REDPEN_LOGIN_USER and REDPEN_LOGIN_PASSWORD, and one of them is not set. There is no flag for either: a credential passed as an argument ends up in the process table and the CI log."
+    );
+  }
+  if (!args.userSelector || !args.passwordSelector) {
+    fail(
+      'redpen login --headless needs --user-selector and --password-selector, e.g. `--user-selector "#email" --password-selector "#password"`. redpen does not guess at field names; guessing wrong types an account into whatever field matched first.'
+    );
+  }
+  if (!args.expectSelector && !args.expectUrl) {
+    fail(
+      "redpen login --headless needs --expect <selector> or --expect-url <substring> \u2014 something that is only there once you are through. A refused password still sets cookies, so without this redpen would save a logged-out session and every authenticated scan after it would silently read the login page."
+    );
+  }
+  process.stderr.write(import_picocolors11.default.dim(`  logging in at ${url} as ${maskAccount(user)}
+`));
+  return captureLoginHeadless(async () => pw, {
+    url,
+    user,
+    password,
+    userSelector: args.userSelector,
+    passwordSelector: args.passwordSelector,
+    submitSelector: args.submitSelector,
+    expectSelector: args.expectSelector,
+    expectUrl: args.expectUrl,
+    timeoutMs: args.timeoutMs && args.timeoutMs > 0 ? args.timeoutMs : 3e4
+  }, out);
+}
+function maskAccount(user) {
+  const at = user.indexOf("@");
+  if (at > 0) return `${user.slice(0, 1)}***${user.slice(at)}`;
+  return user.length <= 2 ? "***" : `${user.slice(0, 1)}***`;
+}
+function ensureGitignored(root, entry) {
+  const gitDir = join10(stateRoot(root), ".git");
+  const file = join10(stateRoot(root), ".gitignore");
+  if (!existsSync7(gitDir)) return "no-repo";
+  let body = "";
+  try {
+    body = readFileSync9(file, "utf8");
+  } catch {
+    body = "";
+  }
+  const covered = body.split("\n").map((l) => l.trim()).some((l) => l === entry || l === entry.replace(/\/$/, "") || l === `/${entry}`);
+  if (covered) return "present";
+  try {
+    writeFileSync5(file, (body && !body.endsWith("\n") ? body + "\n" : body) + entry + "\n", "utf8");
+    return "added";
+  } catch {
+    return "unwritable";
+  }
+}
+
+// src/cli/init.ts
+var import_picocolors12 = __toESM(require_picocolors(), 1);
+import { join as join11 } from "node:path";
+function cmdInit(root) {
+  const existing = loadConfig(root);
+  saveConfig(root, { ...DEFAULT_CONFIG, ...existing });
+  process.stdout.write(
+    `
+  wrote ${import_picocolors12.default.bold(join11(stateRoot(root), ".redpen", "config.json"))}
+
+` + import_picocolors12.default.dim("  Two fields are worth filling in before anything else:\n\n") + import_picocolors12.default.dim('    "urls"    \u2014 without one the browser pass never runs and every\n') + import_picocolors12.default.dim('                finding it could confirm is capped at "possible".\n') + import_picocolors12.default.dim('    "product" \u2014 name, purpose, audience. The vision brief is meant to\n') + import_picocolors12.default.dim("                be answerable by someone who has not seen the project,\n") + import_picocolors12.default.dim("                and several questions are unfair without it.\n\n") + import_picocolors12.default.dim('  "schemes" defaults to "auto": redpen probes the first page for a dark\n') + import_picocolors12.default.dim('  theme and scans it too if there is one. Set ["light"] to skip that.\n\n')
+  );
+}
+
 // src/cli.ts
 var HELP = `
-${import_picocolors2.default.bold("redpen")} \u2014 one verdict on your UI
+${import_picocolors13.default.bold("redpen")} \u2014 one verdict on your UI
 
-  ${import_picocolors2.default.bold("redpen scan")} [path] [url...]  run every available channel and print the report
-  ${import_picocolors2.default.bold("redpen code")} [path]        the source it is written in, not the page it serves
-  ${import_picocolors2.default.bold("redpen check")} [path]       same, but exit non-zero when the score drops
-  ${import_picocolors2.default.bold("redpen baseline")} [path]    record the current score as the bar to hold
-  ${import_picocolors2.default.bold("redpen rules")}              list the merged corpus
-  ${import_picocolors2.default.bold("redpen why")} <rule-id>      explain one rule and where it came from
-  ${import_picocolors2.default.bold("redpen why-score")} [path]   what the score is made of and what would move it
-  ${import_picocolors2.default.bold("redpen sources")}            provenance rollup across upstream catalogues
-  ${import_picocolors2.default.bold("redpen fingerprints")}       show recorded page signatures
-  ${import_picocolors2.default.bold("redpen brief")} [path]       print the vision brief so nobody has to open JSON
-  ${import_picocolors2.default.bold("redpen login")} <url>        log in in a real browser; save the session
-  ${import_picocolors2.default.bold("redpen init")} [path]        write .redpen/config.json
+  ${import_picocolors13.default.bold("redpen scan")} [path] [url...]  run every available channel and print the report
+  ${import_picocolors13.default.bold("redpen code")} [path]        the source it is written in, not the page it serves
+  ${import_picocolors13.default.bold("redpen check")} [path]       same, but exit non-zero when the score drops
+  ${import_picocolors13.default.bold("redpen baseline")} [path]    record the current score as the bar to hold
+  ${import_picocolors13.default.bold("redpen rules")}              list the merged corpus
+  ${import_picocolors13.default.bold("redpen why")} <rule-id>      explain one rule and where it came from
+  ${import_picocolors13.default.bold("redpen why-score")} [path]   what the score is made of and what would move it
+  ${import_picocolors13.default.bold("redpen sources")}            provenance rollup across upstream catalogues
+  ${import_picocolors13.default.bold("redpen fingerprints")}       show recorded page signatures
+  ${import_picocolors13.default.bold("redpen brief")} [path]       print the vision brief so nobody has to open JSON
+  ${import_picocolors13.default.bold("redpen login")} <url>        log in in a real browser; save the session
+  ${import_picocolors13.default.bold("redpen init")} [path]        write .redpen/config.json
 
-${import_picocolors2.default.dim("Options")}
+${import_picocolors13.default.dim("Options")}
   --url <u>          page to render (repeatable). Bare urls work too. Without
                      one, render never runs and every source finding is capped.
   --viewport <n>     viewport width (repeatable). Default 375, 768, 1440.
@@ -13243,7 +13818,7 @@ ${import_picocolors2.default.dim("Options")}
   --version, -V      print the version and exit
   --quiet            suppress progress output
 
-${import_picocolors2.default.dim("Logging in without a person (redpen login --headless)")}
+${import_picocolors13.default.dim("Logging in without a person (redpen login --headless)")}
   Covers one shape of login: a form with a username field, a password field
   and a submit. Anything else \u2014 SSO, a magic link, a second factor \u2014 is the
   headed \`redpen login\`, and this fails rather than pretending.
@@ -13260,9 +13835,9 @@ ${import_picocolors2.default.dim("Logging in without a person (redpen login --he
   The account comes from REDPEN_LOGIN_USER and REDPEN_LOGIN_PASSWORD. There is
   no flag for either, because a credential in an argument is in the CI log.
 
-${import_picocolors2.default.dim("Suppressing a finding")}
-  Add ${import_picocolors2.default.bold("redpen-ignore <reason>")} in a comment on or above the line, or
-  ${import_picocolors2.default.bold("redpen-ignore:<rule-id> <reason>")} to suppress just one rule. The reason is
+${import_picocolors13.default.dim("Suppressing a finding")}
+  Add ${import_picocolors13.default.bold("redpen-ignore <reason>")} in a comment on or above the line, or
+  ${import_picocolors13.default.bold("redpen-ignore:<rule-id> <reason>")} to suppress just one rule. The reason is
   required \u2014 an ignore with no reason is how a rule set stops meaning anything.
 `;
 function parseArgs(argv) {
@@ -13395,16 +13970,11 @@ function parseArgs(argv) {
   }
   return args;
 }
-function fail(message) {
-  process.stderr.write(import_picocolors2.default.red(`redpen: ${message}
-`));
-  process.exit(2);
-}
 function packageVersion() {
   let dir = dirname5(fileURLToPath2(import.meta.url));
   for (let up = 0; up < 6; up++) {
     try {
-      const pkg = JSON.parse(readFileSync8(join9(dir, "package.json"), "utf8"));
+      const pkg = JSON.parse(readFileSync10(join12(dir, "package.json"), "utf8"));
       if (pkg.version) return pkg.version;
     } catch {
     }
@@ -13427,7 +13997,7 @@ async function main() {
   }
   const TAKES_A_PATH = /* @__PURE__ */ new Set(["scan", "code", "check", "baseline", "fingerprints", "brief", "init", "why-score"]);
   const root = resolve4(TAKES_A_PATH.has(args.command) ? args.positional[0] ?? "." : ".");
-  if (TAKES_A_PATH.has(args.command) && args.positional[0] && !existsSync6(root)) {
+  if (TAKES_A_PATH.has(args.command) && args.positional[0] && !existsSync8(root)) {
     fail(`no such directory: ${args.positional[0]}`);
   }
   switch (args.command) {
@@ -13458,538 +14028,11 @@ async function main() {
       return cmdScan(root, args, false);
   }
 }
-async function cmdScan(root, args, gating, code = false) {
-  const onProgress = args.quiet ? void 0 : (m) => process.stderr.write(import_picocolors2.default.dim(`  \u2026 ${m}
-`));
-  const result = await runScan({
-    root,
-    urls: args.urls,
-    viewports: args.viewports,
-    screenshots: args.screenshots,
-    vision: args.vision,
-    answers: args.answers,
-    only: args.only,
-    ephemeral: gating || code,
-    codeCategories: code,
-    onProgress
-  });
-  if (args.min) result.config.minConfidence = args.min;
-  for (const w of result.warnings) {
-    process.stderr.write(import_picocolors2.default.yellow(`  ! ${w}
-`));
-  }
-  if (args.json) {
-    const payload = JSON.stringify(
-      {
-        score: result.score,
-        slopScore: result.slopScore,
-        qualityScore: result.qualityScore,
-        grade: verdict(result.slopScore, result.qualityScore),
-        surfaces: result.surfaces,
-        channelsRun: result.channelsRun,
-        findings: result.findings,
-        advisory: result.advisory,
-        ignored: result.ignored,
-        clashes: result.clashes,
-        fingerprints: result.fingerprints,
-        warnings: result.warnings,
-        timing: result.timing
-      },
-      null,
-      2
-    );
-    if (typeof args.json === "string") {
-      writeFileSync4(args.json, payload + "\n", "utf8");
-      process.stderr.write(import_picocolors2.default.dim(`  wrote ${args.json}
-`));
-    } else {
-      process.stdout.write(payload + "\n");
-    }
-  }
-  if (args.markdown) {
-    const md = renderMarkdown(result);
-    if (typeof args.markdown === "string") {
-      writeFileSync4(args.markdown, md + "\n", "utf8");
-      process.stderr.write(import_picocolors2.default.dim(`  wrote ${args.markdown}
-`));
-    } else {
-      process.stdout.write(md + "\n");
-    }
-  }
-  if (!args.json && !args.markdown) {
-    process.stdout.write(
-      renderTerminal(result, {
-        verbose: args.verbose,
-        showIgnored: args.showIgnored,
-        maxEvidence: args.verbose ? 12 : 3
-      })
-    );
-  }
-  if (result.briefPath) {
-    process.stderr.write(
-      "\n" + import_picocolors2.default.bold("  vision brief ready\n") + import_picocolors2.default.dim(`  ${result.briefPath}
-`) + import_picocolors2.default.dim("  Open each screenshot it lists, fill in the pre-built answer rows, then re-run with\n") + import_picocolors2.default.dim(`  --answers ${result.briefPath}
-`)
-    );
-  }
-  if (!gating) return;
-  const baseline = loadBaseline(root);
-  if (!baseline) {
-    process.stderr.write(
-      import_picocolors2.default.yellow(
-        "  ! no baseline recorded \u2014 run `redpen baseline` to set the bar this check holds against\n"
-      )
-    );
-    process.exit(0);
-  }
-  const gate = compareToBaseline(
-    baseline,
-    {
-      slop: result.slopScore,
-      quality: result.qualityScore,
-      channelsRun: result.channelsRun,
-      findings: result.findings
-    },
-    result.config.tolerance
-  );
-  for (const note of gate.notes) {
-    process.stderr.write(import_picocolors2.default.yellow(`
-  ! ${note}.
-    Re-record it with \`redpen baseline\` to close that hole.
-`));
-  }
-  if (gate.status === "incomparable") {
-    if (gate.reason === "missing-channels") {
-      process.stderr.write(
-        import_picocolors2.default.red(
-          `
-  cannot check: the baseline was recorded with ${gate.had.join(", ")} but this run only managed ${gate.ran.join(", ")}.
-  Missing ${gate.missing.join(", ")} means fewer findings and a higher score, which would pass for the wrong reason.
-`
-        )
-      );
-    } else {
-      process.stderr.write(
-        import_picocolors2.default.red(
-          "\n  cannot check: this baseline predates the two-axis score, so its number is not\n  the same quantity as this run's. Re-record it with `redpen baseline`.\n"
-        )
-      );
-    }
-    process.exit(2);
-  }
-  process.stderr.write("\n");
-  if (gate.status === "regressed") {
-    for (const a of gate.drops) {
-      process.stderr.write(
-        import_picocolors2.default.red(
-          `  ${a.axis} dropped ${a.drop} point(s), ${a.was} to ${a.now} (tolerance ${result.config.tolerance})
-`
-        )
-      );
-    }
-    if (gate.introduced.length) {
-      process.stderr.write(import_picocolors2.default.red(`  new tells since baseline: ${gate.introduced.join(", ")}
-`));
-    }
-    process.exit(1);
-  }
-  process.stderr.write(
-    import_picocolors2.default.green(
-      `  holding: slop ${gate.slop} against ${baseline.slop}, quality ${gate.quality} against ${baseline.quality}
-`
-    )
-  );
-}
-async function cmdBaseline(root, args) {
-  const result = await runScan({
-    root,
-    urls: args.urls,
-    viewports: args.viewports,
-    onProgress: args.quiet ? void 0 : (m) => process.stderr.write(import_picocolors2.default.dim(`  \u2026 ${m}
-`))
-  });
-  for (const warning of result.warnings) {
-    process.stderr.write(import_picocolors2.default.yellow(`  ! ${warning}
-`));
-  }
-  saveBaseline(root, {
-    score: result.score,
-    slop: result.slopScore,
-    quality: result.qualityScore,
-    recordedAt: (/* @__PURE__ */ new Date()).toISOString(),
-    knownRules: ruleIds(result.findings.filter((f) => f.confidence !== "possible")),
-    channels: result.channelsRun
-  });
-  process.stdout.write(
-    `
-  baseline set at ${import_picocolors2.default.bold(String(result.score))} (${verdict(result.slopScore, result.qualityScore)}) with ${result.findings.length} finding(s) on record
-` + import_picocolors2.default.dim(`  channels: ${result.channelsRun.join(", ")}
-`) + import_picocolors2.default.dim("  `redpen check` now fails when the score drops or a new tell appears\n\n")
-  );
-  if (!result.channelsRun.includes("render")) {
-    process.stderr.write(
-      import_picocolors2.default.yellow("  ! recorded without the render channel \u2014 every later `redpen check` that does\n") + import_picocolors2.default.yellow("    render will see the extra findings as a regression. Re-record with --url.\n")
-    );
-  }
-}
-function cmdRules(args) {
-  const rules = loadCorpus();
-  const filter = args.positional[0]?.toLowerCase();
-  const shown = (filter ? rules.filter((r) => r.category === filter || r.id.includes(filter)) : rules).slice().sort((a, b) => a.category.localeCompare(b.category) || b.weight - a.weight);
-  process.stdout.write(
-    `
-  ${import_picocolors2.default.bold(`${rules.length} rules`)}${filter ? import_picocolors2.default.dim(` \xB7 filtered to ${shown.length}`) : ""}
-
-`
-  );
-  let lastCategory = "";
-  for (const r of shown) {
-    if (r.category !== lastCategory) {
-      process.stdout.write(`  ${import_picocolors2.default.bold(import_picocolors2.default.underline(r.category))}
-`);
-      lastCategory = r.category;
-    }
-    const rank2 = r.evidenceRank === 0 ? import_picocolors2.default.green("top") : r.evidenceRank !== null ? import_picocolors2.default.green(`#${String(r.evidenceRank).padEnd(2)}`) : import_picocolors2.default.dim("  \u2014");
-    process.stdout.write(
-      `    ${String(r.weight).padStart(3)} ${rank2}  ${r.id.padEnd(32)} ${import_picocolors2.default.dim(r.channels.join("+"))}
-`
-    );
-  }
-  process.stdout.write(
-    import_picocolors2.default.dim(
-      '\n  weight = 0-100 \xB7 rank = position in the 3,033-comment Reddit sample\n  "top" = the headline finding (sameness outranked every individual tell)\n  "\u2014"  = never measured against human complaint data; weight is assigned by consequence\n\n'
-    )
-  );
-}
-function cmdWhy(args) {
-  const id = args.positional[0];
-  if (!id) fail("usage: redpen why <rule-id>");
-  const rule = ruleById(id);
-  if (!rule) fail(`no rule "${id}" \u2014 run \`redpen rules\` to list them`);
-  process.stdout.write(`
-  ${import_picocolors2.default.bold(rule.title)}  ${import_picocolors2.default.dim(rule.id)}
-
-`);
-  process.stdout.write(`  ${import_picocolors2.default.dim("category")}   ${rule.category}
-`);
-  process.stdout.write(
-    `  ${import_picocolors2.default.dim("kind")}       ${rule.kind === "slop" ? "slop \u2014 reads as machine-made" : "quality \u2014 broken regardless of taste"}${rule.advisory ? import_picocolors2.default.yellow("  (advisory: reported, never scored)") : ""}
-`
-  );
-  process.stdout.write(
-    `  ${import_picocolors2.default.dim("surfaces")}   ${rule.surfaces ? rule.surfaces.join(", ") + import_picocolors2.default.dim(" only") : "all (persuade, operate, read)"}
-`
-  );
-  process.stdout.write(`  ${import_picocolors2.default.dim("weight")}     ${rule.weight}/100
-`);
-  process.stdout.write(
-    `  ${import_picocolors2.default.dim("evidence")}   ${rule.evidenceRank === 0 ? "the headline finding of the 3,033-comment Reddit sample \u2014 it outranked every individual tell" : rule.evidenceRank !== null ? `rank #${rule.evidenceRank} in the 3,033-comment Reddit sample` : "never measured against human complaint data \u2014 weight is assigned by consequence"}
-`
-  );
-  process.stdout.write(`  ${import_picocolors2.default.dim("channels")}   ${rule.channels.join(", ")}
-`);
-  process.stdout.write(`  ${import_picocolors2.default.dim("from")}       ${rule.sources.map((s) => `${s.origin}:${s.ref}`).join("\n             ")}
-
-`);
-  process.stdout.write(`  ${rule.why}
-
-`);
-  process.stdout.write(`  ${import_picocolors2.default.green("fix")}  ${rule.fix}
-
-`);
-  if (rule.legitimateWhen) {
-    process.stdout.write(import_picocolors2.default.dim(`  legitimate when: ${rule.legitimateWhen}
-
-`));
-  }
-}
-async function cmdWhyScore(root, args) {
-  const result = await runScan({
-    root,
-    urls: args.urls,
-    viewports: args.viewports,
-    only: args.only,
-    ephemeral: true,
-    onProgress: args.quiet ? void 0 : (m) => process.stderr.write(import_picocolors2.default.dim(`  \u2026 ${m}
-`))
-  });
-  for (const warning of result.warnings) {
-    process.stderr.write(import_picocolors2.default.yellow(`  ! ${warning}
-`));
-  }
-  const scorable = result.findings.filter((f) => meetsThreshold(f, result.config.minConfidence));
-  const { score: total, contributions } = explainScore(scorable);
-  const excluded = result.findings.length - scorable.length;
-  const w = process.stdout.write.bind(process.stdout);
-  w(
-    `
-  ${import_picocolors2.default.bold("redpen")}  ${import_picocolors2.default.bold(String(total))}${import_picocolors2.default.dim("/100")}   ${import_picocolors2.default.dim(verdict(result.slopScore, result.qualityScore))}
-`
-  );
-  w(`  ${import_picocolors2.default.dim("slop")} ${result.slopScore}   ${import_picocolors2.default.dim("quality")} ${result.qualityScore}
-
-`);
-  if (!contributions.length) {
-    w(import_picocolors2.default.green("  Nothing is costing you anything.\n\n"));
-    return;
-  }
-  w(`  ${import_picocolors2.default.bold("What the score is made of")}
-`);
-  w(import_picocolors2.default.dim("  share = this finding's portion of the total problem.\n"));
-  w(import_picocolors2.default.dim("  +pts  = what the score gains if it goes away, on its own.\n\n"));
-  const saturated = contributions.every((c) => c.worth < 1);
-  if (saturated && contributions.length > 3) {
-    w(import_picocolors2.default.yellow("  The curve is saturated: there is enough here that no single fix\n"));
-    w(import_picocolors2.default.yellow("  moves the number much. Work down by share \u2014 the score starts\n"));
-    w(import_picocolors2.default.yellow("  responding once the top few are gone.\n\n"));
-  }
-  for (const c of contributions) {
-    const bar = "\u2588".repeat(Math.max(1, Math.round(c.share * 40)));
-    const pct = `${(c.share * 100).toFixed(1)}%`.padStart(6);
-    const pts = c.worth >= 1 ? import_picocolors2.default.green(`+${c.worth}`.padStart(5)) : import_picocolors2.default.dim(`+${c.worth}`.padStart(5));
-    w(`   ${pct} ${pts}  ${c.ruleId.padEnd(28)} ${import_picocolors2.default.dim(`${c.kind} \xB7 ${c.instances}\xD7`)}
-`);
-    w(`   ${" ".repeat(12)}${c.kind === "slop" ? import_picocolors2.default.yellow(bar) : import_picocolors2.default.red(bar)}
-`);
-  }
-  const best = contributions[0];
-  if (best) {
-    w(`
-  ${import_picocolors2.default.bold("Start here")}  ${best.ruleId} ${import_picocolors2.default.dim(`\u2014 ${(best.share * 100).toFixed(0)}% of the total`)}
-`);
-    w(import_picocolors2.default.dim(`  ${result.findings.find((f) => f.ruleId === best.ruleId)?.fix ?? ""}
-`));
-  }
-  const advisory = result.advisory.length;
-  if (advisory) {
-    w(import_picocolors2.default.dim(`
-  ${advisory} advisory finding(s) cost nothing and never will.
-`));
-  }
-  if (excluded) {
-    w(import_picocolors2.default.dim(
-      `  ${excluded} finding(s) below the "${result.config.minConfidence}" floor are not counted here \u2014 the render pass checked them and did not agree.
-`
-    ));
-  }
-  w("\n");
-}
-function cmdSources() {
-  const counts = originCounts();
-  const total = loadCorpus().length;
-  process.stdout.write(`
-  ${import_picocolors2.default.bold(`${total} rules`)} merged from:
-
-`);
-  for (const [cat, n] of Object.entries(counts).sort((a, b) => b[1] - a[1])) {
-    process.stdout.write(`    ${String(n).padStart(4)}  ${cat}
-`);
-  }
-  process.stdout.write(
-    import_picocolors2.default.dim(
-      "\n  Counts exceed the rule total because most rules were named by more than one\n  catalogue \u2014 that overlap is what the merge collapsed. See NOTICE for licences.\n\n"
-    )
-  );
-}
-function cmdFingerprints(root) {
-  const prints = load(root);
-  if (!prints.length) {
-    process.stdout.write(
-      import_picocolors2.default.dim("\n  no fingerprints on record \u2014 run `redpen scan --url <u>` to record one\n\n")
-    );
-    return;
-  }
-  process.stdout.write(`
-  ${import_picocolors2.default.bold(`${prints.length} page(s) on record`)}
-
-`);
-  for (const p of prints) {
-    process.stdout.write(`  ${import_picocolors2.default.bold(p.page)}
-`);
-    process.stdout.write(`    ${import_picocolors2.default.dim("skeleton")}  ${p.macrostructure}
-`);
-    process.stdout.write(`    ${import_picocolors2.default.dim("rhythm")}    ${p.sectionRhythm.join(" \u2192 ")}
-`);
-    process.stdout.write(`    ${import_picocolors2.default.dim("hero/nav")}  ${p.hero} / ${p.nav}
-`);
-    process.stdout.write(`    ${import_picocolors2.default.dim("type")}      ${p.typeScale.join(", ")}px \xB7 ${p.families.join(", ")}
-`);
-    process.stdout.write(
-      `    ${import_picocolors2.default.dim("anchor")}    ${p.paletteAnchor === null ? "monochrome" : `hue ${p.paletteAnchor}`}
-
-`
-    );
-  }
-}
-function cmdBrief(root) {
-  const file = join9(stateRoot(root), ".redpen", "vision-brief.json");
-  if (!existsSync6(file)) {
-    fail(`no brief at ${file} \u2014 run \`redpen scan <path> --url <url> --vision\` first`);
-  }
-  const brief = JSON.parse(readFileSync8(file, "utf8"));
-  const w = process.stdout.write.bind(process.stdout);
-  w(`
-  ${import_picocolors2.default.bold("Vision brief")}  ${import_picocolors2.default.dim(file)}
-
-`);
-  w(`  ${import_picocolors2.default.bold("What this is")}
-    ${wrapAt(brief.context.product, 72, "    ")}
-`);
-  w(`  ${import_picocolors2.default.bold("Who uses it")}
-    ${wrapAt(brief.context.audience, 72, "    ")}
-
-`);
-  w(`  ${import_picocolors2.default.bold("Pages")}
-`);
-  for (const [url, shot] of Object.entries(brief.screenshots)) {
-    w(`    ${import_picocolors2.default.bold(url)}
-      ${import_picocolors2.default.dim(shot)}
-      ${import_picocolors2.default.dim(brief.context.surface[url] ?? "")}
-`);
-  }
-  w("\n");
-  w(`  ${import_picocolors2.default.bold("Questions")}  ${import_picocolors2.default.dim("yes means the thing described IS there")}
-`);
-  for (const q of brief.questions) {
-    w(`    ${import_picocolors2.default.green(q.id.padEnd(4))} ${wrapAt(q.ask, 70, "         ")}
-`);
-  }
-  const answered = brief.answers.filter((a) => a.present !== null).length;
-  w(`
-  ${answered}/${brief.answers.length} rows answered.
-`);
-  w(import_picocolors2.default.dim(`  Open each screenshot, fill in present / confidence / evidence, then:
-`));
-  w(import_picocolors2.default.dim(`    redpen scan ${root} --url <url> --answers ${file}
-
-`));
-}
-function wrapAt(text, width, indent) {
-  const words = String(text).split(/\s+/);
-  const lines = [];
-  let line = "";
-  for (const word of words) {
-    if ((line + " " + word).trim().length > width) {
-      lines.push(line.trim());
-      line = word;
-    } else line += " " + word;
-  }
-  if (line.trim()) lines.push(line.trim());
-  return lines.join("\n" + indent);
-}
-async function cmdLogin(root, args) {
-  const url = args.urls[0];
-  if (!url) {
-    fail("redpen login needs the url to log in at, e.g. `redpen login http://localhost:3000/login`");
-  }
-  const pw = await loadPlaywright(root);
-  if (!pw) {
-    fail(
-      "playwright is not installed here or in the project being scanned \u2014 `npm i -D playwright && npx playwright install chromium`"
-    );
-  }
-  const out = join9(stateRoot(root), ".redpen", "auth.json");
-  const result = args.headless ? await headlessLogin(pw, url, out, args) : await captureLogin(async () => pw, url, out, {
-    say: (m) => process.stderr.write(import_picocolors2.default.dim(`  ${m}
-`)),
-    waitForOperator: () => new Promise((done) => {
-      process.stderr.write(import_picocolors2.default.bold("\n  Press Enter here once you are logged in. "));
-      process.stdin.resume();
-      process.stdin.once("data", () => {
-        process.stdin.pause();
-        done();
-      });
-    })
-  });
-  process.stdout.write(
-    `
-  session saved to ${import_picocolors2.default.bold(relative3(root, result.path) || result.path)}
-` + import_picocolors2.default.dim(`  ${result.cookies} cookie(s), ${result.origins} stored origin(s), captured at ${result.landedOn}
-`)
-  );
-  const ignored = ensureGitignored(root, ".redpen/");
-  process.stderr.write(
-    import_picocolors2.default.yellow("\n  This file is a live credential, and it expires when the session does.\n") + import_picocolors2.default.yellow(
-      ignored === "added" ? "  Added .redpen/ to .gitignore so it cannot be committed.\n" : ignored === "present" ? "  .gitignore already covers .redpen/.\n" : ignored === "unwritable" ? "  Could not write .gitignore \u2014 add .redpen/ to it yourself before committing.\n" : "  This is not a git repository, so nothing was ignored \u2014 keep the file out of any archive you share.\n"
-    )
-  );
-  const config = loadConfig(root);
-  if (!config.storageState) {
-    saveConfig(root, { ...config, storageState: ".redpen/auth.json" });
-    process.stderr.write(import_picocolors2.default.dim("\n  .redpen/config.json now points at it; scans will use it automatically.\n"));
-  }
-}
-async function headlessLogin(pw, url, out, args) {
-  const user = process.env.REDPEN_LOGIN_USER;
-  const password = process.env.REDPEN_LOGIN_PASSWORD;
-  if (!user || !password) {
-    fail(
-      "redpen login --headless reads the account from REDPEN_LOGIN_USER and REDPEN_LOGIN_PASSWORD, and one of them is not set. There is no flag for either: a credential passed as an argument ends up in the process table and the CI log."
-    );
-  }
-  if (!args.userSelector || !args.passwordSelector) {
-    fail(
-      'redpen login --headless needs --user-selector and --password-selector, e.g. `--user-selector "#email" --password-selector "#password"`. redpen does not guess at field names; guessing wrong types an account into whatever field matched first.'
-    );
-  }
-  if (!args.expectSelector && !args.expectUrl) {
-    fail(
-      "redpen login --headless needs --expect <selector> or --expect-url <substring> \u2014 something that is only there once you are through. A refused password still sets cookies, so without this redpen would save a logged-out session and every authenticated scan after it would silently read the login page."
-    );
-  }
-  process.stderr.write(import_picocolors2.default.dim(`  logging in at ${url} as ${maskAccount(user)}
-`));
-  return captureLoginHeadless(async () => pw, {
-    url,
-    user,
-    password,
-    userSelector: args.userSelector,
-    passwordSelector: args.passwordSelector,
-    submitSelector: args.submitSelector,
-    expectSelector: args.expectSelector,
-    expectUrl: args.expectUrl,
-    timeoutMs: args.timeoutMs && args.timeoutMs > 0 ? args.timeoutMs : 3e4
-  }, out);
-}
-function maskAccount(user) {
-  const at = user.indexOf("@");
-  if (at > 0) return `${user.slice(0, 1)}***${user.slice(at)}`;
-  return user.length <= 2 ? "***" : `${user.slice(0, 1)}***`;
-}
-function ensureGitignored(root, entry) {
-  const gitDir = join9(stateRoot(root), ".git");
-  const file = join9(stateRoot(root), ".gitignore");
-  if (!existsSync6(gitDir)) return "no-repo";
-  let body = "";
-  try {
-    body = readFileSync8(file, "utf8");
-  } catch {
-    body = "";
-  }
-  const covered = body.split("\n").map((l) => l.trim()).some((l) => l === entry || l === entry.replace(/\/$/, "") || l === `/${entry}`);
-  if (covered) return "present";
-  try {
-    writeFileSync4(file, (body && !body.endsWith("\n") ? body + "\n" : body) + entry + "\n", "utf8");
-    return "added";
-  } catch {
-    return "unwritable";
-  }
-}
-function cmdInit(root) {
-  const existing = loadConfig(root);
-  saveConfig(root, { ...DEFAULT_CONFIG, ...existing });
-  process.stdout.write(
-    `
-  wrote ${import_picocolors2.default.bold(join9(stateRoot(root), ".redpen", "config.json"))}
-
-` + import_picocolors2.default.dim("  Two fields are worth filling in before anything else:\n\n") + import_picocolors2.default.dim('    "urls"    \u2014 without one the browser pass never runs and every\n') + import_picocolors2.default.dim('                finding it could confirm is capped at "possible".\n') + import_picocolors2.default.dim('    "product" \u2014 name, purpose, audience. The vision brief is meant to\n') + import_picocolors2.default.dim("                be answerable by someone who has not seen the project,\n") + import_picocolors2.default.dim("                and several questions are unfair without it.\n\n") + import_picocolors2.default.dim('  "schemes" defaults to "auto": redpen probes the first page for a dark\n') + import_picocolors2.default.dim('  theme and scans it too if there is one. Set ["light"] to skip that.\n\n')
-  );
-}
 main().catch((err) => {
-  process.stderr.write(import_picocolors2.default.red(`redpen: ${err instanceof Error ? err.message : String(err)}
+  process.stderr.write(import_picocolors13.default.red(`redpen: ${err instanceof Error ? err.message : String(err)}
 `));
   if (process.env.REDPEN_DEBUG && err instanceof Error) {
-    process.stderr.write(import_picocolors2.default.dim(String(err.stack)) + "\n");
+    process.stderr.write(import_picocolors13.default.dim(String(err.stack)) + "\n");
   }
   process.exit(2);
 });
