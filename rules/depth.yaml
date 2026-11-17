@@ -189,9 +189,9 @@
   severity: high
   # Rank 1 in the study, named in 2.5% of on-topic comments, the single
   # most-cited concrete cause of the "they all look the same" reaction, across
-  # six subreddits. It shipped at 55 with no rank because it was added from the
-  # prose rather than the ranking, which put the corpus's strongest measured
-  # tell below a dozen rules the same study ranks under it.
+  # six subreddits. The weight follows that rank rather than the prose the rule
+  # was named in, so the corpus's strongest measured tell is not outweighed by
+  # rules the same study ranks under it.
   weight: 92
   evidenceRank: 1
   sources:

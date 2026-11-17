@@ -158,7 +158,7 @@ test('advisory rules exist and are never the loudest thing in the corpus', () =>
 test('the detector bundle is valid JavaScript', async () => {
   // The bundle lives inside a TS template literal, so a stray backtick or a
   // single-backslash regex silently corrupts it and every render check dies at
-  // runtime with "window.__redpenDetect is not a function". Both have happened.
+  // runtime with "window.__redpenDetect is not a function".
   const { detectorSource } = await import('../dist/channels/detectors.js');
   const { fingerprintSource } = await import('../dist/fingerprint/extract.js');
   const { surfaceSource } = await import('../dist/channels/surface.js');
@@ -191,9 +191,9 @@ test('every render check named by a rule exists in the bundle', async () => {
 });
 
 test('no rule depends on case while compiling case-insensitively', () => {
-  // Three rules have now been silently inverted by this: `const food` read as a
-  // SCREAMING_CASE constant, every sentence-case heading read as Title Case,
-  // and `- [x]` task checkboxes read as chat-transcript markup. Patterns compile
+  // This inverts a rule silently: `const food` reads as a SCREAMING_CASE
+  // constant, every sentence-case heading as Title Case, and `- [x]` task
+  // checkboxes as chat-transcript markup. Patterns compile
   // with the `i` flag unless a rule opts out, so an uppercase-only class or
   // literal means the opposite of what it says.
   const offenders = [];

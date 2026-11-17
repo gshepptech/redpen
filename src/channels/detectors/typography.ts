@@ -168,8 +168,8 @@ export const TYPOGRAPHY_CHECKS = `
       // A short, sentence-less label is chrome. Prose has sentences.
       if (t.length <= 24 && !/[.!?]\\s/.test(t)) return true;
       // Nothing without a space in it is prose. A file path, a url, a hash or
-      // an id is chrome at any length. A 68-character temp path in a menu was
-      // being held to the 14px prose floor with no way to satisfy the rule.
+      // an id is chrome at any length. Otherwise a 68-character temp path in a
+      // menu is held to the 14px prose floor with no way to satisfy the rule.
       if (!/\\s/.test(t)) return true;
       // Monospace is how a page says "this is an identifier, not sentences".
       if (/mono/i.test(getComputedStyle(el).fontFamily)) return true;

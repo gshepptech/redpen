@@ -8845,8 +8845,8 @@ var TYPOGRAPHY_CHECKS = `
       // A short, sentence-less label is chrome. Prose has sentences.
       if (t.length <= 24 && !/[.!?]\\s/.test(t)) return true;
       // Nothing without a space in it is prose. A file path, a url, a hash or
-      // an id is chrome at any length. A 68-character temp path in a menu was
-      // being held to the 14px prose floor with no way to satisfy the rule.
+      // an id is chrome at any length. Otherwise a 68-character temp path in a
+      // menu is held to the 14px prose floor with no way to satisfy the rule.
       if (!/\\s/.test(t)) return true;
       // Monospace is how a page says "this is an identifier, not sentences".
       if (/mono/i.test(getComputedStyle(el).fontFamily)) return true;
@@ -9628,7 +9628,7 @@ var DEPTH_CHECKS = `
     var widths = {};
     all('svg').forEach(function (svg) {
       // A filled mark draws no stroke, so its *computed* stroke-width is the
-      // SVG initial value of 1, a number nobody authored. Counting it made a
+      // SVG initial value of 1, a number nobody authored. Counting it would make a
       // brand mark beside stroked nav icons read as two icon libraries, which
       // is a normal and deliberate pairing.
       var parts = Array.prototype.slice.call(svg.querySelectorAll('*'));

@@ -126,7 +126,7 @@ export const DEPTH_CHECKS = `
     var widths = {};
     all('svg').forEach(function (svg) {
       // A filled mark draws no stroke, so its *computed* stroke-width is the
-      // SVG initial value of 1, a number nobody authored. Counting it made a
+      // SVG initial value of 1, a number nobody authored. Counting it would make a
       // brand mark beside stroked nav icons read as two icon libraries, which
       // is a normal and deliberate pairing.
       var parts = Array.prototype.slice.call(svg.querySelectorAll('*'));

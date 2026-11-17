@@ -49,8 +49,8 @@
       # Past tense about the author's own edit. Gerunds are out: "Adding a fifth
       # advisory means adding a row here" is an instruction to whoever comes
       # next, not a note about what happened. "Fixed" is out too: it is more
-      # often "fixed order" or "fixed width" than "I fixed it", and it cost this
-      # rule a false positive on `// Fixed, not the marks' insertion order`.
+      # often "fixed order" or "fixed width" than "I fixed it", and it would
+      # flag `// Fixed, not the marks' insertion order`.
       - '(//|#|\*)\s*(Added|Updated|Changed|Removed|Refactored|Renamed|Moved|Replaced)\b[^\n]{0,60}\b(here|above|below|this|to (use|be|match|support)|from|for (now|clarity|consistency))\b'
       - '(//|#|\*)\s*(NEW|OLD|WAS|BEFORE|AFTER)\s*[::-]'
       - '(//|#|\*)\s*(As (requested|discussed|per)|Per (the|your) (request|feedback|review))\b'
@@ -555,9 +555,9 @@
   # The industry figures are deliberately not in `why`.
   #
   # `why` is printed directly under the finding, so a sentence about 623
-  # million changes across every codebase read as a claim about *this* one;
-  # the first person to see it asked whether redpen thought their repository
-  # had millions of commits and three years of history. The provenance line
+  # million changes across every codebase would read as a claim about *this*
+  # one, as if redpen thought the repository had millions of commits and three
+  # years of history. The provenance line
   # carries the study; the argument has to be about the code in front of you.
   why: >-
     A second copy is cheaper to write than a shared function is to find, and
